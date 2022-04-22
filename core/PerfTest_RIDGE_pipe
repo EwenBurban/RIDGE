@@ -3,9 +3,7 @@
 python = 'python2'
 
 # links to the codes
-#binpath = "/shared/home/croux/softwares/DILS/bin"
 binpath = "/home/genouest/cnrs_umr6553/eburban/GW_DILS/bin"
-#binpath = "/shared/mfs/data/home/croux/softwares/DILS/bin"
 
 # light or normal mode
 lightMode = config['lightMode']
@@ -368,32 +366,6 @@ rule simulation_locus:
         if [[ -e ABCjsfs_locus.txt ]] ;then sed -i '2,${{/dataset/d}}' ABCjsfs_locus.txt ;fi
         """
 
-#   rule assemble_sim_locus:
-#       input:
-#           h_stat = "{timeStamp}/simdata/{simdata_dir}/locus_sim_param/{weight_model}_0/ABCstat_locus.txt",
-#           h_sfs = "{timeStamp}/simdata/{simdata_dir}/locus_sim_param/{weight_model}_0/ABCjsfs_locus.txt",
-#           h_prior = "{timeStamp}/simdata/{simdata_dir}/locus_sim_param/{weight_model}_0/priorfile_locus.txt",
-
-#           stat = expand("{{timeStamp}}/simdata/{{simdata_dir}}/locus_sim_param/{{weight_model}}_{j}/ABCstat_locus.txt",j=range(100)),
-#           sfs = expand("{{timeStamp}}/simdata/{{simdata_dir}}/locus_sim_param/{{weight_model}}_{j}/ABCjsfs_locus.txt",j=range(100)),
-#           prior = expand("{{timeStamp}}/simdata/{{simdata_dir}}/locus_sim_param/{{weight_model}}_{j}/priorfile_locus.txt",j=range(100))
-#       output:
-#           stat="{timeStamp}/simdata/{simdata_dir}/locus_sim_param/{weight_model}/ABCstat_locus.txt",
-#           sfs="{timeStamp}/simdata/{simdata_dir}/locus_sim_param/{weight_model}/ABCjsfs_locus.txt",
-#           prior="{timeStamp}/simdata/{simdata_dir}/locus_sim_param/{weight_model}/priorfile_locus.txt"
-#       shell:
-#           """
-#           head -n1 {input.h_stat} > {output.stat} # put the header of the first file in the output file
-#           sed '1d' {input.stat} >> {output.stat} # append only the data (without header) in the output file
-
-#           head -n1 {input.h_sfs} > {output.sfs}
-#           sed '1d' {input.sfs} >> {output.sfs}
-#           
-#           head -n1 {input.h_prior} > {output.prior}
-#           sed '1d' {input.prior} >> {output.prior}
-#           """
-
-######################### Locus parameter estimation ################
 rule estimate_locus_param:
     input:
         "{timeStamp}/simdata/{simdata_dir}/locus_sim_param/{weight_model}/ABCstat_locus.txt",
@@ -409,13 +381,6 @@ rule estimate_locus_param:
                 sim_dir={timeStamp}/simdata/{wildcards.simdata_dir}/locus_sim_param/{wildcards.weight_model} \
                 output={output} model={wildcards.weight_model} param={wildcards.param_locus}  
         """
-
-#   def chek_weight_model(wildcards):
-#       check=checkpoints.simulation_locus.get(**wildcards)
-#       simdata=check.simdata_dir
-#       models=check.weight_model
-#       return expand('{timeStamp}/simdata/{simdata_dir}/locus_param_estimation/{weight_model}_{param_locus}_estimate_1Pd.txt',
-#               timeStamp=timeStamp,simdata_dir=simdata,weight_model=models,param_locus=locus_param2estimate)
 
 
 rule locus_paramWeight:
