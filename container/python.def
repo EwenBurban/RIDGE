@@ -1,0 +1,8 @@
+Bootstrap: docker
+From: python:3.9
+
+%post
+pip install pandas numpy
+
+%test
+python3 -V

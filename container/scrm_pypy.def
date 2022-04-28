@@ -1,0 +1,11 @@
+Bootstrap: docker
+From: pypy:slim-buster
+
+%post
+apt-get update -y && apt-get upgrade -y
+apt-get install scrm gcc g++ -y
+pip3 install pandas numpy
+pip3 install scikit-allel
+%test
+scrm 2 1 -t 5
+pypy3 -V

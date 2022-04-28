@@ -10,7 +10,6 @@ locus_write=eval(argv['locus_write'])
 global_write=eval(argv['global_write'])
 locus_datafile=argv['locus_datafile']
 num_dataset=int(argv['num_dataset'])
-
 locus_data = pd.read_csv(locus_datafile,sep='\t')
 locus_size_it = iter(locus_data['locus_size'])
 subpop_it = ([range(0,locus_data.loc[i,'popA']),range(locus_data.loc[i,'popA'],(locus_data.loc[i,'popA'] + locus_data.loc[i,'popB']))] for i in range(locus_data.shape[0]))
@@ -24,18 +23,13 @@ def get_GT(locus_data):
         haplotype_list.append(np.array(snp[2:],dtype=int))
     return {'pos':np.array(pos_list,dtype=int) , 'GT':haplotype_list}
 
-def get_abcstat(gt,locus_length,subpop,biased=True):
+def get_abcstat(gt,locus_length,subpop):
     # when biased is true, all statistics will be calculated infering missing position as 
     # invariant sites. If biased == False, stats are calculated only on given SNP.
         nsites = len(gt['pos'])
-        if biased == True :
-            pos = gt['pos']
-            acces = np.full((locus_length),False)
-            acces[gt['pos']] = True
-        elif biased == False :
-            pos = range(nsites)
-            acces = np.full((nsites),True)
-
+        pos = gt['pos']
+        acces = np.full((locus_length),False)
+        acces[gt['pos']] = True
         h = allel.HaplotypeArray(gt['GT'])
         acA  = h.count_alleles(subpop=subpop[0])
         acB  = h.count_alleles(subpop=subpop[1])
@@ -74,7 +68,7 @@ for line in sys.stdin:
         continue
     elif (in_locus == True) and not line:
         gt = get_GT(locus_str)
-        stat.append( get_abcstat(gt,next(locus_size_it),next(subpop_it)))
+        stat.append(get_abcstat(gt,next(locus_size_it),next(subpop_it)))
         in_locus = False
     else:
         locus_str.append(line)
@@ -94,8 +88,10 @@ if locus_write:
 
 if global_write:
     avg = locus_stat.apply(np.mean,axis=0)
+    med = locus_stat.apply(np.median,axis=0)
     std = locus_stat.apply(np.std,axis=0)
     std.index = [x + '_std' for x in std.keys()]
+    med.index = [x + '_median' for x in std.keys()]
     pearson = {'pearson_r_pi':np.corrcoef(locus_stat['piA_avg'].astype(float),locus_stat['piB_avg'].astype(float)).min(),
             'pearson_r_theta':np.corrcoef(locus_stat['thetaA_avg'].astype(float),locus_stat['thetaB_avg'].astype(float)).min(),
             'pearson_r_divAB_netdivAB':np.corrcoef(locus_stat['divAB_avg'].astype(float),locus_stat['netDivAB_avg'].astype(float)).min(),
@@ -107,7 +103,7 @@ if global_write:
             'noSs_sf':np.count_nonzero(np.logical_and(locus_stat['ss_avg']==0,locus_stat['sf_avg']>0)==True),
             'noSs_noSf':np.count_nonzero(np.logical_and(locus_stat['ss_avg']==0,locus_stat['sf_avg']==0)==True)
             }
-    glob_stat = pd.DataFrame(pd.concat([avg,std,pd.Series(pearson),pd.Series(ss_sf)])).T
+    glob_stat = pd.DataFrame(pd.concat([avg,std,med,pd.Series(pearson),pd.Series(ss_sf)])).T
     print(glob_stat.index)
     glob_stat.set_index(glob_stat.index + num_dataset,inplace=True)
     if os.path.isfile('ABCstat_global.txt') == False:

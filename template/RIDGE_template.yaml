@@ -1,0 +1,11 @@
+lightMode: FALSE
+nameA: wild
+nameB: dom
+useSFS: 0
+config_yaml: /home/
+timeStamp: /dir
+nMin: 20
+N_max: 170000
+mu: 3e-8
+container_path: /home/genouest/cnrs_umr6553/eburban/RIDGE/container
+

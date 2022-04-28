@@ -1,9 +1,5 @@
-
-# python
-python = 'python2'
-
 # links to the codes
-binpath = "/home/genouest/cnrs_umr6553/eburban/GW_DILS/bin"
+binpath = "/home/genouest/cnrs_umr6553/eburban/RIDGE/core"
 
 # light or normal mode
 lightMode = config['lightMode']
@@ -22,62 +18,36 @@ if lightMode==False:
     ntree = 1000 # number of tree for the random forest (RF) model comparison (1000)
     nIterations_model_comp = 10 # number of subdirectories for the simulations used in the RF model comparison
     nIterations_estim = 8 # number of subdirectories for the simulations used in the nnet param estimates (500)
+	n_estimation=5
 else:
     nCPU_R = 2 # number of CPUs for the model comp for the model forest R functions (8)
     ntree = 250 # number of tree for the random forest (RF) model comparison (1000)
     nIterations_model_comp = 5 # number of subdirectories for the simulations used in the RF model comparison
     nIterations_estim = 4 # number of subdirectories for the simulations used in the nnet param estimates (500)
+	n_estimation=2
 
 ITERATIONS_MODEL_COMP = range(nIterations_model_comp)
 MODELS_COMP = ['SC_1M_1N', 'SC_1M_2N', 'SC_2M_1N', 'SC_2M_2N', 'AM_1M_1N', 'AM_1M_2N', 'AM_2M_1N', 'AM_2M_2N', 'IM_1M_1N', 'IM_1M_2N', 'IM_2M_1N', 'IM_2M_2N', 'SI_1N', 'SI_2N']
 
-params_model = ['N1','N2','Na','founders1','founders2','Tdem1','Tdem2','M12','M21','shape_N_a','shape_N_b','shape_M12_a','shape_M12_b','shape_M21_a','shape_M21_b','Tsc','Tam','Tsplit']
-locus_param2estimate = ['M12','M21']
 # first and second estimation of parameters
 nIterations_gof = 10 # number of subdirectories for the simulations used in the nnet param estimates (10)
 ITERATIONS_ESTIMATES = range(nIterations_estim)
 
 
 # informations from the config.yaml file
-mail_address = config['mail_address']
-infile = config['infile']
-region = config['region']
-nspecies = config['nspecies']
 nameA = config['nameA']
 nameB = config['nameB']
-nameOutgroup = config['nameOutgroup']
-if nameOutgroup=='NA':
-    outgroup=0
-else:
-    outgroup=1
-
 useSFS = config['useSFS']
-
 config_yaml = config['config_yaml']
 timeStamp = config['timeStamp']
-population_growth = config['population_growth']
-if population_growth=='constant': # TODO : once the pipeline is okay, re-add functional script that take incount population growth
-    submit_simulations='submit_simulations_2pop.py'
-    submit_simulations_gof='submit_simulations_gof_2pop.py'
-else:
-    submit_simulations='submit_simulations_2pop_popGrowth.py'
-    submit_simulations_gof='submit_simulations_gof_2pop_popGrowth.py'
-simulate_data = 'm_submit_simulations_2pop_popGrowth.py'
-modeBarrier = config['modeBarrier']
-max_N_tolerated = config['max_N_tolerated']
-Lmin = config['Lmin']
 nMin = config['nMin']
 Nref = (0 + config['N_max'])/2.0 # Nref is the mid point of the prior
 mu = config['mu']
-rho_over_theta = config['rho_over_theta']
-light_DI = config['light_DI']
-recombination_map = config['recombination_map']
 ############# nLoci gather ######################
 with open(timeStamp + '/nLoci.txt') as f:
     nLoci=int(f.readline().strip())
-rLoci=nLoci-1
 ############# singularity parametrisaiton #########
-container_path =binpath + '/container' 
+container_path =config['container_path'] 
 Sc='singularity exec --bind {0},{1} {2}'.format(binpath,timeStamp,container_path)
 def_container='python3-pd.sif'
 ############## Get global sims data ###################
@@ -92,17 +62,12 @@ if os.path.isfile(model_filter_file):
         used_model = f.readline().strip().replace('"','').split('\t')
 else :
     used_model=MODELS_COMP
-############### Get weigth model ################
-import os
-model_averaging_file='{timeStamp}/simdata/{simdata_dir}/models_weight.txt'.format(timeStamp=timeStamp,simdata_dir=simdata_dir[0])
-if os.path.isfile(model_averaging_file) and os.path.isfile(model_filter_file) :
-    with open(model_averaging_file,'r') as f:
-        weight_model = f.readline().strip().replace('"','').split('\t')
-elif os.path.isfile(model_filter_file):
-    weight_model=used_model
-else:
-    weight_model=MODELS_COMP
-
+############### locus model ################
+locus_model=['IM_2M_2N'] # list of model used to test the barrier
+# IM test for current and ancestral barriers
+# SC test for recent current barriers
+# AM test for ancestral barriers
+locus_param2estimate = ['M_current']
 ############### wildcards management ############## 
 # Prevent Snakemake to use regex behavior on wildcards
 wildcard_constraints:
@@ -111,12 +76,12 @@ wildcard_constraints:
     binpath=binpath,
     model='|'.join(MODELS_COMP),
     used_model = '|'.join(used_model),
-    weight_model = '|'.join(MODELS_COMP),
+    locus_model = '|'.join(MODELS_COMP),
     param_locus = '|'.join(locus_param2estimate),
     ii='|'.join([str(x) for x in ITERATIONS_ESTIMATES]),
     j='|'.join([str(x) for x in range(100)])
 
-############## End of Pipieline & Targets ############
+############## End of Pipeline & Targets ############
 rule targets: # edit at the end 
     input:
         bpfile = expand("{timeStamp}/bpfile", timeStamp=timeStamp),
@@ -125,8 +90,10 @@ rule targets: # edit at the end
 
         sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
         model_filter =  expand("{timeStamp}/simdata/{simdata_dir}/models_filter.txt",timeStamp=timeStamp,simdata_dir=simdata_dir),
-        param_sim=expand("{timeStamp}/simdata/{simdata_dir}/estimation_param_2/{used_model}_{ii}/ABCstat_global.txt",timeStamp=timeStamp,simdata_dir=simdata_dir,used_model=used_model,ii=ITERATIONS_ESTIMATES),
+		param_sim = expand("{timeStamp}/simdata/{simdata_dir}/estimation_param_{n_est}/{used_model}/ABCstat_global.txt",timeStamp=timeStamp,simdata_dir=simdata_dir,n_est=n_estimation,used_model=used_model),
+		param_estimation = expand("{timeStamp}/simdata/{simdata_dir}/estimation_param_{n_est}/posterior_{used_model}.txt",timeStamp=timeStamp,simdata_dir=simdata_dir,n_est=n_estimation,used_model=used_model),
         model_weight= expand("{timeStamp}/simdata/{simdata_dir}/models_weight.txt",timeStamp=timeStamp,simdata_dir=simdata_dir),
+
         mw_post = expand('{timeStamp}/simdata/{simdata_dir}/locus_posteriors_mw.txt',timeStamp=timeStamp,simdata_dir=simdata_dir),
         results_weight = expand("{timeStamp}/simdata/{simdata_dir}/locus_1Pdweight_params.txt",timeStamp=timeStamp,simdata_dir=simdata_dir)
 
@@ -140,33 +107,30 @@ rule simulationsModelComp:
     params:
         nmultilocus={nmultilocus}
     input:
-        "{timeStamp}/bpfile",
-        "{timeStamp}/nLoci.txt"
+        locus_datafile = "{timeStamp}/locus_datafile",
+        nLoci = "{timeStamp}/nLoci.txt"
     output:
         "{timeStamp}/modelComp/{model}_{i}/priorfile.txt",
         "{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",
     shell:
         """
         cd {timeStamp}/modelComp/{wildcards.model}_{wildcards.i}
-        {Sc}/msprime_py.sif python3 {binpath}/submit_priorgen_newsim.py model={wildcards.model} \
-            bpfile={timeStamp}/bpfile locus_write=False global_write=True \
+        {Sc}/python.sif python3 {binpath}/submit_priorgen_newsim.py model={wildcards.model} \
+            locus_datafile={input.locus_datafile} locus_write=False global_write=True \
             config_yaml={config_yaml} binpath={binpath} nMultilocus={nmultilocus} 
         split -l {split_size} exec.sh sub_
         list=(sub_*)
         chmod a+x sub_*
         for ll in ${{list[@]}}; do echo ./$ll >> tmp_exec.sh; done
-        {Sc}/pypy_scrm.sif parallel -a tmp_exec.sh -j 4 --halt now,fail=1
+        {Sc}/scrm_pypy.sif parallel -a tmp_exec.sh -j 4 --halt now,fail=1
         rm exec.sh sub_* tmp_exec.sh
         sed -i '2,${{/dataset/d}}' ABC*.txt
-#    	sed -i '{nmul_plus},$d' *.txt
-        echo $(wc -l ABCstat_global.txt)
-    	if [[ $(wc -l ABCstat_global.txt) < $(({nmultilocus} + 1)) ]]; then rm * ;fi
         """
 
 
 
 ############## Model filtering  ######################
-rule model_filtering: # Integr=DONE
+rule model_filtering:
     input:
         obs=expand("{timeStamp}/simdata/{simdata_dir}/ABCstat_global.txt",timeStamp=timeStamp,simdata_dir=simdata_dir),
         sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP)
@@ -215,9 +179,9 @@ rule param_sim_2 :
         """
         mkdir -p {timeStamp}/simdata/{wildcards.simdata_dir}/estimation_param_{params.iteration}/{wildcards.used_model}_{wildcards.ii}
         cd {timeStamp}/simdata/{wildcards.simdata_dir}/estimation_param_{params.iteration}/{wildcards.used_model}_{wildcards.ii}
-        {Sc}/msprime_py.sif python3 {binpath}/submit_priorgen_postgen.py model={wildcards.used_model} \
-            bpfile={timeStamp}/bpfile locus_write=False global_write=True \
-            posteriors={input.posteriors} binpath={binpath} nMultilocus={nmultilocus} 
+        {Sc}/python.sif python3 {binpath}/submit_priorgen_postgen.py model={wildcards.used_model} \
+            locus_datafile={timeStamp}/locus_datafile locus_write=False global_write=True \
+            priorfile={input.posteriors} binpath={binpath} nMultilocus={nmultilocus} 
         split -l {split_size} exec.sh sub_
         chmod a+x sub_*
         list=(sub_*)
@@ -225,9 +189,6 @@ rule param_sim_2 :
         {Sc}/pypy_scrm.sif parallel -a tmp_exec.sh -j 1 --halt now,fail=1
         rm exec.sh tmp_exec.sh sub* 
         sed -i '2,${{/dataset/d}}' ABC*.txt
-#    	sed -i '{nmul_plus},$d' *.txt
-        echo $(wc -l ABCstat_global.txt)
-    	if [[ $( sed -n '$=' ABCstat_global.txt) < 1001 ]] ; then rm * ; fi
         """
 
 rule estimation_param_model_2 :
@@ -248,8 +209,6 @@ rule estimation_param_model_2 :
                 nPosterior={nPosterior_locus} binpath={binpath} \
                 path2observation={timeStamp}/simdata/{wildcards.simdata_dir} \
                 output_dir={timeStamp}/simdata/{wildcards.simdata_dir}/estimation_param_{params.iteration}
-#        tar -zcvf {timeStamp}/simdata/{wildcards.simdata_dir}/archives/estimation_param_{params.iteration}.tar.gz {timeStamp}/simdata/{wildcards.simdata_dir}/estimation_param_{params.iteration} \
- #               && rm -r {timeStamp}/simdata/{wildcards.simdata_dir}/estimation_param_{params.iteration}
         """
 
 
@@ -310,8 +269,8 @@ use rule estimation_param_model_1 as estimation_param_model_5 with:
 rule model_averaging: 
     input:
         obs="{timeStamp}/simdata/{simdata_dir}/ABCstat_global.txt",
-        sim =expand("{{timeStamp}}/simdata/{{simdata_dir}}/estimation_param_5/{used_model}_{ii}/ABCstat_global.txt",used_model=used_model,ii=ITERATIONS_ESTIMATES),
-        posteriors=expand("{{timeStamp}}/simdata/{{simdata_dir}}/estimation_param_5/posterior_{used_model}.txt",used_model=used_model)
+        sim =expand("{{timeStamp}}/simdata/{{simdata_dir}}/estimation_param_{n_est}/{used_model}_{ii}/ABCstat_global.txt",used_model=used_model,ii=ITERATIONS_ESTIMATES,n_est=n_estimation),
+        posteriors=expand("{{timeStamp}}/simdata/{{simdata_dir}}/estimation_param_{n_est}/posterior_{used_model}.txt",used_model=used_model,n_est=n_estimation)
     output:
         "{timeStamp}/simdata/{simdata_dir}/models_weight.txt"
     threads: nCPU_R 
@@ -329,8 +288,8 @@ rule model_averaging:
 rule posterior_averaging:
     input:
         model_weight = "{timeStamp}/simdata/{simdata_dir}/models_weight.txt",
-        posteriors=expand('{{timeStamp}}/simdata/{{simdata_dir}}/estimation_param_5/posterior_{weight_model}.txt',
-            weight_model=weight_model)
+        posteriors=expand('{{timeStamp}}/simdata/{{simdata_dir}}/estimation_param_5/posterior_{locus_model}.txt',
+            locus_model=locus_model)
     output:
          '{timeStamp}/simdata/{simdata_dir}/locus_posteriors_mw.txt'
     shell:
@@ -345,17 +304,17 @@ rule posterior_averaging:
 rule simulation_locus: 
     input:
         post = "{timeStamp}/simdata/{simdata_dir}/locus_posteriors_mw.txt",
-        bpfile_locus = "{timeStamp}/simdata/{simdata_dir}/bpfile_locus"
+        locus_datafile = "{timeStamp}/locus_datafile_locussp"
     output:
-        "{timeStamp}/simdata/{simdata_dir}/locus_sim_param/{weight_model}/ABCstat_locus.txt",
-        "{timeStamp}/simdata/{simdata_dir}/locus_sim_param/{weight_model}/priorfile_locus.txt"
+        "{timeStamp}/simdata/{simdata_dir}/locus_sim_param/{locus_model}/ABCstat_locus.txt",
+        "{timeStamp}/simdata/{simdata_dir}/locus_sim_param/{locus_model}/priorfile_locus.txt"
     threads: 50
     shell:
         """
-        mkdir -p {timeStamp}/simdata/{wildcards.simdata_dir}/locus_sim_param/{wildcards.weight_model}
-        cd {timeStamp}/simdata/{wildcards.simdata_dir}/locus_sim_param/{wildcards.weight_model}
-        {Sc}/msprime_py.sif python3 {binpath}/submit_priorgen_locus.py model={wildcards.weight_model} \
-            bpfile={input.bpfile_locus} nLoci_ref={nLoci}\
+        mkdir -p {timeStamp}/simdata/{wildcards.simdata_dir}/locus_sim_param/{wildcards.locus_model}
+        cd {timeStamp}/simdata/{wildcards.simdata_dir}/locus_sim_param/{wildcards.locus_model}
+        {Sc}/python.sif python3 {binpath}/submit_priorgen_locus.py model={wildcards.locus_model} \
+            locus_datafile={input.locus_datafile} \
             config_yaml={config_yaml} binpath={binpath} nMultilocus={nmultilocus} posteriors={input.post} 
         split exec.sh -l{split_size_locus} sub_exec
         list_sub=(sub_exec*)
@@ -368,26 +327,26 @@ rule simulation_locus:
 
 rule estimate_locus_param:
     input:
-        "{timeStamp}/simdata/{simdata_dir}/locus_sim_param/{weight_model}/ABCstat_locus.txt",
-        "{timeStamp}/simdata/{simdata_dir}/locus_sim_param/{weight_model}/priorfile_locus.txt"
+        "{timeStamp}/simdata/{simdata_dir}/locus_sim_param/{locus_model}/ABCstat_locus.txt",
+        "{timeStamp}/simdata/{simdata_dir}/locus_sim_param/{locus_model}/priorfile_locus.txt"
     output:
-        '{timeStamp}/simdata/{simdata_dir}/locus_param_estimation/{weight_model}_{param_locus}_estimate_1Pd.txt'
+        '{timeStamp}/simdata/{simdata_dir}/locus_param_estimation/{locus_model}_{param_locus}_estimate_1Pd.txt'
     threads: nCPU_R
     shell:
         """
         mkdir -p {timeStamp}/simdata/{wildcards.simdata_dir}/locus_param_estimation/
         Rscript {binpath}/estimate_locus_param_rf.R timeStamp={timeStamp} ncores={nCPU_R}\
                 ntree={ntree} obs_dir={timeStamp}/simdata/{wildcards.simdata_dir}/ \
-                sim_dir={timeStamp}/simdata/{wildcards.simdata_dir}/locus_sim_param/{wildcards.weight_model} \
-                output={output} model={wildcards.weight_model} param={wildcards.param_locus}  
+                sim_dir={timeStamp}/simdata/{wildcards.simdata_dir}/locus_sim_param/{wildcards.locus_model} \
+                output={output} model={wildcards.locus_model} param={wildcards.param_locus}  
         """
 
 
 rule locus_paramWeight:
     input:
         weight = "{timeStamp}/simdata/{simdata_dir}/models_weight.txt",
-        sim=expand('{timeStamp}/simdata/{simdata_dir}/locus_param_estimation/{weight_model}_{param_locus}_estimate_1Pd.txt',
-               timeStamp=timeStamp,simdata_dir=simdata_dir,weight_model=weight_model,param_locus=locus_param2estimate,allow_missing=True)
+        sim=expand('{timeStamp}/simdata/{simdata_dir}/locus_param_estimation/{locus_model}_{param_locus}_estimate_1Pd.txt',
+               timeStamp=timeStamp,simdata_dir=simdata_dir,locus_model=locus_model,param_locus=locus_param2estimate,allow_missing=True)
 
     output:
         "{timeStamp}/simdata/{simdata_dir}/locus_1Pdweight_params.txt"
