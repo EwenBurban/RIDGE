@@ -93,7 +93,8 @@ rule targets: # edit at the end
         param_estimation = expand("{timeStamp}/simdata/{simdata_dir}/estimation_param_{n_est}/posterior_{used_model}.txt",timeStamp=timeStamp,simdata_dir=simdata_dir,n_est=n_estimation,used_model=used_model),
         model_weight= expand("{timeStamp}/simdata/{simdata_dir}/models_weight.txt",timeStamp=timeStamp,simdata_dir=simdata_dir),
         mw_post = expand('{timeStamp}/simdata/{simdata_dir}/locus_posteriors_mw.txt',timeStamp=timeStamp,simdata_dir=simdata_dir),
-        results_weight = expand("{timeStamp}/simdata/{simdata_dir}/locus_1Pdweight_params.txt",timeStamp=timeStamp,simdata_dir=simdata_dir)
+        locus_estimation = expand('{timeStamp}/simdata/{simdata_dir}/locus_param_estimation/{locus_model}_{param_locus}_estimate_1Pd.txt',timeStamp=timeStamp,
+		simdata_dir=simdata_dir,locus_model=locus_model,param_locus=locus_param2estimate)
 
     run:
         with open(timeStamp + "/resume.txt","w") as f:
@@ -340,16 +341,3 @@ rule estimate_locus_param:
         """
 
 
-rule locus_paramWeight:
-    input:
-        weight = "{timeStamp}/simdata/{simdata_dir}/models_weight.txt",
-        sim=expand('{timeStamp}/simdata/{simdata_dir}/locus_param_estimation/{locus_model}_{param_locus}_estimate_1Pd.txt',
-               timeStamp=timeStamp,simdata_dir=simdata_dir,locus_model=locus_model,param_locus=locus_param2estimate,allow_missing=True)
-
-    output:
-        "{timeStamp}/simdata/{simdata_dir}/locus_1Pdweight_params.txt"
-    threads: 1
-    shell:
-        """
-        Rscript {binpath}/params_locus_averaging.R timeStamp={timeStamp}  obs_dir={timeStamp}/simdata/{wildcards.simdata_dir}/ param_dir={timeStamp}/simdata/{wildcards.simdata_dir}/locus_param_estimation param_pattern=_estimate_1Pd.txt weight={input.weight} output={output} 
-        """
