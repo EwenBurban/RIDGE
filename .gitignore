@@ -1,2 +1,4 @@
 *.sif
 .snakemake/
+slurm_launch/
+
