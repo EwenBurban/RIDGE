@@ -10,13 +10,13 @@
 #. /local/env/envr-4.0.3.sh
 . /local/env/envr-3.6.2.sh
 . /local/env/envsingularity-3.8.0.sh
-binpath='/home/genouest/cnrs_umr6553/eburban/GW_DILS/bin'
+binpath='/home/genouest/cnrs_umr6553/eburban/RIDGE/core'
 
 
-snakemake --snakefile ${binpath}/BetaTSnakepipe_2pop_locus -p -j 40 --until "model_filtering" --configfile ${1} --cluster-config ${binpath}/cluster_glados.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu}"  --latency-wait 60  --nolock --restart-times 3  --rerun-incomplete && \
+snakemake --snakefile ${binpath}/PerfTest_RIDGE_pipe -p -j 40 --until "model_filtering" --configfile ${1} --cluster-config ${binpath}/cluster_glados.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu}"  --latency-wait 60  --nolock --restart-times 3  --rerun-incomplete && \
 for i in {1..18}; do
-    snakemake --snakefile ${binpath}/BetaTSnakepipe_2pop_locus -p -j 40 --until "model_averaging" --configfile ${1} --cluster-config ${binpath}/cluster_glados.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu}"  --latency-wait 60  --nolock --restart-times 3 && \
-    snakemake --snakefile ${binpath}/BetaTSnakepipe_2pop_locus -p -j 40 --configfile ${1} --cluster-config ${binpath}/cluster_glados.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} "  --latency-wait 60  --nolock --restart-times 3   # --dag | dot -Tpdf > dag.pdf # -k # --unlock
+    snakemake --snakefile ${binpath}/PerfTest_RIDGE_pipe  -p -j 40 --until "model_averaging" --configfile ${1} --cluster-config ${binpath}/cluster_glados.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu}"  --latency-wait 60  --nolock --restart-times 3 && \
+    snakemake --snakefile ${binpath}/PerfTest_RIDGE_pipe  -p -j 40 --configfile ${1} --cluster-config ${binpath}/cluster_glados.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} "  --latency-wait 60  --nolock --restart-times 3   # --dag | dot -Tpdf > dag.pdf # -k # --unlock
 done
 
 

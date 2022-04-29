@@ -11,8 +11,8 @@ global_write=eval(argv['global_write'])
 locus_datafile=argv['locus_datafile']
 num_dataset=int(argv['num_dataset'])
 locus_data = pd.read_csv(locus_datafile,sep='\t')
-locus_size_it = iter(locus_data['locus_size'])
-subpop_it = ([range(0,locus_data.loc[i,'popA']),range(locus_data.loc[i,'popA'],(locus_data.loc[i,'popA'] + locus_data.loc[i,'popB']))] for i in range(locus_data.shape[0]))
+locus_size_it = iter(locus_data['locus_length'])
+subpop_it = ([range(0,locus_data.loc[i,'size_popA']),range(locus_data.loc[i,'size_popA'],(locus_data.loc[i,'size_popA'] + locus_data.loc[i,'size_popB']))] for i in range(locus_data.shape[0]))
 
 def get_GT(locus_data):
     pos_list = []
@@ -28,17 +28,15 @@ def get_abcstat(gt,locus_length,subpop):
     # invariant sites. If biased == False, stats are calculated only on given SNP.
         nsites = len(gt['pos'])
         pos = gt['pos']
-        acces = np.full((locus_length),False)
-        acces[gt['pos']] = True
         h = allel.HaplotypeArray(gt['GT'])
         acA  = h.count_alleles(subpop=subpop[0])
         acB  = h.count_alleles(subpop=subpop[1])
-        piA = allel.sequence_diversity(pos,acA,is_accessible=acces)
-        piB = allel.sequence_diversity(pos,acB,is_accessible=acces)
-        dxy = allel.sequence_divergence(pos,acA,acB,is_accessible=acces)
+        piA = allel.sequence_diversity(pos,acA,start=1,stop=locus_length)
+        piB = allel.sequence_diversity(pos,acB,start=1,stop=locus_length)
+        dxy = allel.sequence_divergence(pos,acA,acB,start=1,stop=locus_length)
         da = dxy - (piA + piB)/2
-        thetaA = allel.watterson_theta(pos,acA,is_accessible=acces)
-        thetaB = allel.watterson_theta(pos,acB,is_accessible=acces)
+        thetaA = allel.watterson_theta(pos,acA,start=1,stop=locus_length)
+        thetaB = allel.watterson_theta(pos,acB,start=1,stop=locus_length)
         TajDA = allel.tajima_d(acA)
         TajDB = allel.tajima_d(acB)
         sfs = allel.joint_sfs(acA[:,1],acB[:,1])
@@ -47,11 +45,10 @@ def get_abcstat(gt,locus_length,subpop):
         sf = (sfs[-1,0] + sfs[0,-1])/nsites
         ss = np.sum(sfs[1:-1,1:-1])/nsites
         Fst = allel.average_hudson_fst(acA,acB,nsites)[0]
-        f2 = allel.patterson_f2(acA,acB).mean()
         return {'bialsite_avg':nsites,'piA_avg':piA,'piB_avg':piB,'divAB_avg':dxy,
                 'netDivAB_avg':da,'thetaA_avg':thetaA,
                 'thetaB_avg':thetaB,'DtajA_avg':TajDA,'DtajB_avg':TajDB,'sxA_avg':sxA,
-                'sxB_avg':sxB,'sf_avg':sf,'ss_avg':ss,'FST_avg':Fst,'F2_avg':f2}
+                'sxB_avg':sxB,'sf_avg':sf,'ss_avg':ss,'FST_avg':Fst}
 
 locus_nb = 0
 in_locus = False
@@ -66,7 +63,7 @@ for line in sys.stdin:
         in_locus = True
         locus_str = []
         continue
-    elif (in_locus == True) and not line:
+    elif (in_locus == True) and re.search('scrm',line):
         gt = get_GT(locus_str)
         stat.append(get_abcstat(gt,next(locus_size_it),next(subpop_it)))
         in_locus = False
@@ -104,11 +101,10 @@ if global_write:
             'noSs_noSf':np.count_nonzero(np.logical_and(locus_stat['ss_avg']==0,locus_stat['sf_avg']==0)==True)
             }
     glob_stat = pd.DataFrame(pd.concat([avg,std,med,pd.Series(pearson),pd.Series(ss_sf)])).T
-    print(glob_stat.index)
     glob_stat.set_index(glob_stat.index + num_dataset,inplace=True)
     if os.path.isfile('ABCstat_global.txt') == False:
         glob_stat.to_csv('ABCstat_global.txt',sep='\t',header=True,index_label='dataset',float_format='%.5f',mode='a',na_rep='NA')
     else:
-        glob_stat.to_csv('ABCstat_global.text',sep='\t',header=False,index_label='dataset',float_format='%.5f',mode='a',na_rep='NA')
+        glob_stat.to_csv('ABCstat_global.txt',sep='\t',header=False,index_label='dataset',float_format='%.5f',mode='a',na_rep='NA')
 
 

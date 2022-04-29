@@ -93,7 +93,7 @@ rule generate_global_data:
              locus_datafile={input.locus_datafile} locus_write=True nMultilocus={nMultilocus}\
             global_write=True Pbarrier={wildcards.Pbar} Tsplit={wildcards.Tsplit} Mbasal={wildcards.Mbasal}\
             Nref={Nref} binpath={binpath}
-        {Sc}/scrm_pypy.sif sh exec.sh 
+        {Sc}/scrm_py.sif sh exec.sh 
         rm exec.sh
         """
 

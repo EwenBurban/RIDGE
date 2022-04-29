@@ -1,0 +1,11 @@
+Bootstrap: docker
+From: python:3.9
+
+%post
+apt-get update -y && apt-get upgrade -y
+apt-get install scrm parallel -y
+pip3 install pandas numpy
+pip3 install scikit-allel
+%test
+scrm 2 1 -t 5
+python3 -V

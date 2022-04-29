@@ -19,7 +19,7 @@ mscommand = ""
 if "SI" in model:
     mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na} --print-model -transpose-segsites -SC abs"
 if "AM" in model:
-    mscommand = "scrm {totpopsize} 1-t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2} -ema {Tam} 0 {M_ancestral} {M_ancestral} 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -ema {Tsplit} 0 0 0 0 --print-model -transpose-segsites -SC abs"
+    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2} -ema {Tam} 0 {M_ancestral} {M_ancestral} 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -ema {Tsplit} 0 0 0 0 --print-model -transpose-segsites -SC abs"
 if "SC" in model:
     mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -n 1 {N1} -n 2 {N2}  -ema {Tsc} 0 0 0 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} --print-model -transpose-segsites -SC abs"
 if "IM" in model:
@@ -29,6 +29,7 @@ if "IM" in model:
 shape_bound = [0.1, 5]
 N_bound = [0, 0] # number of diploid individuals in the population
 T_bound = [0, 0] # number of generations
+M_bound = [0,0] # number of migrants per generation
 config_yaml = open(config_yaml, 'r')
 for i in config_yaml:
     i = i.strip().split(':')
@@ -40,6 +41,10 @@ for i in config_yaml:
         T_bound[0] = float(i[1])
     if(i[0] == 'Tsplit_max'):
         T_bound[1] = float(i[1])
+    if(i[0] == 'M_min'):
+        M_bound[0] = float(i[1])
+    if(i[0] == 'M_max'):
+        M_bound[1] = float(i[1])
 config_yaml.close()
 
 
@@ -53,7 +58,6 @@ T_bound[1] /= (4*Nref)
 min_Tsc = 0.05
 max_Tsc = 0.3
 min_Tam = 0.5
-max_m = 0.1
 ###### build global priors for nMultilocus datasets ######
 
 glob_prior = pd.DataFrame({'Tsplit': np.random.uniform(low = T_bound[0], high = T_bound[1], size = nMultilocus),
@@ -65,10 +69,10 @@ if 'SC' in model:
 if 'AM' in model:
     migration = 'M_ancestral'
     glob_prior['Tam'] = glob_prior['Tsplit'].apply(lambda x: np.random.uniform(low = min_Tam*x, high =x))
-    glob_prior[migration] = np.random.uniform(low=0,high=max_m,size = nMultilocus) * 4*Nref 
+    glob_prior[migration] = np.random.uniform(low=M_bound[0],high=M_bound[1],size = nMultilocus) 
 if 'SC' or 'IM' in model:
     migration = 'M_current'
-    glob_prior[migration] = np.random.uniform(low=0,high=max_m,size = nMultilocus) * 4*Nref 
+    glob_prior[migration] = np.random.uniform(low=M_bound[0],high=M_bound[1],size = nMultilocus)
 if '2M' in model:
     glob_prior['shape_' + migration + '_a'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
     glob_prior['shape_' + migration + '_b'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
@@ -94,8 +98,8 @@ def build_locusDf(param,locus_df,nLoci):
     if 'shape_N_a' in param :
         N = ['Na','N1','N2']
         locus_sim[N] = locus_sim[N].apply(lambda x: beta_dis(x,param['shape_N_a'],param['shape_N_b']),axis=1)
-    if 'Pbarrier' in param:
-        locus_sim[migration] = locus_sim[migration].multiply(np.random.choice([0,1],nLoci,p= [param['Pbarrier'],1-param['Pbarrier']]),axis=0)
+    if 'Pbarrier'+ migration  in param:
+        locus_sim[migration] = locus_sim[migration].multiply(np.random.choice([0,1],nLoci,p= [param['Pbarrier'+ migration ],1-param['Pbarrier'+ migration ]]),axis=0)
         if 'shape_' + migration + '_a' in param : 
             locus_sim[migration] = locus_sim[migration].apply(lambda x: beta_dis(x,param['shape_' + migration + '_a'],param['shape_' + migration + '_b']))
 #   tmp=locus_sim[['Na','N1','N2']].copy()
@@ -132,6 +136,6 @@ with open('exec.sh','w') as o:
         for locus in range(nLoci):
             mscommand_formated =  mscommand.format(**sim.loc[locus,:]) 
             output_command = output_command +  mscommand_formated + " ;"
-        output_command += '}' + ' | pypy3 {binpath}/scrm_calc.py locus_datafile={locus_datafile} num_dataset={num_dataset} \n'.format(binpath=binpath,locus_datafile=locus_datafile,num_dataset=num_dataset) 
+        output_command += '}' + ' | python3 {binpath}/scrm_calc.py locus_datafile={locus_datafile} num_dataset={num_dataset} locus_write=False global_write=True\n'.format(binpath=binpath,locus_datafile=locus_datafile,num_dataset=num_dataset) 
         num_dataset += 1
         o.write(output_command)

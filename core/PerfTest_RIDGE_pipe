@@ -18,13 +18,13 @@ if lightMode==False:
     ntree = 1000 # number of tree for the random forest (RF) model comparison (1000)
     nIterations_model_comp = 10 # number of subdirectories for the simulations used in the RF model comparison
     nIterations_estim = 8 # number of subdirectories for the simulations used in the nnet param estimates (500)
-	n_estimation=5
+    n_estimation=5
 else:
     nCPU_R = 2 # number of CPUs for the model comp for the model forest R functions (8)
     ntree = 250 # number of tree for the random forest (RF) model comparison (1000)
     nIterations_model_comp = 5 # number of subdirectories for the simulations used in the RF model comparison
     nIterations_estim = 4 # number of subdirectories for the simulations used in the nnet param estimates (500)
-	n_estimation=2
+    n_estimation=2
 
 ITERATIONS_MODEL_COMP = range(nIterations_model_comp)
 MODELS_COMP = ['SC_1M_1N', 'SC_1M_2N', 'SC_2M_1N', 'SC_2M_2N', 'AM_1M_1N', 'AM_1M_2N', 'AM_2M_1N', 'AM_2M_2N', 'IM_1M_1N', 'IM_1M_2N', 'IM_2M_1N', 'IM_2M_2N', 'SI_1N', 'SI_2N']
@@ -84,16 +84,14 @@ wildcard_constraints:
 ############## End of Pipeline & Targets ############
 rule targets: # edit at the end 
     input:
-        bpfile = expand("{timeStamp}/bpfile", timeStamp=timeStamp),
+        bpfile = expand("{timeStamp}/locus_datafile", timeStamp=timeStamp),
         ABCstat_global = expand("{timeStamp}/simdata/{simdata_dir}/ABCstat_global.txt",timeStamp=timeStamp,simdata_dir=simdata_dir),
         ABCstat_locus = expand("{timeStamp}/simdata/{simdata_dir}/ABCstat_locus.txt",timeStamp=timeStamp,simdata_dir=simdata_dir),
-
         sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
         model_filter =  expand("{timeStamp}/simdata/{simdata_dir}/models_filter.txt",timeStamp=timeStamp,simdata_dir=simdata_dir),
-		param_sim = expand("{timeStamp}/simdata/{simdata_dir}/estimation_param_{n_est}/{used_model}/ABCstat_global.txt",timeStamp=timeStamp,simdata_dir=simdata_dir,n_est=n_estimation,used_model=used_model),
-		param_estimation = expand("{timeStamp}/simdata/{simdata_dir}/estimation_param_{n_est}/posterior_{used_model}.txt",timeStamp=timeStamp,simdata_dir=simdata_dir,n_est=n_estimation,used_model=used_model),
+        param_simulation = expand("{timeStamp}/simdata/{simdata_dir}/estimation_param_{n_est}/{used_model}_{ii}/ABCstat_global.txt",timeStamp=timeStamp,simdata_dir=simdata_dir,n_est=n_estimation,used_model=used_model,ii=ITERATIONS_ESTIMATES),
+        param_estimation = expand("{timeStamp}/simdata/{simdata_dir}/estimation_param_{n_est}/posterior_{used_model}.txt",timeStamp=timeStamp,simdata_dir=simdata_dir,n_est=n_estimation,used_model=used_model),
         model_weight= expand("{timeStamp}/simdata/{simdata_dir}/models_weight.txt",timeStamp=timeStamp,simdata_dir=simdata_dir),
-
         mw_post = expand('{timeStamp}/simdata/{simdata_dir}/locus_posteriors_mw.txt',timeStamp=timeStamp,simdata_dir=simdata_dir),
         results_weight = expand("{timeStamp}/simdata/{simdata_dir}/locus_1Pdweight_params.txt",timeStamp=timeStamp,simdata_dir=simdata_dir)
 
@@ -122,7 +120,7 @@ rule simulationsModelComp:
         list=(sub_*)
         chmod a+x sub_*
         for ll in ${{list[@]}}; do echo ./$ll >> tmp_exec.sh; done
-        {Sc}/scrm_pypy.sif parallel -a tmp_exec.sh -j 4 --halt now,fail=1
+        {Sc}/scrm_py.sif parallel -a tmp_exec.sh -j 4 --halt now,fail=1
         rm exec.sh sub_* tmp_exec.sh
         sed -i '2,${{/dataset/d}}' ABC*.txt
         """

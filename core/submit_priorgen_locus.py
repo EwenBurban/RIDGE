@@ -20,7 +20,7 @@ mscommand = ""
 if "SI" in model:
     mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na} --print-model -transpose-segsites -SC abs"
 if "AM" in model:
-    mscommand = "scrm {totpopsize} 1-t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2} -ema {Tam} 0 {M_ancestral} {M_ancestral} 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -ema {Tsplit} 0 0 0 0 --print-model -transpose-segsites -SC abs"
+    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2} -ema {Tam} 0 {M_ancestral} {M_ancestral} 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -ema {Tsplit} 0 0 0 0 --print-model -transpose-segsites -SC abs"
 if "SC" in model:
     mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -n 1 {N1} -n 2 {N2}  -ema {Tsc} 0 0 0 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} --print-model -transpose-segsites -SC abs"
 if "IM" in model:
@@ -69,8 +69,8 @@ def build_locusDf(param,locus_df,nLoci):
     if 'shape_N_a' in param :
         N = ['Na','N1','N2']
         locus_sim[N] = locus_sim[N].apply(lambda x: beta_dis(x,param['shape_N_a'],param['shape_N_b']),axis=1)
-    if 'Pbarrier' in param:
-        locus_sim[migration] = locus_sim[migration].multiply(np.random.choice([0,1],nLoci,p= [param['Pbarrier'],1-param['Pbarrier']]),axis=0)
+    if 'Pbarrier'+ migration  in param:
+        locus_sim[migration] = locus_sim[migration].multiply(np.random.choice([0,1],nLoci,p= [param['Pbarrier'+ migration ],1-param['Pbarrier'+ migration ]]),axis=0)
         if 'shape_' + migration + '_a' in param : 
             locus_sim[migration] = locus_sim[migration].apply(lambda x: beta_dis(x,param['shape_' + migration + '_a'],param['shape_' + migration + '_b']))
 #   tmp=locus_sim[['Na','N1','N2']].copy()
@@ -107,6 +107,6 @@ with open('exec.sh','w') as o:
         for locus in range(nLoci):
             mscommand_formated =  mscommand.format(**sim.loc[locus,:]) 
             output_command = output_command +  mscommand_formated + " ;"
-        output_command += '}' + ' | pypy3 {binpath}/scrm_calc.py locus_datafile={locus_datafile} num_dataset={num_dataset} \n'.format(binpath=binpath,locus_datafile=locus_datafile,num_dataset=num_dataset) 
+        output_command += '}' + ' | python3 {binpath}/scrm_calc.py locus_datafile={locus_datafile} num_dataset={num_dataset} \n'.format(binpath=binpath,locus_datafile=locus_datafile,num_dataset=num_dataset) 
         num_dataset += 1
         o.write(output_command)
