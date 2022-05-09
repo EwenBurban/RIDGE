@@ -13,10 +13,10 @@
 binpath='/home/genouest/cnrs_umr6553/eburban/RIDGE/core'
 
 
-snakemake --snakefile ${binpath}/PerfTest_RIDGE_pipe -p -j 40 --until "model_filtering" --configfile ${1} --cluster-config ${binpath}/cluster_glados.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu}"  --latency-wait 60  --nolock --restart-times 3  --rerun-incomplete && \
-for i in {1..18}; do
-    snakemake --snakefile ${binpath}/PerfTest_RIDGE_pipe  -p -j 40 --until "model_averaging" --configfile ${1} --cluster-config ${binpath}/cluster_glados.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu}"  --latency-wait 60  --nolock --restart-times 3 && \
-    snakemake --snakefile ${binpath}/PerfTest_RIDGE_pipe  -p -j 40 --configfile ${1} --cluster-config ${binpath}/cluster_glados.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} "  --latency-wait 60  --nolock --restart-times 3   # --dag | dot -Tpdf > dag.pdf # -k # --unlock
+snakemake --snakefile ${binpath}/PerfTest_RIDGE_pipe -p -j 40 --until "model_filtering" --configfile ${1} --cluster-config ${binpath}/cluster_2pop.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p}"  --latency-wait 60  --nolock --restart-times 3  --rerun-incomplete && \
+for i in {1..${2}}; do
+    snakemake --snakefile ${binpath}/PerfTest_RIDGE_pipe  -p -j 40 --until "model_averaging" --configfile ${1} --cluster-config ${binpath}/cluster_2pop.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p}"  --latency-wait 60  --nolock && \
+    snakemake --snakefile ${binpath}/PerfTest_RIDGE_pipe  -p -j 40 --configfile ${1} --cluster-config ${binpath}/cluster_2pop.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p} "  --latency-wait 60  --nolock   # --dag | dot -Tpdf > dag.pdf # -k # --unlock
 done
 
 

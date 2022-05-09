@@ -28,6 +28,7 @@ if "IM" in model:
 
 #### read priorfile and correct for aberation and remove useless prior
 glob_prior = pd.read_csv(priorfile,sep='\t',index_col='dataset') 
+glob_prior.reset_index(inplace=True,drop=True)
 if glob_prior.shape[0] != nMultilocus :
     glob_prior = glob_prior.loc[np.random.choice(range(glob_prior.shape[0]),nMultilocus),:]
     glob_prior.reset_index(inplace=True,drop=True)
@@ -46,13 +47,14 @@ if 'AM' in model:
     migration = 'M_ancestral'
     glob_prior['Tam'] = glob_prior.apply(lambda x: x['Tam'] if x['Tam'] < x['Tsplit'] else x['Tsplit'],axis=1)
 if '2M' in model:
-    prior2keep += ['shape_' + mig + '_a','shape_' + mig + '_b','Pbarrier' + migration]
+    prior2keep += ['shape_' + migration + '_a','shape_' + migration + '_b','Pbarrier' + migration]
     glob_prior[ glob_prior['Pbarrier' + migration]>=1 ]=0.99
 if '2N' in model:
     prior2keep += ['shape_N_a','shape_N_b']
 glob_prior = glob_prior[prior2keep]
 
 glob_prior['Pbarrier' + migration ]=0.5
+glob_prior[migration] = np.mean(glob_prior[migration])
 ########################### Generate locus level parameters
 def beta_dis(X,a,b): # In case of modeBarrier == beta, apply the a and b values to a vector X of values
     scalar = np.random.beta(a,b)
@@ -64,8 +66,11 @@ def build_locusDf(param,locus_df,nLoci):
     locus_sim = pd.DataFrame([param for x in range(nLoci)]) # repeat the param line nLoci times into a DF
     locus_sim.reset_index(inplace=True,drop=True)
     locus_sim = pd.concat([locus_sim,locus_df],axis=1)
-    pat  = re.compile('M')
-    migration =  list(filter(pat.match,list(param.keys())))[0]
+    if 'SI' in model:
+        migration = 'null'
+    else:
+        pat  = re.compile('M')
+        migration =  list(filter(pat.match,list(param.keys())))[0]
     if 'shape_N_a' in param :
         N = ['Na','N1','N2']
         locus_sim[N] = locus_sim[N].apply(lambda x: beta_dis(x,param['shape_N_a'],param['shape_N_b']),axis=1)
@@ -95,7 +100,10 @@ if locus_write == True:
 
 def short(x,digits=5):
     if type(x) == np.dtype('float64'):
-        return round(x,digits)
+        y = round(x,digits)
+        if y <= 0:
+            y = 10 ** -digits
+        return y
     else:
         return x
 
@@ -107,6 +115,6 @@ with open('exec.sh','w') as o:
         for locus in range(nLoci):
             mscommand_formated =  mscommand.format(**sim.loc[locus,:]) 
             output_command = output_command +  mscommand_formated + " ;"
-        output_command += '}' + ' | python3 {binpath}/scrm_calc.py locus_datafile={locus_datafile} num_dataset={num_dataset} \n'.format(binpath=binpath,locus_datafile=locus_datafile,num_dataset=num_dataset) 
+        output_command += '}' + ' | python3 {binpath}/scrm_calc.py locus_datafile={locus_datafile} num_dataset={num_dataset} locus_write=True global_write=False \n'.format(binpath=binpath,locus_datafile=locus_datafile,num_dataset=num_dataset) 
         num_dataset += 1
         o.write(output_command)

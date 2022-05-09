@@ -70,7 +70,7 @@ if 'AM' in model:
     migration = 'M_ancestral'
     glob_prior['Tam'] = glob_prior['Tsplit'].apply(lambda x: np.random.uniform(low = min_Tam*x, high =x))
     glob_prior[migration] = np.random.uniform(low=M_bound[0],high=M_bound[1],size = nMultilocus) 
-if 'SC' or 'IM' in model:
+if 'SC' in model or 'IM' in model:
     migration = 'M_current'
     glob_prior[migration] = np.random.uniform(low=M_bound[0],high=M_bound[1],size = nMultilocus)
 if '2M' in model:
@@ -93,8 +93,11 @@ def build_locusDf(param,locus_df,nLoci):
     locus_sim = pd.DataFrame([param for x in range(nLoci)]) # repeat the param line nLoci times into a DF
     locus_sim.reset_index(inplace=True,drop=True)
     locus_sim = pd.concat([locus_sim,locus_df],axis=1)
-    pat  = re.compile('M')
-    migration =  list(filter(pat.match,list(param.keys())))[0]
+    if 'SI' in model:
+        migration = 'null'
+    else:
+        pat  = re.compile('M')
+        migration =  list(filter(pat.match,list(param.keys())))[0]
     if 'shape_N_a' in param :
         N = ['Na','N1','N2']
         locus_sim[N] = locus_sim[N].apply(lambda x: beta_dis(x,param['shape_N_a'],param['shape_N_b']),axis=1)
@@ -124,7 +127,10 @@ if locus_write == True:
 
 def short(x,digits=5):
     if type(x) == np.dtype('float64'):
-        return round(x,digits)
+        y = round(x,digits)
+        if y <= 0:
+            y = 10 ** -digits
+        return y
     else:
         return x
 

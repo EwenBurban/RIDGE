@@ -185,7 +185,7 @@ rule param_sim_2 :
         chmod a+x sub_*
         list=(sub_*)
         for ll in ${{list[@]}}; do echo ./$ll >> tmp_exec.sh; done
-        {Sc}/pypy_scrm.sif parallel -a tmp_exec.sh -j 1 --halt now,fail=1
+        {Sc}/scrm_py.sif parallel -a tmp_exec.sh -j 1 --halt now,fail=1
         rm exec.sh tmp_exec.sh sub* 
         sed -i '2,${{/dataset/d}}' ABC*.txt
         """
@@ -277,7 +277,7 @@ rule model_averaging:
         """
         Rscript {binpath}/model_averaging.R timeStamp={timeStamp} ncores={nCPU_R} \
                 ntree={ntree} output_name=models_weight.txt obs_dir={timeStamp}/simdata \
-                sim_dir={timeStamp}/simdata/{wildcards.simdata_dir}/estimation_param_5 \
+                sim_dir={timeStamp}/simdata/{wildcards.simdata_dir}/estimation_param_{n_estimation} \
                 obs_pattern=ABCstat_global.txt sim_pattern=ABCstat_global.txt  useSFS={useSFS}
         """
 ########### Global parameter averaging ############
@@ -287,14 +287,14 @@ rule model_averaging:
 rule posterior_averaging:
     input:
         model_weight = "{timeStamp}/simdata/{simdata_dir}/models_weight.txt",
-        posteriors=expand('{{timeStamp}}/simdata/{{simdata_dir}}/estimation_param_5/posterior_{locus_model}.txt',
-            locus_model=locus_model)
+        posteriors=expand('{{timeStamp}}/simdata/{{simdata_dir}}/estimation_param_{n_estimation}/posterior_{locus_model}.txt',
+            locus_model=locus_model,n_estimation=n_estimation)
     output:
          '{timeStamp}/simdata/{simdata_dir}/locus_posteriors_mw.txt'
     shell:
         """
         Rscript {binpath}/posterior_averaging.R \
-                master_post_dir={timeStamp}/simdata/{wildcards.simdata_dir}/estimation_param_5 \
+                master_post_dir={timeStamp}/simdata/{wildcards.simdata_dir}/estimation_param_{n_estimation} \
                 nPosteriors_locus={nPosterior_locus} weight_file={input.model_weight} output={output} 
         """
 
@@ -314,11 +314,11 @@ rule simulation_locus:
         cd {timeStamp}/simdata/{wildcards.simdata_dir}/locus_sim_param/{wildcards.locus_model}
         {Sc}/python.sif python3 {binpath}/submit_priorgen_locus.py model={wildcards.locus_model} \
             locus_datafile={input.locus_datafile} \
-            config_yaml={config_yaml} binpath={binpath} nMultilocus={nmultilocus} posteriors={input.post} 
+            config_yaml={config_yaml} binpath={binpath} nMultilocus={nmultilocus} priorfile={input.post} locus_write=True global_write=True 
         split exec.sh -l{split_size_locus} sub_exec
         list_sub=(sub_exec*)
         for sub in ${{list_sub[@]}}; do echo sh $sub >> tmp_exec.sh; done
-        {Sc}/pypy_scrm.sif parallel -a tmp_exec.sh -j 50
+        {Sc}/scrm_py.sif parallel -a tmp_exec.sh -j 50
         rm tmp_exec.sh sub_exec* exec.sh
         sed -i '2,${{/dataset/d}}' ABCstat_locus.txt
         if [[ -e ABCjsfs_locus.txt ]] ;then sed -i '2,${{/dataset/d}}' ABCjsfs_locus.txt ;fi

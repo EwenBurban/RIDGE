@@ -49,13 +49,16 @@ if( (grepl('SI',m) | grepl('AM',m) ) & grepl('M',p)){model_param_estimation = re
 
 	## curation
 	train_data = as.data.frame(sapply(train_data,as.numeric))[,-1]
+	train_data[is.na(train_data)]=0
 	train_targets = as.data.frame(sapply(train_targets,as.numeric))[,-1]
+	train_targets[is.na(train_targets)]=0
 	if(any(is.na(train_data[,1]))){naline= which(is.na(train_data[,1]));  train_data=train_data[-naline,];print(paste(naline,' line removed'))}
 	if(any(is.na(train_targets[,1]))){naline2= which(is.na(train_targets[,1]));  train_targets=train_targets[-naline2,];print(paste(naline2,' line removed'))}
 	if((any(is.na(train_data[,1])) & any(is.na(train_targets[,1])))){stopifnot(naline==naline2)}
 
 
-	rejected_statistics = c('minDivAB_avg', 'minDivAB_std', 'maxDivAB_avg', 'maxDivAB_std', 'Gmin_avg', 'Gmin_std', 'Gmax_avg', 'Gmax_std','bialsites_avg','thetaA_avg','thetaB_avg','divAB_avg','ss_sf','noSS_sf','ss_noSf','noSS_noSf','succesive_ss_avg') 
+#	rejected_statistics = c('minDivAB_avg', 'minDivAB_std', 'maxDivAB_avg', 'maxDivAB_std', 'Gmin_avg', 'Gmin_std', 'Gmax_avg', 'Gmax_std','bialsites_avg','thetaA_avg','thetaB_avg','divAB_avg','ss_sf','noSS_sf','ss_noSf','noSS_noSf','succesive_ss_avg') 
+	rejected_statistics = c('datatset') 
 	rej_stat = na.omit(match(rejected_statistics,colnames(train_data)))
 	param2rm = union(remove_param(train_data),rej_stat)
 	if(length(param2rm)>0){param2kp = colnames(train_data)[-param2rm]} else { param2kp=colnames(train_data)}

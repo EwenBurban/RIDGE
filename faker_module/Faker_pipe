@@ -102,7 +102,6 @@ rule create_resume: # replace resume by a list of all model use. model = combina
     output:
         expand("{timeStamp}/resume.txt",timeStamp=timeStamp)
     run:
-        n=[0]
         comb = product(SIMULATED_MODEL,n,Tsplit,Pbar,Mbasal)
         with open(timeStamp + "/resume.txt","w") as o:
             for i in comb :

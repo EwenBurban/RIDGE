@@ -9,6 +9,6 @@ mu: 3e-8
 rho_over_theta: 5
 locus_length: 10000
 RIDGE_template: /home/genouest/cnrs_umr6553/eburban/RIDGE/template/RIDGE_template.yaml
-n_sim_iteration: 1
+n_sim_iteration: 10
 param_file: /home/genouest/cnrs_umr6553/eburban/RIDGE/config/param_space_faker.txt
 container_path: /home/genouest/cnrs_umr6553/eburban/RIDGE/container/

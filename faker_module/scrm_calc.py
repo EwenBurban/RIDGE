@@ -37,8 +37,8 @@ def get_abcstat(gt,locus_length,subpop):
         da = dxy - (piA + piB)/2
         thetaA = allel.watterson_theta(pos,acA,start=1,stop=locus_length)
         thetaB = allel.watterson_theta(pos,acB,start=1,stop=locus_length)
-        TajDA = allel.tajima_d(acA)
-        TajDB = allel.tajima_d(acB)
+        TajDA = allel.tajima_d(acA,pos,start=1,stop=locus_length)
+        TajDB = allel.tajima_d(acB,pos,start=1,stop=locus_length)
         sfs = allel.joint_sfs(acA[:,1],acB[:,1])
         sxA = np.sum(sfs[1:-1,(0,-1)])/nsites
         sxB = np.sum(sfs[(0,-1),1:-1])/nsites
@@ -87,8 +87,8 @@ if global_write:
     avg = locus_stat.apply(np.mean,axis=0)
     med = locus_stat.apply(np.median,axis=0)
     std = locus_stat.apply(np.std,axis=0)
-    std.index = [x + '_std' for x in std.keys()]
-    med.index = [x + '_median' for x in std.keys()]
+    std.index = [x.replace('_avg','_std') for x in std.keys()]
+    med.index = [x.replace('_avg','_median') for x in med.keys()]
     pearson = {'pearson_r_pi':np.corrcoef(locus_stat['piA_avg'].astype(float),locus_stat['piB_avg'].astype(float)).min(),
             'pearson_r_theta':np.corrcoef(locus_stat['thetaA_avg'].astype(float),locus_stat['thetaB_avg'].astype(float)).min(),
             'pearson_r_divAB_netdivAB':np.corrcoef(locus_stat['divAB_avg'].astype(float),locus_stat['netDivAB_avg'].astype(float)).min(),

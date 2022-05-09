@@ -273,7 +273,7 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
 	#obs_ss = read.table(paste(timeStamp, '/ABCstat_global.txt', sep=''), h=T)
 	obs_ss_tmp = read.table(paste(path2observation, '/ABCstat_global.txt', sep=''), h=T)
 
-	undesired_stats = c('min', 'max', 'successive', 'pearson', 'ss_sf', 'ss_noSf', 'noSs_sf', 'noSs_noSf','dataset')
+	undesired_stats = c('dataset')
 
 	# remove stats
 	for(stat in undesired_stats){
@@ -374,8 +374,7 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
 	toRemove = c(1)
 	for(i in 2:ncol(ss_sim[[model]])){
 		sd_tmp = sd(as.numeric(c(ss_obs[i], ss_sim[[model]][,i])))
-		
-		if(sd_tmp<0.00001){
+		if(sd_tmp<0.00001 | is.na(sd_tmp)){
 			toRemove = c(toRemove, i)
 		}
 	}

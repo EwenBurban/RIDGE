@@ -47,7 +47,7 @@ if (usesfs==1){train_ABCsfs_file_list = list.files(sim_dir,pattern='ABCjsfs.txt'
 
 print(paste('The length of train list file is',length(train_ABCstat_file_list)))
 train_models=sub("N_.*","N",list.dirs(path=sim_dir,full.names = F,recursive=F))
-train_data = do.call(rbind,lapply(train_ABCstat_file_list,read.table,header=T))[,-1]
+train_data = do.call(rbind,lapply(train_ABCstat_file_list,read.table,header=T,fill=T))[,-1]
 nmultilocus=sapply(train_ABCstat_file_list,function(x) nrow(read.table(x,h=T)))
 train_target = factor(rep(train_models,nmultilocus))
 print(length(train_target))
@@ -67,7 +67,8 @@ test_data = test_data[,-useless_param]
 print(paste('the number of remove parameter is', nc_bef - ncol(train_data_2rf)))
 print(paste('the number of remaining parameter is', ncol(train_data_2rf)))
 }
-
+test_data[is.na(test_data)] = 0
+train_data_2rf[is.na(train_data_2rf)] = 0
 train_data_2rf = data.frame(train_data_2rf,'t'=train_target)
 rf = abcrf(t~.,train_data_2rf,paral=T,ncores=ncores,lda=F)
 
