@@ -276,9 +276,7 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
 	undesired_stats = c('dataset')
 
 	# remove stats
-	for(stat in undesired_stats){
-		obs_ss_tmp = obs_ss_tmp[, -grep(stat, colnames(obs_ss_tmp))]
-	}
+		obs_ss_tmp = obs_ss_tmp[, -grep(undesired_stats, colnames(obs_ss_tmp))]
 	# end of remove stats
 
 
@@ -291,23 +289,6 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
 	}
 
 	
-##### get the number of statistics, number of simulations and number of parameters
-####tmp = read.table(paste(timeStamp, '/', sub_dir_sim, '/', model, '_0/ABCstat_global.txt', sep=''), h=T)
-####nSimulations = nrow(tmp)
-####nStats = ncol(tmp)
-####print(nSimulations)
-####ss_sim_tmp = matrix(NA, nrow=nSimulations*nSubdir, ncol=nStats)
-####colnames(ss_sim_tmp) = colnames(tmp)
-####
-####tmp = read.table(paste(timeStamp, '/', sub_dir_sim, '/', model, '_0/priorfile.txt', sep=''), h=T)[,-1]
-####nParams = ncol(tmp)
-####params_sim_tmp = matrix(NA, nrow=nSimulations*nSubdir, ncol=nParams)
-####colnames(params_sim_tmp) = colnames(tmp)
-
-####if(useSFS == 1){
-####	sfs_sim_tmp = matrix(NA, nrow=nSimulations*nSubdir, ncol=ncol(sfs_obs)); colnames(sfs_sim_tmp) = colnames(sfs_obs)
-####}
-####	
 	# read all these simulated datasets
 	ss_sim = list()
 	params_sim = list()
@@ -334,24 +315,6 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
         stopifnot(nrow(tmp_ss)==nrow(tmp_params))
         if(useSFS==1){stopifnot(nrow(sfs_sim)==nrow(tmp_params))}
 
-	##### statistics
-	####tmp_ss = as.matrix(fread(paste(timeStamp, '/', sub_dir_sim, '/', model, '_', rep, '/ABCstat_global.txt', sep=''), h=T))
-    ####tmp_ss = tmp_ss[order(tmp_ss[,'dataset']),]
-	####ss_sim_tmp[(rep*nSimulations+1):((rep+1)*nSimulations),] = as.matrix(tmp_ss)
-	####
-	####if(useSFS == 1){
-	####	# sfs
-	####	sfs_sim = as.matrix(fread(paste(timeStamp, '/', sub_dir_sim, '/', model, '_', rep, '/ABCjsfs.txt', sep=''), h=T))
-    ####    sfs_sim = sfs_sim[order(sfs_sim[,'dataset']),]
-	####	sfs_sim = sfs_sim[, -c(which(colnames(sfs_sim)=='fA0_fB0'), which(colnames(sfs_sim)=='fA1_fB0'), which(colnames(sfs_sim)=='fA0_fB1'))] # remove the singletons and the (0,0)
-
-	####	sfs_sim_tmp[(rep*nSimulations+1):((rep+1)*nSimulations),] = as.matrix(sfs_sim)
-	####}
-
-	##### params
-	####tmp_params = as.matrix(fread(paste(timeStamp, '/', sub_dir_sim, '/', model, '_', rep, '/priorfile.txt', sep=''), h=T))
-    ####tmp_params = tmp_params[order(tmp_params[,'dataset']),-1]
-	####params_sim_tmp[(rep*nSimulations+1):((rep+1)*nSimulations),] = as.matrix(tmp_params)
 	}
     ss_sim_tmp = do.call(rbind,ss_sim_tmp)
     if(useSFS==1){    sfs_sim_tmp = do.call(rbind,sfs_sim_tmp)}
@@ -390,11 +353,7 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
 
 	### write the prior
 	nPrior = nrow(params_sim[[model]])
-	if(nPrior>10000){
-		write.table(params_sim[[model]][1:10000,], paste(output_dir, '/priorfile.txt', sep=''), col.names=T, row.names=F, quote=F, sep='\t')
-	}else{
-		write.table(params_sim[[model]], paste(output_dir, '/priorfile.txt', sep=''), col.names=T, row.names=F, quote=F, sep='\t')
-	}
+	write.table(params_sim[[model]], paste(output_dir, '/priorfile.txt', sep=''), col.names=T, row.names=F, quote=F, sep='\t')
 	
 	##############
 	# inferences

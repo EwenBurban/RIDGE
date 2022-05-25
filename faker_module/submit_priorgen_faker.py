@@ -114,6 +114,6 @@ with open('exec.sh','w') as o:
         for locus in range(nLoci):
             mscommand_formated =  mscommand.format(**sim.loc[locus,:]) 
             output_command = output_command +  mscommand_formated + " ;"
-        output_command += '}' + ' | python3 {binpath}/scrm_calc.py locus_datafile={locus_datafile} num_dataset={num_dataset} locus_write=True global_write=True\n'.format(binpath=binpath,locus_datafile=locus_datafile,num_dataset=num_dataset) 
+        output_command += '}' + ' | python3 {binpath}/scrm2vcf.py locus_datafile={locus_datafile}\n'.format(binpath=binpath,locus_datafile=locus_datafile) 
         num_dataset += 1
         o.write(output_command)

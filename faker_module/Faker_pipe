@@ -51,6 +51,8 @@ rule targets: # edit at the end
         locus_datafile_locussp = expand("{timeStamp}/locus_datafile_locussp",timeStamp=timeStamp),
         resume=expand("{timeStamp}/resume.txt",timeStamp=timeStamp),
         config = expand('{timeStamp}/config.yaml',timeStamp=timeStamp),
+        popfile= expand('{timeStamp}/popfile.csv',timeStamp=timeStamp),
+        contig_file = expand('{timeStamp}/contig_data.txt',timeStamp=timeStamp),
         simdata_result_prior = expand('{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/{simdata_result}',timeStamp=timeStamp,sim_model=SIMULATED_MODEL,n=n,Tsplit=Tsplit,Pbar=Pbar,Mbasal=Mbasal,simdata_result='priorfile.txt'),
         simdata_result_statglob = expand('{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/{simdata_result}',timeStamp=timeStamp,sim_model=SIMULATED_MODEL,n=n,Tsplit=Tsplit,Pbar=Pbar,Mbasal=Mbasal,simdata_result='ABCstat_global.txt'),
         simdata_result_statloc = expand('{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/{simdata_result}',timeStamp=timeStamp,sim_model=SIMULATED_MODEL,n=n,Tsplit=Tsplit,Pbar=Pbar,Mbasal=Mbasal,simdata_result='ABCstat_locus.txt'),
@@ -69,20 +71,19 @@ rule generate_bpfile:
     shell:
         """
         {Sc}/python.sif python3 {binpath}/generate_bpfile.py nLoci={nLoci} mu={mu} Nref={Nref} locus_length={L} \
-		nameA={nameA} nameB={nameB} size_popA={size_popA} size_popB={size_popB} rho_over_theta={rho_over_theta} \
-		timeStamp={timeStamp}
-		cp {output.locus_datafile} {timeStamp}/locus_datafile_locussp
+        nameA={nameA} nameB={nameB} size_popA={size_popA} size_popB={size_popB} rho_over_theta={rho_over_theta} \
+        timeStamp={timeStamp}
+        cp {output.locus_datafile} {timeStamp}/locus_datafile_locussp
         """ 
 
-rule generate_global_data:
+rule generate_prior_and_vcf:
     input:
-        locus_datafile = "{timeStamp}/locus_datafile",
-        config_yaml = "{timeStamp}/config.yaml"
+        locus_datafile = '{timeStamp}/locus_datafile',
+        config_yaml = '{timeStamp}/config.yaml'
     output:
-        "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/ABCstat_global.txt", 
-        "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/ABCstat_locus.txt", 
-        "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/priorfile.txt",
-        "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/priorfile_locus.txt",
+        prior = "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/priorfile.txt",
+        prior_locus = "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/priorfile_locus.txt",
+        vcf = "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/simulation.vcf"
     threads: 4
     resources: 
         mem_mb=10000
@@ -95,7 +96,26 @@ rule generate_global_data:
             Nref={Nref} binpath={binpath}
         {Sc}/scrm_py.sif sh exec.sh 
         rm exec.sh
+        sed -i 1i'##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' {output.vcf}
         """
+
+rule generate_global_data:
+    input:
+        popfile=expand('{timeStamp}/popfile.csv',timeStamp=timeStamp),
+        contig_file=expand('{timeStamp}/contig_data.txt',timeStamp=timeStamp),
+        vcf = "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/simulation.vcf"
+    output:
+        "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/ABCstat_global.txt", 
+        "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/ABCstat_locus.txt", 
+    threads: 4
+    resources: 
+        mem_mb=10000
+    shell:
+         """
+         {Sc}/scrm_py.sif python3 {binpath}/vcf2abc.py data={input.vcf} \
+            popfile={input.popfile} contig_file={input.contig_file} nameA={nameA}\
+            nameB={nameB} window_size={L} output_dir={timeStamp}/simdata/{wildcards.sim_model}_{wildcards.n}_Ts~{wildcards.Tsplit}_Pb~{wildcards.Pbar}_Mb~{wildcards.Mbasal}
+         """
 
 ######################## Generate Resume ###############
 rule create_resume: # replace resume by a list of all model use. model = combination of dem model + sim params
@@ -108,20 +128,37 @@ rule create_resume: # replace resume by a list of all model use. model = combina
                 o.write('{}_{}_Ts~{}_Pb~{}_Mb~{}'.format(*i) + '\t')
 
 rule create_RIDGE_config:
-	output:
-		expand('{timeStamp}/config.yaml',timeStamp=timeStamp)
-	run:
-		with open(RIDGE_template,'r') as template:
-			list_param = yaml.safe_load(template)
-		list_param['timeStamp'] = timeStamp
-		list_param['nameA'] = 'wild'
-		list_param['nameB'] = 'dom'
-		list_param['useSFS'] =  0
-		list_param['config_yaml'] = '{0}/config.yaml'.format(timeStamp)
-		list_param['mu'] = 3e-8
-		list_param['N_max'] = 170000
-		list_param['container_path'] = '/home/genouest/cnrs_umr6553/eburban/RIDGE/container'
-		list_param['lightMode'] = False
-		
-		with open('{timeStamp}/config.yaml'.format(timeStamp=timeStamp),'w') as outfile:
-			yaml.dump(list_param,outfile)		
+    output:
+        expand('{timeStamp}/config.yaml',timeStamp=timeStamp)
+    run:
+        with open(RIDGE_template,'r') as template:
+            list_param = yaml.safe_load(template)
+        list_param['timeStamp'] = timeStamp
+        list_param['nameA'] = 'wild'
+        list_param['nameB'] = 'dom'
+        list_param['useSFS'] =  0
+        list_param['config_yaml'] = '{0}/config.yaml'.format(timeStamp)
+        list_param['mu'] = 3e-8
+        list_param['N_max'] = 170000
+        list_param['container_path'] = '/home/genouest/cnrs_umr6553/eburban/RIDGE/container'
+        list_param['lightMode'] = False
+        
+        with open('{timeStamp}/config.yaml'.format(timeStamp=timeStamp),'w') as outfile:
+            yaml.dump(list_param,outfile)       
+
+rule create_popfile:
+    output:
+        expand('{{timeStamp}}/popfile.csv')
+    run:
+        dic = {nameA:['A{}'.format(x) for x in range(size_popA)],
+                nameB:['B{}'.format(x) for x in range(size_popB)]}
+        df = pd.DataFrame(dic)
+        df.to_csv('{timeStamp}/popfile.csv'.format(timeStamp=timeStamp),header=True,index=False)
+
+rule create_contig_data:
+    output:
+        expand('{{timeStamp}}/contig_data.txt')
+    run:
+        df = pd.DataFrame({'contig_name': ['contig_{}'.format(x) for x in range(nLoci)],'contig_length': [L for x in range(nLoci)]})
+        df.to_csv('{timeStamp}/contig_data.txt'.format(timeStamp=timeStamp),header=True,sep='\t',index=False)
+        

@@ -32,6 +32,7 @@ obs_ABCstat_file = file.path(obs_dir,'ABCstat_locus.txt')
 #obs_ABCjsfs_file = file.path(obs_dir,'ABCjsfs_locus.txt')
 #test_data = cbind(read.table(obs_ABCstat_file,h=T),read.table(obs_ABCjsfs_file,h=T))
 test_data = read.table(obs_ABCstat_file,h=T)
+test_data[is.na(test_data)]=0
 # Training set 
 train_ABCstat_file_list = list.files(sim_dir,pattern = "ABCstat_locus.txt",recursive = T,full.names = T)
 #train_ABCjsfs_file_list = list.files(sim_dir,pattern = "ABCjsfs_locus.txt",recursive = T,full.names = T)

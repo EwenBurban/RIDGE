@@ -52,8 +52,8 @@ Sc='singularity exec --bind {0},{1} {2}'.format(binpath,timeStamp,container_path
 def_container='python3-pd.sif'
 ############## Get global sims data ###################
 with open(timeStamp + "/resume.txt","r") as f:
-    simdata_dir=f.readline().strip().split("\t")
-simdata_dir=[simdata_dir[0]]
+    simdata_dir_all=f.readline().strip().split("\t")
+simdata_dir=[simdata_dir_all[0]]
 ############### Get used model ################
 import os
 model_filter_file='{timeStamp}/simdata/{simdata_dir}/models_filter.txt'.format(timeStamp=timeStamp,simdata_dir=simdata_dir[0])
@@ -98,7 +98,7 @@ rule targets: # edit at the end
 
     run:
         with open(timeStamp + "/resume.txt","w") as f:
-            f.write('\t'.join(simdata_dir[1:]))
+            f.write('\t'.join(simdata_dir_all[1:]))
 
 ############################ generating global data ############
 
@@ -287,8 +287,8 @@ rule model_averaging:
 rule posterior_averaging:
     input:
         model_weight = "{timeStamp}/simdata/{simdata_dir}/models_weight.txt",
-        posteriors=expand('{{timeStamp}}/simdata/{{simdata_dir}}/estimation_param_{n_estimation}/posterior_{locus_model}.txt',
-            locus_model=locus_model,n_estimation=n_estimation)
+        posteriors=expand('{{timeStamp}}/simdata/{{simdata_dir}}/estimation_param_{n_estimation}/posterior_{used_model}.txt',
+            used_model=used_model,n_estimation=n_estimation)
     output:
          '{timeStamp}/simdata/{simdata_dir}/locus_posteriors_mw.txt'
     shell:
