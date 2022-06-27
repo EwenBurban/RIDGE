@@ -1,0 +1,18 @@
+Bootstrap: library
+From: ubuntu:20.04
+%post
+apt-get update -y && apt-get upgrade -y
+apt-get install software-properties-common -y
+add-apt-repository universe -y
+apt-get install libgsl-dev -y
+apt-get install wget make unzip gcc -y
+cd /usr/bin/
+mkdir RAiSD
+cd RAiSD
+wget https://github.com/alachins/raisd/archive/master.zip
+unzip master.zip
+cd raisd-master
+./install-RAiSD.sh
+ln -s /usr/bin/RAiSD/raisd-master/RAiSD home/RAiSD
+%test
+/home/RAiSD -h

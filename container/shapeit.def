@@ -1,0 +1,5 @@
+Bootstrap: docker
+From: mchoilab/shapeit2-geva-aws:1.1
+
+%test
+shapeit --version

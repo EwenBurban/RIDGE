@@ -1,0 +1,11 @@
+Bootstrap: docker
+From: r-base
+
+%post
+apt-get update && apt-get -y  upgrade
+apt install -y curl
+apt install -y cmake
+R -e 'install.packages("pcadapt",dependencies=T,repos="http://cran.rstudio.com/")'
+
+%test
+R -e 'library(pcadapt)'

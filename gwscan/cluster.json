@@ -1,0 +1,21 @@
+
+{
+    "__default__" :
+    {
+        "node" : 1,
+        "ntasks" : 1,
+        "n" : 1,
+        "p" : "ecobio,genouest",
+	"cpusPerTask" : 1,
+	"memPerCpu" : 5000,
+	"time" : "4-04:00:00"
+    },
+    "haplotyping" :
+    {
+	"memPerCpu" : 35000
+    },
+    "pcadapt_detect" :
+    {
+	    "memPerCpu" : 10000
+    }
+}

@@ -2,7 +2,7 @@ Bootstrap: docker
 From: python:3.9
 
 %post
-pip install pandas numpy
-
+pip3 install pandas numpy
+pip3 install scikit-allel
 %test
 python3 -V

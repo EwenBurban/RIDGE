@@ -22,12 +22,12 @@ head(data)
 colnames(data) = c('chr','start','end','rec_rate')
 data$rho = data$rec_rate * 4 * Nref * window_size
 data[is.na(data$rho),'rho'] = 0
-data$mu = rep(mu * 4 * Nref * window_size,nrow(data))
+data$theta = rep(mu * 4 * Nref * window_size,nrow(data))
 data$locus_length = rep(window_size,nrow(data))
 data$size_popA  = rep(size_popA,nrow(data))
 data$size_popB  = rep(size_popB,nrow(data))
 data$totpopsize = data$size_popA + data$size_popB
-res = subset(data,select = c('locus_length','size_popA','size_popB','totpopsize','mu','rho'))
+res = subset(data,select = c('locus_length','size_popA','size_popB','totpopsize','theta','rho'))
 write.table(res,file=output,sep='\t',row.names=F)
 
 
