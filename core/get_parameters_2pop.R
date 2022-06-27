@@ -49,7 +49,7 @@ abc_nnet_multivar <- function(target,x,sumstat,tol,gwt,rejmethod=F,noweight=F,tr
 	# $wt - the regression weight (i.e. the Epanechnikov weight)
 	# $ss - the sumstats corresponding to these points
 	# $predmean - estimate of the posterior mean
-	if(class(x)=="numeric")
+	if(class(x)[1]=="numeric")
 	{
 		bb<-cbind(bb)
 		x<-cbind(x)
@@ -353,7 +353,7 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
 
 	### write the prior
 	nPrior = nrow(params_sim[[model]])
-	write.table(params_sim[[model]], paste(output_dir, '/priorfile.txt', sep=''), col.names=T, row.names=F, quote=F, sep='\t')
+#	write.table(params_sim[[model]], paste(output_dir, '/priorfile.txt', sep=''), col.names=T, row.names=F, quote=F, sep='\t')
 	
 	##############
 	# inferences
@@ -397,7 +397,7 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
 		# NEURAL NETWORK
 		library('nnet')
 		target = matrix(as.numeric(unlist(ss_obs)), nrow=1)
-		x = matrix(as.numeric(unlist(params_sim[[model]])), byrow=F, ncol=ncol(params_sim[[model]]))
+		x = as.matrix(params_sim[[model]])
 
 		sumstat = matrix(as.numeric(unlist(ss_sim[[model]])), byrow=F, ncol=ncol(ss_sim[[model]]))
 		transf_obs = rep("logit", ncol(params_sim[[model]]))

@@ -1,6 +1,5 @@
 *.sif
 .snakemake/
-slurm_launch/
-slurm_launch2/
+slurm_launch*/
 slurm*.out
 config/

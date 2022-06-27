@@ -1,6 +1,5 @@
 #!/usr/bin/env Rscript
 library(abcrf)
-library(plyr)
 mode = 'class' # class or reg
 for(arg in commandArgs()){
   tmp = strsplit(arg, '='); opt = tmp[[1]][1]; val = tmp[[1]][2]

@@ -7,13 +7,11 @@
 #. /local/env/envconda.sh
 #conda activate DILS
 . /local/env/envsnakemake-6.0.5.sh
-#. /local/env/envr-4.0.3.sh
-. /local/env/envr-3.6.2.sh
 . /local/env/envsingularity-3.8.0.sh
 binpath='/home/genouest/cnrs_umr6553/eburban/RIDGE/core'
 
 
-snakemake --snakefile ${binpath}/PerfTest_RIDGE_pipe -p -j 70 --until "model_filtering" --configfile ${1} --cluster-config ${binpath}/cluster_2pop.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p}"  --latency-wait 60  --nolock --restart-times 3  --rerun-incomplete
-snakemake --snakefile ${binpath}/PerfTest_RIDGE_pipe  -p -j 70 --configfile ${1} --cluster-config ${binpath}/cluster_2pop.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p} "  --latency-wait 60  --nolock   # --dag | dot -Tpdf > dag.pdf # -k # --unlock
+snakemake --snakefile ${binpath}/RIDGE_pipe -p -j 70 --until "model_filtering" --configfile ${1} --cluster-config ${binpath}/cluster_2pop.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p}"  --latency-wait 60  --nolock --restart-times 3  --rerun-incomplete
+snakemake --snakefile ${binpath}/RIDGE_pipe  -p -j 70 --configfile ${1} --cluster-config ${binpath}/cluster_2pop.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p} "  --latency-wait 60  --nolock 
 
 
