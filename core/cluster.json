@@ -61,7 +61,7 @@
     },
     "estimate_roc":
     {
-        "ntasks" : 10,
+        "ntasks" : 5,
         "memPerCpu" : 50000
     },
     "estimate_locus_param":

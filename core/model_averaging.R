@@ -6,7 +6,7 @@ obs_pattern = "ABCstat.txt"
 sim_pattern = "ABCstat.txt"
 ntree=1000
 ncores=8
-
+test='FALSE'
 for(arg in commandArgs()){
   tmp = strsplit(arg, '='); opt = tmp[[1]][1]; val = tmp[[1]][2]
   if(opt == "ntree"){ntree=as.numeric(val)}
@@ -18,6 +18,7 @@ for(arg in commandArgs()){
   if(opt == "output_name"){output_name=val}
   if(opt == "timeStamp"){timeStamp=val}
   if(opt == "ncores"){ncores=as.numeric(val)}
+  if(opt == "mode"){mode=val}
 }
 ### function
 remove_param = function(table){
@@ -29,17 +30,15 @@ remove_param = function(table){
 #### Model weighting #####
 
 # Observed data
+if(mode == 'multi'){
 list_obs_dir = list.dirs(path=obs_dir,full.names = F,recursive=F)
 print(list_obs_dir)
-models=unique(sub("N_.*","N",list_obs_dir))
 obs_ABCstat_file_list = file.path(obs_dir,list_obs_dir,obs_pattern)
 test_data = do.call(rbind,lapply(obs_ABCstat_file_list,read.table,header=T))[,-1]
-if (usesfs==1){
-	sfs_file_list = file.path(obs_dir,list_obs_dir,'ABCjsfs.txt')
-	sfs_data = do.call(rbind,lapply(sfs_file_list,read.table,h=T))
-	test_data = data.frame(test_data,sfs_data)
+}else if (mode == 'single') {
+	test_data = read.table(file.path(obs_dir,obs_pattern),h=T)[,-1]
 }
-test_target = factor(sub("N_.*","N",list_obs_dir)) 
+
 # Training set 
 train_ABCstat_file_list = list.files(sim_dir,pattern = sim_pattern,recursive = T,full.names = T)
 print(train_ABCstat_file_list)
@@ -77,6 +76,7 @@ rf = abcrf(t~.,train_data_2rf,paral=T,ncores=ncores,lda=F)
 votes = predict(rf,test_data,training=train_data_2rf)$vote
 votes=votes/rowSums(votes) # normalize votes
 
+if(test=='TRUE'){
 votes = as.data.frame(votes)
 stopifnot(nrow(votes)==length(list_obs_dir))
 for(o in list_obs_dir){ # write all the result inside their respective directory (in case of multiple observed data)
@@ -91,21 +91,18 @@ for(o in list_obs_dir){ # write all the result inside their respective directory
 	usefull_votes = usefull_votes/sum(usefull_votes) # rescale 
 	write.table(usefull_votes, file=output, row.names=F,sep="\t" )
 	}
-## get the Relatice Class frequencies
-
-#rf_votes = data.frame(rf$votes,"y" = as.vector(rf$y))
-#rfq = lapply(unique(rf_votes$y),function(x,...){colMeans(rf_votes[rf_votes$y==x,][-ncol(rf_votes)])})
-#names(rfq) = unique(rf_votes$y)
-#rfq_mx = matrix(unlist(rfq[p]),nc=length(rf$class),byrow=T)
-
-## calculate Weighted votes
-#Wvotes = votes * rfq_mx / rowSums(votes * rfq_mx)
-
-#	results = list()
-#	results$test_target = test_target
-#	results$p = p
-#	results$votes = votes
-#	results$rfq_mx = rfq_mx
-#	results$Wvotes = Wvotes
-
-#saveRDS(results,file=output,compress = "gzip")
+}else{
+	output=file.path(obs_dir,output_name)
+	tmp = as.vector(votes)
+	names(tmp) = colnames(votes)
+	votes = tmp
+	print(votes)
+	cumsort_v = cumsum(sort(votes))
+	usefull_model = names(cumsort_v)[which(cumsort_v >= 0.05)] # remove all the useless models which alltogether doesn’t contribute to result 
+	usefull_votes = votes[usefull_model]
+	usefull_votes = usefull_votes/sum(usefull_votes) # rescale 
+	names(usefull_votes) = usefull_model
+	print(usefull_votes)
+	usefull_votes = as.data.frame(t(usefull_votes))
+	write.table(usefull_votes, file=output, row.names=F,sep="\t" )
+}

@@ -17,11 +17,11 @@ remove_param = function(table){
 	return(y)
 }
 
-get_roc_stat = function(prior,est,trsh){
-	TP = length(which(prior[migration]==0 & est[migration]>=trsh))
-	FP = length(which(prior[migration]>0 & est[migration]>=trsh))
-	TN = length(which(prior[migration]>0 & est[migration]<trsh))
-	FN = length(which(prior[migration]==0 & est[migration]<trsh))
+get_roc_stat = function(prior,est,trsh,...){
+	TP = length(which(prior==0 & est>=trsh))
+	FP = length(which(prior>0 & est>=trsh))
+	TN = length(which(prior>0 & est<trsh))
+	FN = length(which(prior==0 & est<trsh))
 	TPR = TP / (TP + FN)
 	FPR = FP / (FP + TN)
 	y=c('TPR'=TPR,'FPR'=FPR)
@@ -64,11 +64,16 @@ test_set=train_data[locus_to_eval,param2kp]
 rf = abcrf(tag~.,data=train_set,ncores = ncores,ntree = ntree,paral = T,lda=F)
 pred = predict(rf,training =train_set ,obs =test_set ,paral = T,ncores=ncores)
 model_param_estimation = pred$vote[,'barrier'] / rowSums(pred$vote)
+print(train_targets[locus_to_eval,migration])
+print(model_param_estimation)
 ## roc estimation
 
 seq_trsh = seq(0,1,by=0.05)
-stats = do.call(rbind,lapply(seq_trsh,function(x) get_roc_stat(train_data[locus_to_eval,migration],model_param_estimation,x)))
+stats = do.call(rbind,lapply(seq_trsh,function(x) get_roc_stat(train_targets[locus_to_eval,migration],model_param_estimation,x)))
+colnames(stats)=c('TPR','FPR')
+print(head(stats))
+print(class(stats))
 write.table(stats,file=file.path(output_dir,'roc_table.txt'),row.names=F)
 pdf(file.path(output_dir,'roc.pdf'))
-plot(stats$FPR,stats$TPR,type='p')
+plot(stats[,'FPR'],stats[,'TPR'],type='p')
 dev.off()

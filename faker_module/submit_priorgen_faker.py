@@ -35,25 +35,25 @@ min_Tam = 0.5
 max_m = 0.1
 shape_bound = [0.1,5]
 Tsplit = Tsplit/(4*Nref)
-
+N = Nref/Nref
 ###### build global priors for nMultilocus datasets ######
 
 glob_prior = pd.DataFrame({'Tsplit': np.full(nMultilocus,Tsplit),
-        'Na': np.full(nMultilocus,0.5) ,
-        'N1': np.full(nMultilocus,0.5),
-        'N2': np.full(nMultilocus,0.5)})
+        'Na': np.full(nMultilocus,N) ,
+        'N1': np.full(nMultilocus,N),
+        'N2': np.full(nMultilocus,N)})
 if 'SC' in model:
     glob_prior['Tsc'] = glob_prior['Tsplit'].apply(lambda x: np.random.uniform(low = min_Tsc * x, high = max_Tsc * x))
 if 'AM' in model:
     migration = 'M_ancestral'
     glob_prior['Tam'] = glob_prior['Tsplit'].apply(lambda x: np.random.uniform(low = min_Tam*x, high =x))
     glob_prior[migration] = np.random.uniform(low=0,high=max_m,size = nMultilocus) * 4*Nref 
-if 'SC' or 'IM' in model:
+if 'SC' in model or 'IM' in model:
     migration = 'M_current'
     glob_prior[migration] = np.full(nMultilocus,Mbasal) 
 if '2M' in model:
-    glob_prior['shape_' + migration + '_a'] = np.full(nMultilocus,90)   
-    glob_prior['shape_' + migration + '_b'] = np.full(nMultilocus,1)   
+    glob_prior['shape_' + migration + '_a'] = np.full(nMultilocus,10)   
+    glob_prior['shape_' + migration + '_b'] = np.full(nMultilocus,10)   
     glob_prior['Pbarrier' + migration] = np.full(nMultilocus,Pbarrier)
 if '2N' in model:
     glob_prior['shape_N_a'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
@@ -71,18 +71,19 @@ def build_locusDf(param,locus_df,nLoci):
     locus_sim = pd.DataFrame([param for x in range(nLoci)]) # repeat the param line nLoci times into a DF
     locus_sim.reset_index(inplace=True,drop=True)
     locus_sim = pd.concat([locus_sim,locus_df],axis=1)
-    pat  = re.compile('M')
-    migration =  list(filter(pat.match,list(param.keys())))[0]
+    if 'SI' in model:
+        migration = 'null'
+    else:
+        pat  = re.compile('M')
+        migration =  list(filter(pat.match,list(param.keys())))[0]
     if 'shape_N_a' in param :
         N = ['Na','N1','N2']
         locus_sim[N] = locus_sim[N].apply(lambda x: beta_dis(x,param['shape_N_a'],param['shape_N_b']),axis=1)
+        locus_sim[N] = np.clip(locus_sim[N],9e-4,1e9)
     if 'Pbarrier' + migration in param:
         locus_sim[migration] = locus_sim[migration].multiply(np.random.choice([0,1],nLoci,p= [param['Pbarrier'+ migration],1-param['Pbarrier'+ migration]]),axis=0)
         if 'shape_' + migration + '_a' in param : 
             locus_sim[migration] = locus_sim[migration].apply(lambda x: beta_dis(x,param['shape_' + migration + '_a'],param['shape_' + migration + '_b']))
-#   tmp=locus_sim[['Na','N1','N2']].copy()
-#   tmp[tmp<1e-4]=1e-4
-#   locus_sim.update(tmp)
     return locus_sim
 
 locus_param_df = [build_locusDf(glob_prior.loc[x,:],locus_data,nLoci) for x in range(nMultilocus)]

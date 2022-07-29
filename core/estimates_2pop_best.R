@@ -45,6 +45,7 @@ for(i in commandArgs()){
 	if(tmp[[1]][1] == 'binpath'){ binpath = tmp[[1]][2] } # binpath = path where to source get_parameters
 	if(tmp[[1]][1] == 'path2observation'){ path2observation = tmp[[1]][2] } # path2observation = path where the observed data to fit can be found
 	if(tmp[[1]][1] == 'output_dir'){ output_dir = tmp[[1]][2] } # path2observation = path where the observed data to fit can be found
+	if(tmp[[1]][1] == 'mode'){ mode_var2remove = tmp[[1]][2] } # path2observation = path where the observed data to fit can be found
 }
 
 outfile = paste(output_dir, '/report_', nameA, '_', nameB, '.txt', sep='')
@@ -61,24 +62,24 @@ source(paste(binpath, '/get_parameters_2pop.R', sep=''))
 options(digits=5)
 #list_models_param = c('SI_1N', 'SI_2N', 'IM_2M_2N', 'AM_2M_2N', 'SC_2M_2N')
 list_models_param = c(bestModel)
-for(model_tmp in list_models_param){
-	write(paste('\n#####\n\nparameters of model using neural_network (upper lines) and random_forest (lower lines): ', model_tmp, sep=''), outfile, append=T)
-	posterior = get_posterior(nameA=nameA, nameB=nameB, nSubdir=nSubdir, sub_dir_sim=sub_dir_sim, model=bestModel, sub_dir_model=bestModel, nPosterior=nPosterior, figure=F, timeStamp=timeStamp, path2observation=path2observation, useSFS=useSFS, ncores=ncores)
-	write('param\tHPD2.5%\tmedian\tHPD%97.5', outfile, append=T)
-	for(i in 1:ncol(posterior[['neural_network']])){
-		param_i = colnames(posterior[['neural_network']])[i]
-		if(param_i=='N1' || param_i=='N2' || param_i=='Na'){
-			write(paste(param_i, as.numeric(quantile(posterior[['neural_network']][,i], 0.025))*Nref, as.numeric(quantile(posterior[['neural_network']][,i], 0.5))*Nref, as.numeric(quantile(posterior[['neural_network']][,i], 0.975))*Nref, sep='\t'), outfile, append=T)
-			write(paste(param_i, as.numeric(posterior[['random_forest']][[param_i]][['quantile025']])*Nref, as.numeric(posterior[['random_forest']][[param_i]][['expectation']])*Nref, as.numeric(posterior[['random_forest']][[param_i]][['quantile975']])*Nref, sep='\t'), outfile, append=T)
-		
-		}else if(param_i=='Tsplit' || param_i=='Tam' || param_i=='Tsc' || param_i=='Tdem1' || param_i=='Tdem2'){
-			write(paste(param_i, as.numeric(quantile(posterior[['neural_network']][,i], 0.025))*4*Nref, as.numeric(quantile(posterior[['neural_network']][,i], 0.5))*4*Nref, as.numeric(quantile(posterior[['neural_network']][,i], 0.975))*4*Nref, sep='\t'), outfile, append=T)
-			write(paste(param_i, as.numeric(posterior[['random_forest']][[param_i]][['quantile025']])*4*Nref, as.numeric(posterior[['random_forest']][[param_i]][['expectation']])*4*Nref, as.numeric(posterior[['random_forest']][[param_i]][['quantile975']])*4*Nref, sep='\t'), outfile, append=T)
-		
-		} else{
-			write(paste(param_i, as.numeric(quantile(posterior[['neural_network']][,i], 0.025)), as.numeric(quantile(posterior[['neural_network']][,i], 0.5)), as.numeric(quantile(posterior[['neural_network']][,i], 0.975)), sep='\t'), outfile, append=T)
-			write(paste(param_i, as.numeric(posterior[['random_forest']][[param_i]][['quantile025']]), as.numeric(posterior[['random_forest']][[param_i]][['expectation']]), as.numeric(posterior[['random_forest']][[param_i]][['quantile975']]), sep='\t'), outfile, append=T)
-		}
-	}
-}
+#for(model_tmp in list_models_param){
+#	write(paste('\n#####\n\nparameters of model using neural_network (upper lines) and random_forest (lower lines): ', model_tmp, sep=''), outfile, append=T)
+	posterior = get_posterior(nameA=nameA, nameB=nameB, nSubdir=nSubdir, sub_dir_sim=sub_dir_sim, model=bestModel, sub_dir_model=bestModel, nPosterior=nPosterior, figure=T, timeStamp=timeStamp, path2observation=path2observation, useSFS=useSFS, ncores=ncores,mode_var2remove=mode_var2remove)
+#	write('param\tHPD2.5%\tmedian\tHPD%97.5', outfile, append=T)
+####for(i in 1:ncol(posterior[['neural_network']])){
+####	param_i = colnames(posterior[['neural_network']])[i]
+####	if(param_i=='N1' || param_i=='N2' || param_i=='Na'){
+####		write(paste(param_i, as.numeric(quantile(posterior[['neural_network']][,i], 0.025))*Nref, as.numeric(quantile(posterior[['neural_network']][,i], 0.5))*Nref, as.numeric(quantile(posterior[['neural_network']][,i], 0.975))*Nref, sep='\t'), outfile, append=T)
+####		write(paste(param_i, as.numeric(posterior[['random_forest']][[param_i]][['quantile025']])*Nref, as.numeric(posterior[['random_forest']][[param_i]][['expectation']])*Nref, as.numeric(posterior[['random_forest']][[param_i]][['quantile975']])*Nref, sep='\t'), outfile, append=T)
+####	
+####	}else if(param_i=='Tsplit' || param_i=='Tam' || param_i=='Tsc' || param_i=='Tdem1' || param_i=='Tdem2'){
+####		write(paste(param_i, as.numeric(quantile(posterior[['neural_network']][,i], 0.025))*4*Nref, as.numeric(quantile(posterior[['neural_network']][,i], 0.5))*4*Nref, as.numeric(quantile(posterior[['neural_network']][,i], 0.975))*4*Nref, sep='\t'), outfile, append=T)
+####		write(paste(param_i, as.numeric(posterior[['random_forest']][[param_i]][['quantile025']])*4*Nref, as.numeric(posterior[['random_forest']][[param_i]][['expectation']])*4*Nref, as.numeric(posterior[['random_forest']][[param_i]][['quantile975']])*4*Nref, sep='\t'), outfile, append=T)
+####	
+####	} else{
+####		write(paste(param_i, as.numeric(quantile(posterior[['neural_network']][,i], 0.025)), as.numeric(quantile(posterior[['neural_network']][,i], 0.5)), as.numeric(quantile(posterior[['neural_network']][,i], 0.975)), sep='\t'), outfile, append=T)
+####		write(paste(param_i, as.numeric(posterior[['random_forest']][[param_i]][['quantile025']]), as.numeric(posterior[['random_forest']][[param_i]][['expectation']]), as.numeric(posterior[['random_forest']][[param_i]][['quantile975']]), sep='\t'), outfile, append=T)
+####	}
+#	}
+# }
 

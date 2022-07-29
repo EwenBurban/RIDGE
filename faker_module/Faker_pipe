@@ -3,13 +3,14 @@ import pandas as pd
 from itertools import product
 import yaml
 # links to the codes
-binpath = "/home/genouest/cnrs_umr6553/eburban/RIDGE/faker_module"
+binpath = config['binpath']
+
 
 # general property
 # data generation
 nMultilocus=1
 
-SIMULATED_MODEL = ["IM_2M_2N"] # only this four models have current migration
+SIMULATED_MODEL = [config['model']] 
 
 
 # informations from the config.yaml file
@@ -27,7 +28,8 @@ param_file = config['param_file'] # contain data about Tsplit , Pbar, M
 RIDGE_template = config['RIDGE_template']
 n_sim_iteration =int(config['n_sim_iteration']) # number of fake dataset for each model
 n=range(n_sim_iteration)
-container_path=config['container_path']
+container_path=binpath + '/container'
+binpath = binpath + '/faker_module'
 ##### get parameter from param_file###
 param_space = pd.read_csv(param_file,sep='\t')
 Pbar = param_space['Pbar'].dropna()
@@ -137,9 +139,11 @@ rule create_RIDGE_config:
         list_param['nameA'] = 'wild'
         list_param['nameB'] = 'dom'
         list_param['useSFS'] =  0
-        list_param['config_yaml'] = '{0}/config.yaml'.format(timeStamp)
+        list_param['config_yaml'] = 'config.yaml'
+        list_param['popfile'] = 'popfile.csv'
         list_param['mu'] = 3e-8
-        list_param['N_max'] = 170000
+        list_param['N_max'] = 2*Nref
+        list_param['N_min'] = Nref/10
         list_param['container_path'] = '/home/genouest/cnrs_umr6553/eburban/RIDGE/container'
         list_param['lightMode'] = False
         

@@ -11,3 +11,4 @@ locus_length: 10000
 RIDGE_template: /home/genouest/cnrs_umr6553/eburban/RIDGE/template/RIDGE_template.yaml
 n_sim_iteration: 1
 param_file: /home/genouest/cnrs_umr6553/eburban/RIDGE/config/param_space_faker.txt
+model: IM_2M_2N

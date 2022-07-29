@@ -7,8 +7,8 @@ lightMode = config['lightMode']
 # general property
 nmultilocus = 1000 # number of multilocus simulations per iteration (500)
 nPosterior_locus = 1000
-split_size=int(nmultilocus/8)
-split_size_locus=int(nmultilocus/100)
+split_size=int(nmultilocus/4)
+split_size_locus=int(nmultilocus/50)
 # data generation
 # model comparison
 if lightMode==False:
@@ -43,6 +43,7 @@ Nref = (0 + config['N_max'])/2.0 # Nref is the mid point of the prior
 window_size = config['window_size']
 config_yaml = timeStamp + '/'  +config['config_yaml']
 popfile= timeStamp + '/'  +  config['popfile']
+mode= config['mode']
 ############# singularity parametrisaiton #########
 container_path =binpath + '/container' 
 Sc='singularity exec --bind {0},{1} {2}'.format(binpath,timeStamp,container_path)
@@ -135,7 +136,7 @@ rule model_filtering:
         """
         {Sc}/R.sif Rscript {core_path}/model_averaging.R timeStamp={timeStamp} ncores={nCPU_R}\
         ntree={ntree} output_name=models_filter.txt obs_dir={timeStamp}/ \
-        sim_dir={timeStamp}/modelComp obs_pattern=ABCstat_global.txt sim_pattern=ABCstat_global.txt  useSFS={useSFS}
+        sim_dir={timeStamp}/modelComp obs_pattern=ABCstat_global.txt sim_pattern=ABCstat_global.txt  useSFS={useSFS} mode={mode}
         """
 ############################### Global Parameter estimation  #####  
 # First it list the X pertinent models written in models_filter files
@@ -154,7 +155,7 @@ rule estimation_param_model_1:
         "{timeStamp}/estimation_param_1/posterior_{used_model}.txt"
     shell:
         """
-        {Sc}/R.sif Rscript {core_path}/estimates_2pop_best.R Nref={Nref} nameA={nameA} nameB={nameB} nMin={nMin} \
+        {Sc}/R.sif Rscript {core_path}/estimate_posteriors.R Nref={Nref} nameA={nameA} nameB={nameB} nMin={nMin} \
                 sub_dir_sim=modelComp nSubdir={nIterations_model_comp} ntree={ntree} ncores={nCPU_R}\
                 useSFS={useSFS} bestModel={wildcards.used_model} timeStamp={timeStamp} \
                 nPosterior={nPosterior_locus} binpath={core_path} \
@@ -200,7 +201,7 @@ rule estimation_param_model_2 :
         posteriors = "{timeStamp}/estimation_param_2/posterior_{used_model}.txt"
     shell:
         """
-        {Sc}/R.sif Rscript {core_path}/estimates_2pop_best.R Nref={Nref} nameA={nameA} nameB={nameB} nMin={nMin} \
+        {Sc}/R.sif Rscript {core_path}/estimate_posteriors.R Nref={Nref} nameA={nameA} nameB={nameB} nMin={nMin} \
                 sub_dir_sim=estimation_param_{params.iteration} nSubdir={nIterations_estim} ntree={ntree} ncores={nCPU_R}\
                 useSFS={useSFS} bestModel={wildcards.used_model} timeStamp={timeStamp} \
                 nPosterior={nPosterior_locus} binpath={core_path} \
@@ -276,7 +277,7 @@ rule model_averaging:
         {Sc}/R.sif Rscript {core_path}/model_averaging.R timeStamp={timeStamp} ncores={nCPU_R} \
                 ntree={ntree} output_name=models_weight.txt obs_dir={timeStamp} \
                 sim_dir={timeStamp}/estimation_param_{n_estimation} \
-                obs_pattern=ABCstat_global.txt sim_pattern=ABCstat_global.txt  useSFS={useSFS}
+                obs_pattern=ABCstat_global.txt sim_pattern=ABCstat_global.txt  useSFS={useSFS} mode={mode}
         """
 ########### Global parameter averaging ############
 

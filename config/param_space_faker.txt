@@ -1,2 +1,0 @@
-Tsplit	Pbar	Mbasal
-10000	0.1	10

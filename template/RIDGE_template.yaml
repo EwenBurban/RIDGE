@@ -1,9 +1,10 @@
-gwscan_tag: default
+tag: default
 gwscan_zoom: NULL
 lightMode: FALSE
 popfile: popfile.csv
 contig_data: contig_data.txt
 rec_rate_map: rec_rate_map.txt
+gff_file: tt.gff
 useSFS: 0
 window_size: 10000
 nameA: wild

@@ -58,10 +58,10 @@ abc_nnet_multivar <- function(target,x,sumstat,tol,gwt,rejmethod=F,noweight=F,tr
 	if(rejmethod)
 		transf<-rep("none", dim(x)[2])
 	normalise <- function(x,y){
-	if(mad(y) == 0)
+	if(mad(y,na.rm=T) == 0)
 	return (x)
 	else
-	return (x/mad(y))
+	return (x/mad(y,na.rm=T))
 	}
 
 	####Define the weight-decay paramaeter
@@ -135,7 +135,7 @@ abc_nnet_multivar <- function(target,x,sumstat,tol,gwt,rejmethod=F,noweight=F,tr
 		    dst[!gwt] <- floor(max(dst[gwt])+10)
 
 		# wt1 defines the region we're interested in
-		    abstol <- quantile(dst,tol)
+		    abstol <- quantile(dst,tol,na.rm=T)
 		    wt1 <- dst <= abstol
 		    if(rejmethod){
 			regwt <- 1-dst[wt1]^2/abstol^2
@@ -213,7 +213,7 @@ abc_nnet_multivar <- function(target,x,sumstat,tol,gwt,rejmethod=F,noweight=F,tr
 		    }
 		}
 		    return(l1)
-	#	    write.table(l1$x, col.names=F, row.names=F, file=paste(output,L,sep=""))
+		#    write.table(l1$x, col.names=F, row.names=F, file=paste(output,L,sep=""))
 		}
 }
 
@@ -261,7 +261,7 @@ babar<-function(a,b,space=2,breaks="auto",AL=0.5,nameA="A",nameB="B",xl="",yl=""
 #}
 
 
-get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='iteration_2', model='estimation_1', sub_dir_model=1, nPosterior=1000, figure=FALSE, timeStamp='SI_2N', path2observation='SI_2N/iteration_2/pod_0', do_nnet=T, useSFS=0, ncores=ncores){
+get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='iteration_2', model='estimation_1', sub_dir_model=1, nPosterior=1000, figure=FALSE, timeStamp='SI_2N', path2observation='SI_2N/iteration_2/pod_0', do_nnet=T, useSFS=0, ncores=ncores,mode_var2remove=NULL){
 	library(data.table)
 	options(digits=5)
 	###################
@@ -272,11 +272,18 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
 
 	#obs_ss = read.table(paste(timeStamp, '/ABCstat_global.txt', sep=''), h=T)
 	obs_ss_tmp = read.table(paste(path2observation, '/ABCstat_global.txt', sep=''), h=T)
-
-	undesired_stats = c('dataset')
-
+	obs_ss_tmp = obs_ss_tmp[,-1]
+	if(mode_var2remove == 'NULL'){undesired_stats = c()} 
+	if(mode_var2remove == 'REJ'){undesired_stats = c()} 
+	if(mode_var2remove == 'CV'){undesired_stats = c()} 
+	if(mode_var2remove == 'DILS'){undesired_stats = c( 'pearson', 'ss_sf', 'ss_noSf', 'noSs_sf', 'noSs_noSf')}
+	if(mode_var2remove == 'DILS_med'){undesired_stats = c('pearson', 'ss_sf', 'ss_noSf', 'noSs_sf', 'noSs_noSf','_med')} 
+	if(mode_var2remove == 'ALL'){undesired_stats = c('pearson', 'ss_sf', 'ss_noSf', 'noSs_sf', 'noSs_noSf')} 
+	print(undesired_stats)
 	# remove stats
-		obs_ss_tmp = obs_ss_tmp[, -grep(undesired_stats, colnames(obs_ss_tmp))]
+	for (stat in undesired_stats){
+		obs_ss_tmp = obs_ss_tmp[, -grep(pattern = stat, colnames(obs_ss_tmp))]
+	}
 	# end of remove stats
 
 
@@ -299,18 +306,22 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
 	for(rep in seq(0, nSubdir-1, 1)){
         tmp_ss = read.table(file.path(timeStamp,sub_dir_sim,paste0(model,'_',rep),'ABCstat_global.txt'),h=T)
         tmp_ss = tmp_ss[order(tmp_ss[,'dataset']),]
-        ss_sim_tmp[[length(ss_sim_tmp)+1]] = tmp_ss
+		na_lines = unique(unlist(lapply(tmp_ss,function(x) which(is.na(x)))))
+		if(length(na_lines)> 0) { tmp_ss = tmp_ss[-na_lines,]}
+        ss_sim_tmp[[length(ss_sim_tmp)+1]] = tmp_ss[,-1]
+
+
 
         if(useSFS==1){
             sfs_sim = read.table(file.path(timeStamp,sub_dir_sim,paste0(model,'_',rep),'ABCjsfs.txt'),h=T)
             sfs_sim = sfs_sim[order(sfs_sim[,'dataset']),]
-            sfs_sim_tmp[[length(sfs_sim_tmp)+1]] = sfs_sim
+            sfs_sim_tmp[[length(sfs_sim_tmp)+1]] = sfs_sim[,-1]
         }
 
         tmp_params = read.table(file.path(timeStamp,sub_dir_sim,paste0(model,'_',rep),'priorfile.txt'),h=T)
         tmp_params = tmp_params[order(tmp_params[,'dataset']),]
         tmp_params = tmp_params[match(tmp_ss$dataset,tmp_params$dataset),]
-        params_sim_tmp[[length(params_sim_tmp)+1]] = tmp_params
+        params_sim_tmp[[length(params_sim_tmp)+1]] = tmp_params[,-1]
 
         stopifnot(nrow(tmp_ss)==nrow(tmp_params))
         if(useSFS==1){stopifnot(nrow(sfs_sim)==nrow(tmp_params))}
@@ -334,17 +345,24 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
 	}
 
 	# remove the uninformative statistics
-	toRemove = c(1)
+	toRemove = 1
 	for(i in 2:ncol(ss_sim[[model]])){
-		sd_tmp = sd(as.numeric(c(ss_obs[i], ss_sim[[model]][,i])))
+		sd_tmp = sd(as.numeric(c(ss_obs[i], ss_sim[[model]][,i])),na.rm=T)
+		mean_tmp = mean(as.numeric(c(ss_obs[i], ss_sim[[model]][,i])),na.rm=T)
+		if(mode_var2remove == 'CV' | mode_var2remove == 'ALL'){
+		print(sd_tmp/mean_tmp)
+		if((sd_tmp/mean_tmp) <0.1 | is.na(sd_tmp)){
+			toRemove = c(toRemove, i)}
+		}else { 
 		if(sd_tmp<0.00001 | is.na(sd_tmp)){
 			toRemove = c(toRemove, i)
-		}
+		}}
 	}
 	
 	toRemove = unique(toRemove)
-	
+	print(colnames(ss_obs)[toRemove])
 	ss_obs = ss_obs[-toRemove]
+	print(colnames(ss_obs))
 	ss_sim[[model]] = ss_sim[[model]][, -toRemove]
 
 	# params
@@ -359,7 +377,7 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
 	# inferences
 	target_rf = ss_obs 
 
-	# RANDOM FOREST	
+#      RANDOM FOREST	
         library(abcrf)
         params_model_rf = as.matrix(params_sim[[model]]) # in case of debug
         stats_model_rf = ss_sim[[model]] # in case of debug
@@ -374,15 +392,15 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
         	parameter = params_model_rf[,i]
         	data = data.frame(parameter, stats_model_rf)
         	mod = regAbcrf(parameter~., data, ntree=1000, paral=T, ncores=ncores)
-        	estimate = predict(mod, target_rf, data, paral=T, ncores=ncores)
+			estimate = predict(mod, target_rf, data, paral=T, ncores=ncores)
 
-        	param_name = colnames(params_sim[[model]])[i]
-        	res_rf[[param_name]] = list()
-        	res_rf[[param_name]][['expectation']] = estimate$expectation
-        	res_rf[[param_name]][['variance']] = estimate$variance
-        	res_rf[[param_name]][['quantile025']] = estimate$quantiles[,1]
-        	res_rf[[param_name]][['quantile975']] = estimate$quantiles[,2] 
-        	write(paste(c(param_name, round(estimate$quantiles[1],5), round(estimate$expectation, 5), round(estimate$quantiles[2],5)), collapse="\t"), paste(output_dir,'/posterior_summary_RandomForest_', sub_dir_model, '.txt', sep=''), append=T)
+       	param_name = colnames(params_sim[[model]])[i]
+       	res_rf[[param_name]] = list()
+       	res_rf[[param_name]][['expectation']] = estimate$expectation
+       	res_rf[[param_name]][['variance']] = estimate$variance
+       	res_rf[[param_name]][['quantile025']] = estimate$quantiles[,1]
+       	res_rf[[param_name]][['quantile975']] = estimate$quantiles[,2] 
+       	write(paste(c(param_name, round(estimate$quantiles[1],5), round(estimate$expectation, 5), round(estimate$quantiles[2],5)), collapse="\t"), paste(output_dir,'/posterior_summary_RandomForest_', sub_dir_model, '.txt', sep=''), append=T)
         	
         	header_RF = c(header_RF, param_name)
         	estimates_RF = cbind(estimates_RF, estimate$expectation)
@@ -390,7 +408,6 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
 
         colnames(estimates_RF) = header_RF	
         write.table(estimates_RF, paste(output_dir,'/posterior_RandomForest_', sub_dir_model, '.txt', sep=''), sep="\t", col.names=T, row.names=F, quote=F )
-        	
 	res_tot = list()
 	
 	if(do_nnet == TRUE){	
@@ -412,12 +429,12 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
 		}
 		
 		bb = rbind(apply(x, MARGIN=2, FUN="min"), apply(x, MARGIN=2, FUN="max"))
-		
-		res = abc_nnet_multivar(target=target, x=x, sumstat=sumstat, tol=nPosterior/nrow(x), rejmethod=F, noweight=F, transf=transf_obs, bb=bb, nb.nnet=10, size.nnet=10, trace=T)
+		if(mode_var2remove=='REJ'){rej=T} else{rej=F}		
+		res = abc_nnet_multivar(target=target, x=x, sumstat=sumstat, tol=nPosterior/nrow(x), rejmethod=rej, noweight=F, transf=transf_obs, bb=bb, nb.nnet=100, size.nnet=12, trace=T)
 	
 		posterior = res$x
 		colnames(posterior) = colnames(params_sim[[model]])
-		write.table(posterior, paste(output_dir,'/posterior_', sub_dir_model, '.txt', sep=''), row.names=F, col.names=T, sep='\t', quote=F)
+		write.table(posterior, paste(output_dir,'/posterior_', sub_dir_model,'_',mode_var2remove, '.txt', sep=''), row.names=F, col.names=T, sep='\t', quote=F)
 		res_tot[['neural_network']] = posterior	
 	}
 	

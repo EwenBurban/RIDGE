@@ -34,6 +34,10 @@ def get_abcstat(gt,locus_length,subpop):
         piA = allel.sequence_diversity(pos,acA,start=1,stop=locus_length)
         piB = allel.sequence_diversity(pos,acB,start=1,stop=locus_length)
         dxy = allel.sequence_divergence(pos,acA,acB,start=1,stop=locus_length)
+        w=np.tile(pos,(1,2)).reshape(len(pos),2,order='F')
+        w_dxy = allel.windowed_divergence(pos,acA,acB,windows=w)[0]
+        g_min = np.min(w_dxy) / dxy
+        g_max = np.max(w_dxy) / dxy
         da = dxy - (piA + piB)/2
         thetaA = allel.watterson_theta(pos,acA,start=1,stop=locus_length)
         thetaB = allel.watterson_theta(pos,acB,start=1,stop=locus_length)
@@ -48,7 +52,7 @@ def get_abcstat(gt,locus_length,subpop):
         return {'bialsite_avg':nsites,'piA_avg':piA,'piB_avg':piB,'divAB_avg':dxy,
                 'netDivAB_avg':da,'thetaA_avg':thetaA,
                 'thetaB_avg':thetaB,'DtajA_avg':TajDA,'DtajB_avg':TajDB,'sxA_avg':sxA,
-                'sxB_avg':sxB,'sf_avg':sf,'ss_avg':ss,'FST_avg':Fst}
+                'sxB_avg':sxB,'sf_avg':sf,'ss_avg':ss,'FST_avg':Fst,'Gmin_avg':g_min,'Gmax_avg':g_max}
 
 locus_nb = 0
 in_locus = False

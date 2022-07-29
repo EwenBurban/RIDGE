@@ -101,13 +101,12 @@ def build_locusDf(param,locus_df,nLoci):
     if 'shape_N_a' in param :
         N = ['Na','N1','N2']
         locus_sim[N] = locus_sim[N].apply(lambda x: beta_dis(x,param['shape_N_a'],param['shape_N_b']),axis=1)
+        locus_sim[N] = np.clip(locus_sim[N],9e-4,1e9)
     if 'Pbarrier'+ migration  in param:
-        locus_sim[migration] = locus_sim[migration].multiply(np.random.choice([0,1],nLoci,p= [param['Pbarrier'+ migration ],1-param['Pbarrier'+ migration ]]),axis=0)
         if 'shape_' + migration + '_a' in param : 
             locus_sim[migration] = locus_sim[migration].apply(lambda x: beta_dis(x,param['shape_' + migration + '_a'],param['shape_' + migration + '_b']))
-#   tmp=locus_sim[['Na','N1','N2']].copy()
-#   tmp[tmp<1e-4]=1e-4
-#   locus_sim.update(tmp)
+            locus_sim[migration] = np.clip(locus_sim[migration],M_bound[0],M_bound[1])
+        locus_sim[migration] = locus_sim[migration].multiply(np.random.choice([0,1],nLoci,p= [param['Pbarrier'+ migration ],1-param['Pbarrier'+ migration ]]),axis=0)
     return locus_sim
 
 locus_param_df = [build_locusDf(glob_prior.loc[x,:],locus_data,nLoci) for x in range(nMultilocus)]
