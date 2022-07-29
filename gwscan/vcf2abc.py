@@ -35,7 +35,7 @@ for contig in contig_list:
     sub_acB = acB[sel_snp]
     window_list = allel.windowed_diversity( pos,sub_acA,size=win_size,start=1,stop=contig_length)[1]
 
-    sxA_arr = sxB_arr= sf_arr = ss_arr= nsites = thetaA= thetaB = TajDA = TajDB = Fst = piA = piB = dxy = da = g_min = g_max  = np.empty(0)
+    sxA_arr = sxB_arr= sf_arr = ss_arr= nsites = thetaA= thetaB = TajDA = TajDB = Fst = piA = piB = dxy = da =np.empty(0)
     for window in window_list:
         sel_snp_sfs = np.where(np.logical_and(pos>=window[0],pos<=window[1])==True)[0]
         sfs_nsites = len(sel_snp_sfs)
@@ -43,10 +43,6 @@ for contig in contig_list:
             piA_tmp = allel.sequence_diversity(pos,sub_acA,start=window[0],stop=window[1])
             piB_tmp= allel.sequence_diversity(pos,sub_acB,start=window[0],stop=window[1])
             dxy_tmp = allel.sequence_divergence(pos,sub_acA,sub_acB,start=window[0],stop=window[1])
-            w=np.tile(pos,(1,2)).reshape(len(pos),2,order='F')
-            w_dxy = allel.windowed_divergence(pos,sub_acA,sub_acB,windows=w)[0]
-            g_min_tmp = np.min(w_dxy) / dxy_tmp
-            g_max_tmp = np.max(w_dxy) / dxy_tmp
             da_tmp = dxy_tmp - (piA_tmp + piB_tmp)/2
             TajDA_tmp = allel.tajima_d(sub_acA,pos,start=window[0],stop=window[1])
             TajDB_tmp = allel.tajima_d(sub_acB,pos,start=window[0],stop=window[1])
@@ -73,8 +69,6 @@ for contig in contig_list:
             dxy = np.append(dxy,dxy_tmp)
             da = np.append(da,da_tmp)
             Fst = np.append(Fst,Fst_tmp)
-            g_min = np.append(g_min,g_min_tmp)
-            g_max = np.append(g_max,g_max_tmp)
         
 
     #### format all arrays into a dataframe
@@ -85,7 +79,7 @@ for contig in contig_list:
     contig_stat= pd.DataFrame({'dataset':dataset,'bialsite_avg':nsites,'piA_avg':piA,'piB_avg':piB,'divAB_avg':dxy,
             'netDivAB_avg':da,'thetaA_avg':thetaA,
             'thetaB_avg':thetaB,'DtajA_avg':TajDA,'DtajB_avg':TajDB,'sxA_avg':sxA_arr,
-            'sxB_avg':sxB_arr,'sf_avg':sf_arr,'ss_avg':ss_arr,'FST_avg':Fst,'Gmin_avg':g_min,'Gmax_avg':g_max})
+            'sxB_avg':sxB_arr,'sf_avg':sf_arr,'ss_avg':ss_arr,'FST_avg':Fst})
     chr_stat_list.append(contig_stat)
     print('conting {} done'.format(contig))
 
