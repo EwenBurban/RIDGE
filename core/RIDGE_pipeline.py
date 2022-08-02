@@ -184,7 +184,7 @@ rule param_sim_2 :
         chmod a+x sub_*
         list=(sub_*)
         for ll in ${{list[@]}}; do echo ./$ll >> tmp_exec.sh; done
-        {Sc}/scrm_py.sif parallel -a tmp_exec.sh -j 1 --halt now,fail=1
+        {Sc}/scrm_py.sif parallel -a tmp_exec.sh -j 4 --halt now,fail=1
         rm exec.sh tmp_exec.sh sub* 
         sed -i '2,${{/dataset/d}}' ABC*.txt
         """
