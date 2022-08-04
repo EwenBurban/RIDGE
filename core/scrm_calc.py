@@ -85,9 +85,9 @@ if locus_write:
         locus_stat.to_csv('ABCstat_locus.txt',sep='\t',header=None,index_label='dataset',float_format='%.5f',mode='a',na_rep='NA')
 
 if global_write:
-    avg = locus_stat.apply(np.mean,axis=0)
-    med = locus_stat.apply(np.median,axis=0)
-    std = locus_stat.apply(np.std,axis=0)
+    avg = locus_stat.apply(np.nanmean,axis=0)
+    med = locus_stat.apply(np.nanmedian,axis=0)
+    std = locus_stat.apply(np.nanstd,axis=0)
     std.index = [x.replace('_avg','_std') for x in std.keys()]
     med.index = [x.replace('_avg','_median') for x in med.keys()]
     pearson = {'pearson_r_pi':np.corrcoef(locus_stat['piA_avg'].astype(float),locus_stat['piB_avg'].astype(float)).min(),
