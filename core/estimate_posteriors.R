@@ -113,15 +113,17 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
         params_model_rf = as.matrix(params_sim[[model]]) # in case of debug
         stats_model_rf = ss_sim[[model]] # in case of debug
 
-        
+        rtnorm <- function(n, mean, sd, a = -Inf, b = Inf){
+			qnorm(runif(n, pnorm(a, mean, sd), pnorm(b, mean, sd)), mean, sd)
+			} 
         posterior_list = list()
         for(i in 1:nparams){
         	parameter = params_model_rf[,i]
 			param_name = colnames(params_sim[[model]])[i]
         	data = data.frame(parameter, stats_model_rf)
         	mod = regAbcrf(parameter~., data, ntree=1000)
-			estimate = predict(mod, target_rf, data,quantiles=seq(0.25,0.75,length.out=nPosterior))
-			posterior_list[[param_name]] = sample(estimate$quantiles,nPosterior,replace=F)
+			estimate = predict(mod, target_rf, data)
+			posterior_list[[param_name]] = rtnorm(n=nPosterior,mean=estimate$expectation,sd=sqrt(estimate$post.NMAE.mean)/3,a=min(parameter),b=max(parameter))
 
 		}
 		posterior_dataset = do.call(cbind,posterior_list)
