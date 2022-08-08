@@ -81,4 +81,6 @@ if( (grepl('SI',m) | grepl('AM',m) ) & grepl('M',p)){model_param_estimation = re
 	model_param_estimation = pred$vote[,'barrier'] / rowSums(pred$vote)
 	}
 }
+model_param_estimation = cbind(model_param_estimation,test_data[,'dataset'])
+
 write.table(model_param_estimation,col.names=p,row.names=F,file = output) 
