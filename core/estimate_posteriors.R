@@ -123,7 +123,9 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
         	data = data.frame(parameter, stats_model_rf)
         	mod = regAbcrf(parameter~., data, ntree=1000)
 			estimate = predict(mod, target_rf, data)
-			posterior_list[[param_name]] = rtnorm(n=nPosterior,mean=estimate$expectation,sd=sqrt(estimate$post.NMAE.mean)/3,a=min(parameter),b=max(parameter))
+			error = estimate$post.NMAE.mean
+			if(is.na(error)){error = estimate$variance}
+			posterior_list[[param_name]] = rtnorm(n=nPosterior,mean=estimate$expectation,sd=sqrt(error)/3,a=min(parameter),b=max(parameter))
 
 		}
 		posterior_dataset = do.call(cbind,posterior_list)
