@@ -1,0 +1,13 @@
+Bootstrap: docker
+From: r-base:4.1.0
+
+%post
+apt-get update && apt-get -y  upgrade
+apt install -y curl
+apt install -y cmake
+R -e 'install.packages("ggpubr")'
+R -e 'install.packages("FactoMineR")'
+
+%test
+R -e 'library("ggpubr")'
+R -e 'library("FactoMineR")'

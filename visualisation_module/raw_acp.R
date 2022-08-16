@@ -6,7 +6,7 @@ args = sapply(args,function(x){tmp = unlist(strsplit(x,split='='))
 		return(y)},USE.NAMES=F)
 obs_dataset = read.table(args['obs_data'],h=T)
 first_round_dir = args['first_round_dir']
-est_model_dir = args['est_model_dir']
+est_model_dir = first_round_dir
 output = args['output']
 output_list = list()
 library(ggpubr)
@@ -31,7 +31,7 @@ col_vec = c(rep('grey',nrow(acp_data)-1),'red')
 acp = PCA(acp_data,graph=F)
 acp_plot = plot(acp,choix='ind',label='none',habillage='ind',col.hab=col_vec,cex=0.8)
 
-
+ggsave(acp_plot,filename=output)
 #### density plots ### 
 sim_res_data= do.call(rbind,sim_data)
 sim_res_data$model = model_tag
@@ -70,6 +70,7 @@ tmp_list= list_posterior_data[grep(x=colnames_posterior,pattern=param)]
 if(length(tmp_list)==0){next()}	
 for(i in 1:length(tmp_list)){tmp_list[[i]] = subset(tmp_list[[i]],select=c(param,'tag'))}
 tmp_data = do.call(rbind,tmp_list)
+if(param=='Tsplit'){save_Tsplit_data = tmp_data}
 est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag')
 est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],font.legend = c(6, "plain", "black")) + rremove('legend.title')
 }
@@ -88,6 +89,7 @@ for (param in c('Na','N1','N2')){
 		tmp_list[[i]] = subset(tmp_list[[i]],select=c(param,'tag')) }
 	}
 	tmp_data = do.call(rbind,tmp_list)
+	if(param=='Na'){save_na_data = tmp_data}
 	est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag')
 	est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],font.legend = c(6, "plain", "black")) + rremove('legend.title')
 
@@ -121,6 +123,15 @@ for (param in c('M_current','M_ancestral')){
 	est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag')
 	est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],xlim=c(0,150),font.legend = c(6, "plain", "black")) + rremove('legend.title')
 }
+#### 2D plot Tspilt vs Na
+
+tmp_data = as.data.frame(cbind(save_na_data,save_Tsplit_data))
+print(head(tmp_data))
+tmp_data = tmp_data[,-2]
+tmp_data[,c(1,2)] = apply(tmp_data[,c(1,2)],2,as.numeric)
+est_density_plotlist[['2Dplot']] = ggline(tmp_data,'Na','Tsplit',color='tag',numeric.x.axis=T)
+est_density_plotlist[['2Dplot']] = ggpar(est_density_plotlist[['2Dplot']],font.legend = c(6, "plain", "black")) + rremove('legend.title')
+print('2d plot done')
 
 est_density_plot = ggarrange(plotlist=est_density_plotlist,ncol=2,nrow=2)
 ggexport(plotlist=list(acp_plot,density_plot,est_density_plot),filename=output)

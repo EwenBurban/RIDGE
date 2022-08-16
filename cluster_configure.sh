@@ -6,3 +6,4 @@ singularity build --remote container/R.sif container/R.def
 singularity build --remote container/scrm_py.sif container/scrm_py.def
 singularity build --remote container/raisd.sif container/raisd.def
 singularity build --remote container/pcadapt.sif container/pcadapt.def
+singularity build --remote container/R_visual.sif container/R_visual.def

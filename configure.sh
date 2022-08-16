@@ -6,3 +6,4 @@ sudo singularity build container/R.sif container/R.def
 sudo singularity build container/scrm_py.sif container/scrm_py.def
 sudo singularity build container/raisd.sif container/raisd.def
 sudo singularity build container/pcadapt.sif container/pcadapt.def
+sudo singularity build container/R_visual.sif container/R_visual.def

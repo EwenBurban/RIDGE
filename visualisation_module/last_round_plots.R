@@ -7,8 +7,8 @@ args = sapply(args,function(x){tmp = unlist(strsplit(x,split='='))
 obs_dataset = read.table(args['obs_data'],h=T)
 first_round_dir = args['first_round_dir']
 last_round_dir = args['last_round_dir']
-model_filter = read.table(args['model_filter'])
 est_model_dir = args['est_model_dir']
+average_posterior_file = args['average_posterior_file']
 output = args['output']
 output_list = list()
 library(ggpubr)
@@ -26,6 +26,8 @@ last_sim_files = list.files(last_round_dir,pattern = sim_pattern,recursive = T,f
 
 last_models=sub("N_.*","N",list.dirs(path=last_round_dir,full.names = F,recursive=F))
 last_sim_data = lapply(last_sim_files,read.table,h=T)
+print(last_sim_data)
+print(last_models)
 stopifnot(length(last_sim_data)==length(last_models))
 model_tag = vector()
 for(i in 1:length(last_sim_files)){
@@ -59,9 +61,12 @@ posterior_pattern = 'posterior'
 
 posterior_files = list.files(est_model_dir,pattern = posterior_pattern,recursive = F,full.names = T)
 posterior_files  = grep(posterior_files,pattern='RandomForest',value=T,invert=T)
+posterior_files = c(posterior_files,average_posterior_file)
 posterior_namefiles = list.files(est_model_dir,pattern = posterior_pattern,recursive = F,full.names = F)
 posterior_namefiles  = grep(posterior_namefiles,pattern='RandomForest',value=T,invert=T)
 models=sub("posterior_","",posterior_namefiles)
+models = sub('.txt','',models)
+models = c(models,'average')
 print(models)
 list_posterior_data = lapply(posterior_files,read.table,h=T)
 print(length(list_posterior_data))
@@ -70,16 +75,68 @@ if(any(all_param=='dataset')){print('dataset found');all_param = all_param[-whic
 for(i in 1:length(models)){
 	list_posterior_data[[i]]$tag = rep(models[i],nrow(list_posterior_data[[i]]))
 }
-colnames_posterior = lapply(list_posterior_data,colnames)
 est_density_plotlist = list()
-for(param in all_param){
-	tmp_list= list_posterior_data[grep(x=colnames_posterior,pattern=param)]
-	
-	for(i in 1:length(tmp_list)){tmp_list[[i]] = subset(tmp_list[[i]],select=c(param,'tag'))}
-	tmp_data = do.call(rbind,tmp_list)
-	est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag')
-	est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],font.legend = c(6, "plain", "black")) + rremove('legend.title')
+colnames_posterior = lapply(list_posterior_data,colnames)
+##### Tsplit
+for (param in c('Tsplit','Tam','Tsc')){
+tmp_list= list_posterior_data[grep(x=colnames_posterior,pattern=param)]
+if(length(tmp_list)==0){next()}	
+for(i in 1:length(tmp_list)){tmp_list[[i]] = subset(tmp_list[[i]],select=c(param,'tag'))}
+tmp_data = do.call(rbind,tmp_list)
+if(param=='Tsplit'){save_Tsplit_data = tmp_data}
+est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag',palette=c(get_palette('npg',length(unique(tmp_data$tag))),'red'))
+est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],font.legend = c(6, "plain", "black")) + rremove('legend.title')
 }
-est_density_plot = ggarrange(plotlist=est_density_plotlist,ncol=2,nrow=2)
 
+
+##### N plot
+for (param in c('Na','N1','N2')){
+
+	tmp_list= list_posterior_data[grep(x=colnames_posterior,pattern=param)]
+	if(length(tmp_list)==0){next()}	
+	for(i in 1:length(tmp_list)){
+		if(any(grepl(colnames(tmp_list[[i]]),pattern='shape'))){			
+		tmp_df = tmp_list[[i]]
+		tmp_df[,param] = tmp_df[,param] * (tmp_df$shape_N_a / (tmp_df$shape_N_a + tmp_df$shape_N_b))
+		tmp_list[[i]] = subset(tmp_df,select=c(param,'tag'))
+		} else {
+		tmp_list[[i]] = subset(tmp_list[[i]],select=c(param,'tag')) }
+	}
+	tmp_data = do.call(rbind,tmp_list)
+	if(param=='Na'){save_na_data = tmp_data}
+	est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag',palette=c(get_palette('npg',length(unique(tmp_data$tag))),'red'))
+	est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],font.legend = c(6, "plain", "black")) + rremove('legend.title')
+
+}
+#### Migration plot 
+for (param in c('M_current','M_ancestral')){
+
+	tmp_list= list_posterior_data[grep(x=colnames_posterior,pattern=param)]
+	if(length(tmp_list)==0){next()}	
+
+	for(i in 1:length(tmp_list)){
+	 	if(any(grepl(colnames(tmp_list[[i]]),pattern='shape_M'))){			
+		tmp_df = tmp_list[[i]]
+		tmp_df = apply(tmp_df,1,function(x,...){
+			size = 1e2
+			a = as.numeric(x[paste0('shape_',param,'_a')])
+			b = as.numeric(x[paste0('shape_',param,'_b')])
+			barrier = as.numeric(x[paste0('Pbarrier',param)])
+			M = as.numeric(rep(x[param],size)) * (rbeta(size,a,b) / (a/(a + b)))# * sample(c(0,1),size,replace=T,prob=c(barrier,1-barrier))
+			y = as.data.frame(cbind(M,rep(x['tag'],length(M))))
+			colnames(y) = c(param,'tag')
+			return(y)})
+		tmp_list[[i]] = do.call(rbind,tmp_df)
+		} else {
+		tmp_list[[i]] = subset(tmp_list[[i]],select=c(param,'tag')) }
+	}
+	tmp_data = do.call(rbind,tmp_list)
+	tmp_data = as.data.frame(tmp_data)
+	rownames(tmp_data)= NULL
+	tmp_data[,param] = as.numeric(tmp_data[,param])
+	est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag',palette=c(get_palette('npg',length(unique(tmp_data$tag))),'red'))
+	est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],xlim=c(0,150),font.legend = c(6, "plain", "black")) + rremove('legend.title')
+}
+
+est_density_plot = ggarrange(plotlist=est_density_plotlist,ncol=2,nrow=2)
 ggexport(plotlist=list(acp_plot,density_plot,est_density_plot),filename=output)

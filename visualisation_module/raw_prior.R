@@ -6,7 +6,6 @@ args = sapply(args,function(x){tmp = unlist(strsplit(x,split='='))
 		return(y)},USE.NAMES=F)
 obs_dataset = read.table(args['obs_data'],h=T)
 first_round_dir = args['first_round_dir']
-est_model_dir = args['est_model_dir']
 output = args['output']
 output_list = list()
 library(ggpubr)
@@ -23,15 +22,15 @@ for(i in 1:length(sim_files)){
 	model_tag = c(model_tag,rep(models[i],nrow(sim_data[[i]])))
 }
 
+########### acp#####################################
 acp_data = do.call(rbind,sim_data)[,-1]
 ### add obs dataset ###
 acp_data = rbind(acp_data,obs_dataset[,-1])
 col_vec = c(rep('grey',nrow(acp_data)-1),'red')
-### acp
 acp = PCA(acp_data,graph=F)
 acp_plot = plot(acp,choix='ind',label='none',habillage='ind',col.hab=col_vec,cex=0.8)
 
-
+print('acp prior')
 #### density plots ### 
 sim_res_data= do.call(rbind,sim_data)
 sim_res_data$model = model_tag
@@ -44,41 +43,38 @@ if(var!=all_var[1]){ll[[var]]=ggpar(ll[[var]],legend='none',font.legend = c(6, "
 }
 }
 density_plot = ggarrange(plotlist = ll,ncol=2,nrow=2)
-print('density_plot done')
-#### posterior plots ###
-posterior_pattern = 'posterior'
+print('density_plot raw prior  done')
 
-posterior_files = list.files(est_model_dir,pattern = posterior_pattern,recursive = F,full.names = T)
-posterior_files  = grep(posterior_files,pattern='RandomForest',value=T,invert=T)
-posterior_namefiles = list.files(est_model_dir,pattern = posterior_pattern,recursive = F,full.names = F)
-posterior_namefiles  = grep(posterior_namefiles,pattern='RandomForest',value=T,invert=T)
-models=sub("posterior_","",posterior_namefiles)
-models = sub('.txt','',models)
-print(models)
-list_posterior_data = lapply(posterior_files,read.table,h=T)
-print(length(list_posterior_data))
-all_param = unique(unlist(lapply(list_posterior_data,colnames)))
-if(any(all_param=='dataset')){print('dataset found');all_param = all_param[-which(all_param=='dataset')]}
+########## plot prior ############################
+### gather all prior
+
+prior_pattern = 'priorfile.txt'
+prior_files = list.files(first_round_dir,pattern = prior_pattern,recursive = T,full.names = T)
+
+models=sub("N_.*","N",list.dirs(path=first_round_dir,full.names = F,recursive=F))
+prior_data = lapply(prior_files,read.table,h=T)
+stopifnot(length(prior_data)==length(models))
+
 for(i in 1:length(models)){
-	list_posterior_data[[i]]$tag = rep(models[i],nrow(list_posterior_data[[i]]))
+	prior_data[[i]]$tag = rep(models[i],nrow(prior_data[[i]]))
 }
+colnames_prior = lapply(prior_data,colnames)
 est_density_plotlist = list()
-colnames_posterior = lapply(list_posterior_data,colnames)
 ##### Tsplit
 for (param in c('Tsplit','Tam','Tsc')){
-tmp_list= list_posterior_data[grep(x=colnames_posterior,pattern=param)]
+tmp_list= prior_data[grep(x=colnames_prior,pattern=param)]
 if(length(tmp_list)==0){next()}	
 for(i in 1:length(tmp_list)){tmp_list[[i]] = subset(tmp_list[[i]],select=c(param,'tag'))}
 tmp_data = do.call(rbind,tmp_list)
+if(param=='Tsplit'){save_Tsplit_data = tmp_data}
 est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag')
 est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],font.legend = c(6, "plain", "black")) + rremove('legend.title')
 }
 
-
 ##### N plot
 for (param in c('Na','N1','N2')){
 
-	tmp_list= list_posterior_data[grep(x=colnames_posterior,pattern=param)]
+	tmp_list= prior_data[grep(x=colnames_prior,pattern=param)]
 	if(length(tmp_list)==0){next()}	
 	for(i in 1:length(tmp_list)){
 		if(any(grepl(colnames(tmp_list[[i]]),pattern='shape'))){			
@@ -88,6 +84,7 @@ for (param in c('Na','N1','N2')){
 		tmp_list[[i]] = subset(tmp_list[[i]],select=c(param,'tag')) }
 	}
 	tmp_data = do.call(rbind,tmp_list)
+	if(param=='Na'){save_na_data = tmp_data}
 	est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag')
 	est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],font.legend = c(6, "plain", "black")) + rremove('legend.title')
 
@@ -95,7 +92,7 @@ for (param in c('Na','N1','N2')){
 #### Migration plot 
 for (param in c('M_current','M_ancestral')){
 
-	tmp_list= list_posterior_data[grep(x=colnames_posterior,pattern=param)]
+	tmp_list= prior_data[grep(x=colnames_prior,pattern=param)]
 	if(length(tmp_list)==0){next()}	
 
 	for(i in 1:length(tmp_list)){
@@ -121,6 +118,6 @@ for (param in c('M_current','M_ancestral')){
 	est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag')
 	est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],xlim=c(0,150),font.legend = c(6, "plain", "black")) + rremove('legend.title')
 }
-
+print('raw prior plot')
 est_density_plot = ggarrange(plotlist=est_density_plotlist,ncol=2,nrow=2)
 ggexport(plotlist=list(acp_plot,density_plot,est_density_plot),filename=output)
