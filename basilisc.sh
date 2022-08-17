@@ -1,8 +1,16 @@
 #!/usr/bin/bash
 ## the provided argument is for --configfile, expecting the yaml file
-
+if [[ -n $SLURM_JOB_ID ]] ; then
+path=$(scontrol show job $SLURM_JOBID | awk -F= '/Command=/{print $2}')
+scontrol show job $SLURM_JOBID
+IFS=' '
+read -ra path_arr <<< "$path"
+binpath="$( cd -- "$(dirname ${path_arr[0]})" >/dev/null 2>&1 ; pwd -P )"
+else
 path=$(realpath $0)
 binpath="$( cd -- "$(dirname $path)" >/dev/null 2>&1 ; pwd -P )"
+fi
+
 
 . ${binpath}/config/config.sh
 cat ${binpath}/logo

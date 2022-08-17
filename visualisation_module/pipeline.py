@@ -53,6 +53,7 @@ rule last_round:
         first_round_dir = directory('{timeStamp}/modelComp'),
         est_model_dir = directory(last_est_model_dir),
         last_round_dir = directory(last_est_model_dir),
+        model_weight = '{timeStamp}/models_weight.txt',
         average_posterior_file = '{timeStamp}/locus_posteriors_mw.txt'
     output:
         '{timeStamp}/visualisation/last_round_plot.pdf'
@@ -61,5 +62,5 @@ rule last_round:
         {Sc}/R_visual.sif Rscript {visual_path}/last_round_plots.R obs_data={input.obs_data}\
             first_round_dir={input.first_round_dir} est_model_dir={input.est_model_dir}\
             last_round_dir={input.last_round_dir} average_posterior_file={input.average_posterior_file}\
-            output={output}
+            output={output} model_weight={input.model_weight}
         """
