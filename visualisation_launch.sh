@@ -2,7 +2,7 @@
 ## the provided argument is for --configfile, expecting the yaml file
 
 ## load the necessary environement (used for Genouest cluster)
-if [ -n $SLURM_JOB_ID ] ; then
+if [[ -n $SLURM_JOB_ID ]] ; then
 path=$(scontrol show job $SLURM_JOBID | awk -F= '/Command=/{print $2}')
 scontrol show job $SLURM_JOBID
 IFS=' '

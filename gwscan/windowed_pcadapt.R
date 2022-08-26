@@ -5,6 +5,7 @@ args = sapply(args,function(x){tmp = unlist(strsplit(x,split='='))
             y[tmp[1]] = tmp[2]
             return(y)},USE.NAMES=F)
 vcf=args['vcf']
+bed=args['bed']
 output = args['output']
 window_size  = as.numeric(args['window_size'])
 popfile = args['popfile']
@@ -28,7 +29,7 @@ name_pop[popA] = nameA
 name_pop[popB] = nameB
 ## get the number of pertinent K
 library(pcadapt)
-data = read.pcadapt(vcf,type='vcf')
+data = read.pcadapt(bed,type='bed')
 pca  = pcadapt(data,K=20)
 pvar = pca$singular.values^2
 var_of_interest = which(pvar >=0.05) # Keep only the PC that explain more than 5% of the variance

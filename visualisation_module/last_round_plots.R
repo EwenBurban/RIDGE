@@ -93,12 +93,12 @@ for (param in c('Na','N1','N2')){
 	tmp_list= list_posterior_data[grep(x=colnames_posterior,pattern=param)]
 	if(length(tmp_list)==0){next()}	
 	for(i in 1:length(tmp_list)){
-		if(any(grepl(colnames(tmp_list[[i]]),pattern='shape'))){			
+		if(any(grepl(colnames(tmp_list[[i]]),pattern='shape_N'))){			
 		tmp_df = tmp_list[[i]]
 		tmp_df = apply(tmp_df,1,function(x,...){
 			size = 1e2
-			a = as.numeric(x[paste0('shape_',param,'_a')])
-			b = as.numeric(x[paste0('shape_',param,'_b')])
+			a = as.numeric(x[,paste0('shape_','N','_a')])
+			b = as.numeric(x[,paste0('shape_','N','_b')])
 			N = as.numeric(rep(x[param],size)) * (rbeta(size,a,b) / (a/(a + b))) 
 			y = as.data.frame(cbind(N,rep(x['tag'],length(N))))
 			colnames(y) = c(param,'tag')

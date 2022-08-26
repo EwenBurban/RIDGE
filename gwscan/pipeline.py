@@ -100,8 +100,9 @@ rule pcadapt_detect:
         expand('{timeStamp}/gwscan/pcadapt_detect{tag}.txt',timeStamp=timeStamp,tag=tag)
     shell:
         """
+        {Sc}/plink.sif plink1.9 --vcf {input.vcf} --make-bed --out {timeStamp}/gwscan/plink_tmp 
         {Sc}/pcadapt.sif Rscript {gwscan_path}/windowed_pcadapt.R vcf={input.vcf} window_size={window_size} output={output}\
-                contig_file={input.contig_file} popfile={input.popfile} nameA={nameA} nameB={nameB}
+                contig_file={input.contig_file} popfile={input.popfile} nameA={nameA} nameB={nameB} bed={timeStamp}/gwscan/plink_tmp.bed
         """
 
 ########## calculating coding rate based on exon position
