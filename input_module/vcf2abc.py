@@ -9,7 +9,7 @@ popfile = argv['popfile']
 nameA = argv['nameA']
 nameB = argv['nameB']
 win_size = int(argv['window_size'])
-min_sites = 30 #TODO add a warning about this
+min_sites = 1 
 locus_write = eval(argv['locus_write'])
 global_write = eval(argv['global_write'])
 output_dir=argv['output_dir']
@@ -35,7 +35,7 @@ for contig in set(bed['chr']):
     sub_acB = acB[sel_snp]
     window_list  =np.array(bed[bed['chr']==contig][['start','end']])
 
-    sxA_arr = sxB_arr= sf_arr = ss_arr= nsites = thetaA= thetaB = TajDA = TajDB = Fst = piA = piB = dxy = da =np.empty(0)
+    sxA_arr = sxB_arr= sf_arr = ss_arr= nsites = thetaA= thetaB = TajDA = TajDB = Fst = piA = piB = dxy = da = dataset =np.empty(0)
     for window in window_list:
         sel_snp_sfs = np.where(np.logical_and(pos>=window[0],pos<=window[1])==True)[0]
         sfs_nsites = len(sel_snp_sfs)
@@ -55,6 +55,7 @@ for contig in set(bed['chr']):
             sf = (sfs[-1,0] + sfs[0,-1])/sfs_nsites
             ss = np.sum(sfs[1:-1,1:-1])/sfs_nsites
 
+            dataset_tmp = '{}:{}-{}'.format(contig,window[0],window[1])
             nsites = np.append(nsites,sfs_nsites)
             sxA_arr = np.append(sxA_arr,sxA)
             sxB_arr = np.append(sxB_arr,sxB)
@@ -69,13 +70,11 @@ for contig in set(bed['chr']):
             dxy = np.append(dxy,dxy_tmp)
             da = np.append(da,da_tmp)
             Fst = np.append(Fst,Fst_tmp)
+            dataset = np.append(dataset,dataset_tmp)
         
 
+
     #### format all arrays into a dataframe
-    chr = np.full(len(nsites),contig)
-    start = window_list[:,0]
-    end = window_list[:,1]
-    dataset = ['{}:{}-{}'.format(chr[x],start[x],end[x]) for x,y in enumerate(chr)]
     contig_stat= pd.DataFrame({'dataset':dataset,'bialsite_avg':nsites,'piA_avg':piA,'piB_avg':piB,'divAB_avg':dxy,
             'netDivAB_avg':da,'thetaA_avg':thetaA,
             'thetaB_avg':thetaB,'DtajA_avg':TajDA,'DtajB_avg':TajDB,'sxA_avg':sxA_arr,
@@ -87,7 +86,7 @@ for contig in set(bed['chr']):
 locus_stat = pd.concat(chr_stat_list,axis=0)
 locus_stat.set_index('dataset',inplace=True)
 if locus_write == True:
-    locus_stat.to_csv('{}/ABCstat_locus.txt'.format(output_dir),sep='\t',header=True,index_label='dataset',float_format='%.5f',mode='w',na_rep='NA')
+    locus_stat.to_csv('{}/ABCstat_locus.txt'.format(output_dir),sep='\t',header=True,index_label='dataset',float_format='%.5f',mode='w',na_rep='0')
 
 if global_write == True:
     avg = locus_stat.apply(np.nanmean,axis=0)
@@ -108,4 +107,4 @@ if global_write == True:
             }
     glob_stat = pd.DataFrame(pd.concat([avg,std,med,pd.Series(pearson),pd.Series(ss_sf)])).T
 
-    glob_stat.to_csv('{}/ABCstat_global.txt'.format(output_dir),sep='\t',header=True,index_label='dataset',float_format='%.5f',mode='w',na_rep='NA')
+    glob_stat.to_csv('{}/ABCstat_global.txt'.format(output_dir),sep='\t',header=True,index_label='dataset',float_format='%.5f',mode='w',na_rep='0')

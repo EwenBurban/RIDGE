@@ -11,7 +11,7 @@ window_size = config['window_size']
 popfile= timeStamp + '/'  +  config['popfile']
 contig_file=  timeStamp + '/'  + config['contig_file']
 rec_rate_map =  timeStamp + '/'  + config['rec_rate_map']
-Nthread_shape_it=8
+Nthread_shape_it=20
 ############# vcfile gather ######################
 vcf_list_files = os.listdir(timeStamp + '/rawdata')
 pattern= re.compile('.vcf')

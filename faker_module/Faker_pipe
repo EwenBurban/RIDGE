@@ -61,7 +61,7 @@ rule targets: # edit at the end
         simdata_result_prior_loc = expand('{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/{simdata_result}',timeStamp=timeStamp,sim_model=SIMULATED_MODEL,n=n,Tsplit=Tsplit,Pbar=Pbar,Mbasal=Mbasal,simdata_result='priorfile_locus.txt')
     shell:
         """
-        rm slurm*.out
+       # rm slurm*.out
         """
 ############################ generating global data ############################# DONE
 rule generate_bpfile:
