@@ -94,16 +94,13 @@ for (param in c('Na','N1','N2')){
 	if(length(tmp_list)==0){next()}	
 	for(i in 1:length(tmp_list)){
 		if(any(grepl(colnames(tmp_list[[i]]),pattern='shape_N'))){			
-			print(colnames(tmp_list[[i]]))
-		tmp_df = tmp_list[[i]]
-		tmp_df = apply(tmp_df,1,function(x,...){
+			tmp_df = tmp_list[[i]]
+			tmp_df = apply(tmp_df,1,function(x,...){
 			size = 1e2
 			a = as.numeric(x['shape_N_a'])
 			b = as.numeric(x['shape_N_b'])
 			N = as.numeric(rep(x[param],size)) * (rbeta(size,a,b) / (a/(a + b))) 
-			print(length(N))
 			y = as.data.frame(cbind(N,rep(x['tag'],length(N))))
-			print(nrow(y))
 			colnames(y) = c(param,'tag')
 			return(y)
 
@@ -113,9 +110,13 @@ for (param in c('Na','N1','N2')){
 		tmp_list[[i]] = subset(tmp_list[[i]],select=c(param,'tag')) }
 	}
 	tmp_data = do.call(rbind,tmp_list)
+	tmp_data = as.data.frame(tmp_data)
+	rownames(tmp_data)= NULL
+	tmp_data[,param] = as.numeric(tmp_data[,param])
 	est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag',palette=c(get_palette('npg',length(unique(tmp_data$tag))),'red'))
 	est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],font.legend = c(6, "plain", "black")) + rremove('legend.title')
 	warnings()
+	print(paste(param,'done'))
 }
 #### Migration plot 
 for (param in c('M_current','M_ancestral')){
@@ -146,6 +147,7 @@ for (param in c('M_current','M_ancestral')){
 	est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag',palette=c(get_palette('npg',length(unique(tmp_data$tag))),'red'))
 	est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],font.legend = c(6, "plain", "black")) + rremove('legend.title')
 	warnings()
+	print(paste(param,'done'))
 }
 
 est_density_plot = ggarrange(plotlist=est_density_plotlist,ncol=2,nrow=2)
