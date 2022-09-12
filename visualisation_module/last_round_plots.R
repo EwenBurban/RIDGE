@@ -72,6 +72,7 @@ all_param = unique(unlist(lapply(list_posterior_data,colnames)))
 if(any(all_param=='dataset')){print('dataset found');all_param = all_param[-which(all_param=='dataset')]}
 for(i in 1:length(models)){
 	list_posterior_data[[i]]$tag = rep(models[i],nrow(list_posterior_data[[i]]))
+	if(i!=length(models)){list_posterior_data[[i]]$alpha_tag = 0} else {list_posterior_data[[i]]$alpha_tag =1}
 }
 est_density_plotlist = list()
 colnames_posterior = lapply(list_posterior_data,colnames)
@@ -82,7 +83,7 @@ if(length(tmp_list)==0){next()}
 for(i in 1:length(tmp_list)){tmp_list[[i]] = subset(tmp_list[[i]],select=c(param,'tag'))}
 tmp_data = do.call(rbind,tmp_list)
 if(param=='Tsplit'){save_Tsplit_data = tmp_data}
-est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag',palette=c(get_palette('npg',length(unique(tmp_data$tag))),'red'))
+est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag',palette=c(get_palette('npg',length(unique(tmp_data$tag))-1),'red'),alpha='alpha_tag')
 est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],font.legend = c(6, "plain", "black")) + rremove('legend.title')
 }
 
@@ -113,7 +114,7 @@ for (param in c('Na','N1','N2')){
 	tmp_data = as.data.frame(tmp_data)
 	rownames(tmp_data)= NULL
 	tmp_data[,param] = as.numeric(tmp_data[,param])
-	est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag',palette=c(get_palette('npg',length(unique(tmp_data$tag))),'red'))
+	est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag',palette=c(get_palette('npg',length(unique(tmp_data$tag))-1),'red'),alpha='alpha_tag')
 	est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],font.legend = c(6, "plain", "black")) + rremove('legend.title')
 	warnings()
 	print(paste(param,'done'))
@@ -144,7 +145,7 @@ for (param in c('M_current','M_ancestral')){
 	tmp_data = as.data.frame(tmp_data)
 	rownames(tmp_data)= NULL
 	tmp_data[,param] = as.numeric(tmp_data[,param])
-	est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag',palette=c(get_palette('npg',length(unique(tmp_data$tag))),'red'))
+	est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag',palette=c(get_palette('npg',length(unique(tmp_data$tag))-1),'red'),alpha='alpha_tag')
 	est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],font.legend = c(6, "plain", "black")) + rremove('legend.title')
 	warnings()
 	print(paste(param,'done'))
