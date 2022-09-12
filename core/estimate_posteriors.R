@@ -123,8 +123,7 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
         	data = data.frame(parameter, stats_model_rf)
         	mod = regAbcrf(parameter~., data, ntree=1000)
 			estimate = predict(mod, target_rf, data)
-			error = estimate$post.NMAE.mean
-			if(is.na(error)){error = estimate$variance}
+			error = estimate$variance
 			posterior_list[[param_name]] = rtnorm(n=nPosterior,mean=estimate$expectation,sd=sqrt(error)/3,a=min(parameter),b=max(parameter))
 
 		}
