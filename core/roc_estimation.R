@@ -35,7 +35,7 @@ train_targets = read.table(train_priorfile_list,header=T,stringsAsFactors=F)
 train_targets = train_targets[order(train_targets$dataset),]
 train_data = read.table(train_ABCstat_file_list,header=T,stringsAsFactors=F)
 train_data = train_data[order(train_data$dataset),]
-
+train_targets = train_targets[match(train_data$dataset,train_targets$dataset),]
 ## curation
 dataset_col = which(colnames(train_data)=='dataset')
 train_data = as.data.frame(sapply(train_data,as.numeric))[,-dataset_col]

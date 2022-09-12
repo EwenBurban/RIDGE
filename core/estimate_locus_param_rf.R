@@ -39,7 +39,6 @@ train_priorfile_list = list.files(sim_dir,pattern = "priorfile_locus.txt",recurs
 
 train_targets = do.call(rbind,lapply(train_priorfile_list[grep(m,train_priorfile_list)],read.table,header=T,stringsAsFactors=F))
 train_targets = train_targets[order(train_targets$dataset),]
-tmp_params = tmp_params[match(tmp_ss$dataset,tmp_params$dataset),]
 if( (grepl('SI',m) | grepl('AM',m) ) & grepl('M',p)){model_param_estimation = rep(0,nrow(test_data))} else {
 
 	train_data = do.call(rbind,lapply(train_ABCstat_file_list[grep(m,train_ABCstat_file_list)],read.table,header=T,stringsAsFactors=F))
