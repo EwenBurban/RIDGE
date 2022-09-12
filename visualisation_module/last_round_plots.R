@@ -72,7 +72,7 @@ all_param = unique(unlist(lapply(list_posterior_data,colnames)))
 if(any(all_param=='dataset')){print('dataset found');all_param = all_param[-which(all_param=='dataset')]}
 for(i in 1:length(models)){
 	list_posterior_data[[i]]$tag = rep(models[i],nrow(list_posterior_data[[i]]))
-	if(i!=length(models)){list_posterior_data[[i]]$alpha_tag = 0} else {list_posterior_data[[i]]$alpha_tag =1}
+	if(i!=length(models)){list_posterior_data[[i]]$alpha_tag =  rep('0',nrow(list_posterior_data[[i]]))} else {list_posterior_data[[i]]$alpha_tag =rep('1',nrow(list_posterior_data[[i]]))}
 }
 est_density_plotlist = list()
 colnames_posterior = lapply(list_posterior_data,colnames)
