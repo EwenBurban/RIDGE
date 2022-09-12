@@ -12,7 +12,7 @@ library(ggpubr)
 
 get_pos = function(str){
     tmp=unlist(strsplit(str,split=':'))
-    chr=as.integer(sub('Chr','',tmp[1]))
+    chr=as.integer(sub('.hr','',tmp[1]))
     tmp_bis = unlist(strsplit(tmp[2],split='-'))
     start=as.integer(tmp_bis[1])
     end=as.integer(tmp_bis[2])

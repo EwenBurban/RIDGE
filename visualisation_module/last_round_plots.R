@@ -97,10 +97,12 @@ for (param in c('Na','N1','N2')){
 		tmp_df = tmp_list[[i]]
 		tmp_df = apply(tmp_df,1,function(x,...){
 			size = 1e2
-			a = as.numeric(x[,paste0('shape_','N','_a')])
-			b = as.numeric(x[,paste0('shape_','N','_b')])
+			a = as.numeric(x[,'shape_N_a'])
+			b = as.numeric(x[,'shape_N_b'])
 			N = as.numeric(rep(x[param],size)) * (rbeta(size,a,b) / (a/(a + b))) 
+			print(length(N))
 			y = as.data.frame(cbind(N,rep(x['tag'],length(N))))
+			print(nrow(y))
 			colnames(y) = c(param,'tag')
 			return(y)
 
