@@ -144,7 +144,7 @@ for (param in c('M_current','M_ancestral')){
 	rownames(tmp_data)= NULL
 	tmp_data[,param] = as.numeric(tmp_data[,param])
 	est_density_plotlist[[param]] = ggdensity(tmp_data,param,color='tag',palette=c(get_palette('npg',length(unique(tmp_data$tag))),'red'))
-	est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],xlim=c(0,150),font.legend = c(6, "plain", "black")) + rremove('legend.title')
+	est_density_plotlist[[param]] = ggpar(est_density_plotlist[[param]],font.legend = c(6, "plain", "black")) + rremove('legend.title')
 	warnings()
 }
 
