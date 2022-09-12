@@ -94,6 +94,7 @@ for (param in c('Na','N1','N2')){
 	if(length(tmp_list)==0){next()}	
 	for(i in 1:length(tmp_list)){
 		if(any(grepl(colnames(tmp_list[[i]]),pattern='shape_N'))){			
+			print(colnames(tmp_list[[i]]))
 		tmp_df = tmp_list[[i]]
 		tmp_df = apply(tmp_df,1,function(x,...){
 			size = 1e2
