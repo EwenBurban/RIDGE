@@ -17,17 +17,17 @@ all_param = c('N1','N2','Na','M_current','M_ancestral','shape_N_a','shape_N_b','
 ## zero params ## 
 zero=list()
 
-zero[['SI']] = c('M_current'=0,'M_ancestral'=0,'shape_N_a'=90,'shape_N_b'=1,'shape_M_current_a'=90,
-				 'shape_M_current_b'=1,'shape_M_ancestral_a'=90,'shape_M_ancestral_b'=1,'Tsc'=0,
+zero[['SI']] = c('M_current'=0,'M_ancestral'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,'shape_M_current_a'=1e4,
+				 'shape_M_current_b'=1e4,'shape_M_ancestral_a'=1e4,'shape_M_ancestral_b'=1e4,'Tsc'=0,
 				 'Tam'='x["Tsplit"]','PbarrierM_current'='runif(1)','PbarrierM_ancestral'='runif(1)')
-zero[['SC']] = c('M_ancestral'=0,'shape_N_a'=90,'shape_N_b'=1,'shape_M_current_a'=90,
-				 'shape_M_current_b'=1,'shape_M_ancestral_a'=90,'shape_M_ancestral_b'=1,
+zero[['SC']] = c('M_ancestral'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,'shape_M_current_a'=1e4,
+				 'shape_M_current_b'=1e4,'shape_M_ancestral_a'=1e4,'shape_M_ancestral_b'=1e4,
 				 'Tam'='x["Tsplit"]','PbarrierM_current'='runif(1)','PbarrierM_ancestral'='runif(1)')
-zero[['AM']] = c('M_current'=0,'shape_N_a'=90,'shape_N_b'=1,'shape_M_current_a'=90,
-				 'shape_M_current_b'=1,'shape_M_ancestral_a'=90,'shape_M_ancestral_b'=1,'Tsc'=0,
+zero[['AM']] = c('M_current'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,'shape_M_current_a'=1e4,
+				 'shape_M_current_b'=1e4,'shape_M_ancestral_a'=1e4,'shape_M_ancestral_b'=1e4,'Tsc'=0,
 				 'PbarrierM_current'='runif(1)','PbarrierM_ancestral'='runif(1)')
-zero[['IM']] = c('M_ancestral'=0,'shape_N_a'=90,'shape_N_b'=1,'shape_M_current_a'=90,
-				 'shape_M_current_b'=1,'shape_M_ancestral_a'=90,'shape_M_ancestral_b'=1,'Tsc'='x["Tsplit"]',
+zero[['IM']] = c('M_ancestral'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,'shape_M_current_a'=1e4,
+				 'shape_M_current_b'=1e4,'shape_M_ancestral_a'=1e4,'shape_M_ancestral_b'=1e4,'Tsc'='x["Tsplit"]',
 				 'Tam'=0,'PbarrierM_current'='runif(1)','PbarrierM_ancestral'='runif(1)')
 print(zero)
 get_zeros <- function (x,z,m,missing_param) {# a function to generate the zero values for each row of a model posterior

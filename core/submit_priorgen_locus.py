@@ -18,13 +18,13 @@ locus_data = pd.read_csv(locus_datafile,sep='\t')
 nLoci = locus_data.shape[0]
 mscommand = ""
 if "SI" in model:
-    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na} --print-model -transpose-segsites -SC abs"
+    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed} --print-model -transpose-segsites -SC abs"
 if "AM" in model:
-    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2} -ema {Tam} 0 {M_ancestral} {M_ancestral} 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -ema {Tsplit} 0 0 0 0 --print-model -transpose-segsites -SC abs"
+    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2} -ema {Tam} 0 {M_ancestral} {M_ancestral} 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -ema {Tsplit} 0 0 0 0 -seed {seed} --print-model -transpose-segsites -SC abs"
 if "SC" in model:
-    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -n 1 {N1} -n 2 {N2}  -ema {Tsc} 0 0 0 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} --print-model -transpose-segsites -SC abs"
+    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -n 1 {N1} -n 2 {N2}  -ema {Tsc} 0 0 0 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed}--print-model -transpose-segsites -SC abs"
 if "IM" in model:
-    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na} --print-model -transpose-segsites -SC abs"
+    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed} --print-model -transpose-segsites -SC abs"
 
 #### read priorfile and correct for aberation and remove useless prior
 glob_prior = pd.read_csv(priorfile,sep='\t',index_col='dataset') 
@@ -54,7 +54,7 @@ if '2N' in model:
 glob_prior = glob_prior[prior2keep]
 
 glob_prior['Pbarrier' + migration ]=0.5
-glob_prior[migration] = np.mean(glob_prior[migration])
+#glob_prior[migration] = np.mean(glob_prior[migration])
 ########################### Generate locus level parameters
 def beta_dis(X,a,b): # In case of modeBarrier == beta, apply the a and b values to a vector X of values
     scalar = np.random.beta(a,b)
@@ -66,6 +66,7 @@ def build_locusDf(param,locus_df,nLoci):
     locus_sim = pd.DataFrame([param for x in range(nLoci)]) # repeat the param line nLoci times into a DF
     locus_sim.reset_index(inplace=True,drop=True)
     locus_sim = pd.concat([locus_sim,locus_df],axis=1)
+    locus_sim['seed'] = np.random.randint(0,high = 1e18, size = nLoci)
     if 'SI' in model:
         migration = 'null'
     else:

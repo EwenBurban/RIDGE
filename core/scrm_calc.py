@@ -14,7 +14,10 @@ min_sites = 1 #TODO add a warning about this
 locus_data = pd.read_csv(locus_datafile,sep='\t')
 locus_size_it = iter(locus_data['locus_length'])
 subpop_it = ([range(0,locus_data.loc[i,'size_popA']),range(locus_data.loc[i,'size_popA'],(locus_data.loc[i,'size_popA'] + locus_data.loc[i,'size_popB']))] for i in range(locus_data.shape[0]))
-
+### control ###
+log = open('error.log','w')
+loc_num = iter(range(locus_data.shape[0]))
+#######
 def get_GT(locus_data):
     pos_list = []
     haplotype_list = []
@@ -24,9 +27,10 @@ def get_GT(locus_data):
         haplotype_list.append(np.array(snp[2:],dtype=int))
     return {'pos':np.array(pos_list,dtype=int) , 'GT':haplotype_list}
 
-def get_abcstat(gt,locus_length,subpop):
+def get_abcstat(gt,locus_length,subpop,seed):
     # when biased is true, all statistics will be calculated infering missing position as 
     # invariant sites. If biased == False, stats are calculated only on given SNP.
+        l_n = next(loc_num)
         nsites = len(gt['pos'])
         if nsites > min_sites:
             pos = gt['pos']
@@ -51,42 +55,58 @@ def get_abcstat(gt,locus_length,subpop):
             return {'bialsite_avg':nsites,'piA_avg':piA,'piB_avg':piB,'divAB_avg':dxy,
                     'netDivAB_avg':da,'thetaA_avg':thetaA,
                     'thetaB_avg':thetaB,'DtajA_avg':TajDA,'DtajB_avg':TajDB,'sxA_avg':sxA,
-                    'sxB_avg':sxB,'sf_avg':sf,'ss_avg':ss,'FST_avg':Fst}
+                    'sxB_avg':sxB,'sf_avg':sf,'ss_avg':ss,'FST_avg':Fst,'seed':seed}
+        else :
+            log.write(str(l_n) + '\n')
 
 locus_nb = 0
 in_locus = False
+in_head_locus = False
 locus_str = []
 stat = []
 header ='position'
 for line in sys.stdin:
     line = line.strip()
-    if in_locus == False and not re.search(header,line):
+
+    if in_head_locus == False and re.search('scrm',line) and in_locus==False :
+        in_head_locus =  True
+        continue
+    elif in_head_locus == True and in_locus==False :
+        seed = line 
+        in_head_locus = False
+        continue
+    elif in_locus == False and in_head_locus==False  and not re.search(header,line):
         continue
     elif in_locus == False and re.search(header,line):
         in_locus = True
         locus_str = []
         continue
-    elif (in_locus == True) and re.search('scrm',line):
+    elif in_locus == True and re.search('scrm',line):
         gt = get_GT(locus_str)
-        stat.append(get_abcstat(gt,next(locus_size_it),next(subpop_it)))
+        stat.append(get_abcstat(gt,next(locus_size_it),next(subpop_it),seed))
         in_locus = False
+        in_head_locus = True
     else:
         locus_str.append(line)
-
 gt = get_GT(locus_str)
-stat.append( get_abcstat(gt,next(locus_size_it),next(subpop_it)))
+stat.append( get_abcstat(gt,next(locus_size_it),next(subpop_it),seed))
+index = np.arange(len(stat))
+index = np.delete(index,np.where(np.array(stat)==None)[0])
 stat = list(filter(None,stat))
 locus_stat = pd.DataFrame(stat)
 locus_stat.replace(np.inf,0)
 
+log.close()
+
 if locus_write:
-    locus_stat.set_index(locus_stat.index + num_dataset*locus_stat.shape[0],inplace=True)
+    locus_stat.set_index(index + num_dataset*locus_stat.shape[0],inplace=True)
     if os.path.isfile('ABCstat_locus.txt') == False:
         locus_stat.to_csv('ABCstat_locus.txt',sep='\t',header=True,index_label='dataset',float_format='%.5f',mode='a',na_rep='0')
     else:
         locus_stat.to_csv('ABCstat_locus.txt',sep='\t',header=None,index_label='dataset',float_format='%.5f',mode='a',na_rep='0')
 
 if global_write:
+    locus_stat.drop('seed',axis=1,inplace=True)
     avg = locus_stat.apply(np.nanmean,axis=0)
     med = locus_stat.apply(np.nanmedian,axis=0)
     std = locus_stat.apply(np.nanstd,axis=0)

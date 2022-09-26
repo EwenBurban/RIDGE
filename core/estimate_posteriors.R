@@ -124,7 +124,7 @@ get_posterior<-function(nameA='spA', nameB='spB', nSubdir=10, sub_dir_sim='itera
         	mod = regAbcrf(parameter~., data, ntree=1000)
 			estimate = predict(mod, target_rf, data)
 			error = estimate$variance
-			posterior_list[[param_name]] = rtnorm(n=nPosterior,mean=estimate$expectation,sd=sqrt(error)/3,a=min(parameter),b=max(parameter))
+			posterior_list[[param_name]] = rtnorm(n=nPosterior,mean=estimate$expectation,sd=sqrt(error),a=min(parameter),b=max(parameter))
 
 		}
 		posterior_dataset = do.call(cbind,posterior_list)

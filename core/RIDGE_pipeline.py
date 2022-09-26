@@ -13,7 +13,6 @@ split_size_locus=int(nmultilocus/50)
 # model comparison
 if lightMode==False:
     nCPU_R = 8 # number of CPUs for the model comp for the model forest R functions (8)
-    nCPU_R = 1 # number of CPUs for the model comp for the model forest R functions (8)
     ntree = 1000 # number of tree for the random forest (RF) model comparison (1000)
     nIterations_model_comp = 10 # number of subdirectories for the simulations used in the RF model comparison
     nIterations_estim = 8 # number of subdirectories for the simulations used in the nnet param estimates (500)
@@ -365,8 +364,9 @@ rule simulation_locus_roc:
 
 rule estimate_roc:
     input:
-        expand("{timeStamp}/locus_sim_param/{locus_model}_roc/ABCstat_locus.txt",timeStamp=timeStamp,locus_model=locus_model),
-        expand("{timeStamp}/locus_sim_param/{locus_model}_roc/priorfile_locus.txt",timeStamp=timeStamp,locus_model=locus_model)
+        locus_estimation = expand('{timeStamp}/locus_param_estimation/{locus_model}_{param_locus}_estimate_1Pd.txt',timeStamp=timeStamp,locus_model=locus_model,param_locus=locus_param2estimate),
+        abc = expand("{timeStamp}/locus_sim_param/{locus_model}_roc/ABCstat_locus.txt",timeStamp=timeStamp,locus_model=locus_model),
+        prior = expand("{timeStamp}/locus_sim_param/{locus_model}_roc/priorfile_locus.txt",timeStamp=timeStamp,locus_model=locus_model)
     params:
         locus_model=locus_model
     output:
@@ -374,6 +374,6 @@ rule estimate_roc:
         fig = '{timeStamp}/roc_curve/roc.pdf'
     shell:
         """
-            {Sc}/R.sif Rscript {core_path}/roc_estimation.R ntree=1000 ncores=1 timeStamp={timeStamp} sim_dir=locus_sim_param/{params.locus_model}\
-                    output_dir={timeStamp}/roc_curve mig_mod=M_current
+            {Sc}/R.sif Rscript {core_path}/roc_estimation.R ntree=1000 ncores=8 timeStamp={timeStamp} sim_dir=locus_sim_param/{params.locus_model}_roc\
+                    output_dir={timeStamp}/roc_curve mig_mod=M_current locus_estimation={input.locus_estimation}
         """
