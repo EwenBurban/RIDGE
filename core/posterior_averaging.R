@@ -22,13 +22,13 @@ zero[['SI']] = c('M_current'=0,'M_ancestral'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,'
 				 'Tam'='x["Tsplit"]','PbarrierM_current'='runif(1)','PbarrierM_ancestral'='runif(1)')
 zero[['SC']] = c('M_ancestral'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,'shape_M_current_a'=1e4,
 				 'shape_M_current_b'=1e4,'shape_M_ancestral_a'=1e4,'shape_M_ancestral_b'=1e4,
-				 'Tam'='x["Tsplit"]','PbarrierM_current'='runif(1)','PbarrierM_ancestral'='runif(1)')
+				 'Tam'='x["Tsplit"]','PbarrierM_current'=0,'PbarrierM_ancestral'='runif(1)')
 zero[['AM']] = c('M_current'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,'shape_M_current_a'=1e4,
 				 'shape_M_current_b'=1e4,'shape_M_ancestral_a'=1e4,'shape_M_ancestral_b'=1e4,'Tsc'=0,
-				 'PbarrierM_current'='runif(1)','PbarrierM_ancestral'='runif(1)')
+				 'PbarrierM_current'='runif(1)','PbarrierM_ancestral'=0)
 zero[['IM']] = c('M_ancestral'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,'shape_M_current_a'=1e4,
 				 'shape_M_current_b'=1e4,'shape_M_ancestral_a'=1e4,'shape_M_ancestral_b'=1e4,'Tsc'='x["Tsplit"]',
-				 'Tam'=0,'PbarrierM_current'='runif(1)','PbarrierM_ancestral'='runif(1)')
+				 'Tam'=0,'PbarrierM_current'=0,'PbarrierM_ancestral'='runif(1)')
 print(zero)
 get_zeros <- function (x,z,m,missing_param) {# a function to generate the zero values for each row of a model posterior
 	z = zero[[m]][missing_param]

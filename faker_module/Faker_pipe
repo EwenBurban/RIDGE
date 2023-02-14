@@ -10,8 +10,8 @@ binpath = config['binpath']
 # data generation
 nMultilocus=1
 
-SIMULATED_MODEL = [config['model']] 
-
+SIMULATED_MODEL = config['model'] 
+print(SIMULATED_MODEL)
 
 # informations from the config.yaml file
 nameA = config['nameA']
@@ -34,6 +34,7 @@ binpath = binpath + '/faker_module'
 param_space = pd.read_csv(param_file,sep='\t')
 Pbar = param_space['Pbar'].dropna()
 Tsplit = param_space['Tsplit'].dropna()
+Tsplit = [int(x) for x in Tsplit]
 Mbasal = param_space['Mbasal'].dropna()
 
 ##### singularity parametrisation ####
@@ -117,6 +118,7 @@ rule generate_global_data:
          {Sc}/scrm_py.sif python3 {binpath}/vcf2abc.py data={input.vcf} \
             popfile={input.popfile} contig_file={input.contig_file} nameA={nameA}\
             nameB={nameB} window_size={L} output_dir={timeStamp}/simdata/{wildcards.sim_model}_{wildcards.n}_Ts~{wildcards.Tsplit}_Pb~{wildcards.Pbar}_Mb~{wildcards.Mbasal}
+         rm {input.vcf}
          """
 
 ######################## Generate Resume ###############
@@ -127,7 +129,7 @@ rule create_resume: # replace resume by a list of all model use. model = combina
         comb = product(SIMULATED_MODEL,n,Tsplit,Pbar,Mbasal)
         with open(timeStamp + "/resume.txt","w") as o:
             for i in comb :
-                o.write('{}_{}_Ts~{}_Pb~{}_Mb~{}'.format(*i) + '\t')
+                o.write('{}_{}_Ts~{}_Pb~{}_Mb~{}'.format(*i) + '\n')
 
 rule create_RIDGE_config:
     output:
@@ -141,7 +143,7 @@ rule create_RIDGE_config:
         list_param['useSFS'] =  0
         list_param['config_yaml'] = 'config.yaml'
         list_param['popfile'] = 'popfile.csv'
-        list_param['mu'] = 3e-8
+        list_param['mu'] = mu
         list_param['N_max'] = 2*Nref
         list_param['N_min'] = Nref/10
         list_param['container_path'] = '/home/genouest/cnrs_umr6553/eburban/RIDGE/container'

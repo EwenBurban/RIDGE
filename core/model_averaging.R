@@ -6,7 +6,7 @@ obs_pattern = "ABCstat.txt"
 sim_pattern = "ABCstat.txt"
 ntree=1000
 ncores=8
-test='FALSE'
+test=FALSE
 for(arg in commandArgs()){
   tmp = strsplit(arg, '='); opt = tmp[[1]][1]; val = tmp[[1]][2]
   if(opt == "ntree"){ntree=as.numeric(val)}
@@ -27,6 +27,14 @@ remove_param = function(table){
 	return(y)
 }
 
+model_target_generator = function(file_dir){
+	data = read.table(file_dir,h=T)
+	dir = dirname(file_dir)
+	model=sub('.*/','',dir)
+	model=sub('N_.*','N',model)
+	y=rep(model,nrow(data))
+	return(y)
+}
 #### Model weighting #####
 
 # Observed data
@@ -35,6 +43,7 @@ list_obs_dir = list.dirs(path=obs_dir,full.names = F,recursive=F)
 print(list_obs_dir)
 obs_ABCstat_file_list = file.path(obs_dir,list_obs_dir,obs_pattern)
 test_data = do.call(rbind,lapply(obs_ABCstat_file_list,read.table,header=T))[,-1]
+test=TRUE
 }else if (mode == 'single') {
 	test_data = read.table(file.path(obs_dir,obs_pattern),h=T)[,-1]
 }
@@ -47,8 +56,7 @@ if (usesfs==1){train_ABCsfs_file_list = list.files(sim_dir,pattern='ABCjsfs.txt'
 print(paste('The length of train list file is',length(train_ABCstat_file_list)))
 train_models=sub("N_.*","N",list.dirs(path=sim_dir,full.names = F,recursive=F))
 train_data = do.call(rbind,lapply(train_ABCstat_file_list,read.table,header=T,fill=T))[,-1]
-nmultilocus=sapply(train_ABCstat_file_list,function(x) nrow(read.table(x,h=T)))
-train_target = factor(rep(train_models,nmultilocus))
+train_target=factor(unlist(sapply(train_ABCstat_file_list,model_target_generator)))
 print(length(train_target))
 print(nrow(train_data))
 stopifnot(length(train_target)==nrow(train_data))
@@ -76,7 +84,7 @@ rf = abcrf(t~.,train_data_2rf,paral=T,ncores=ncores,lda=F)
 votes = predict(rf,test_data,training=train_data_2rf)$vote
 votes=votes/rowSums(votes) # normalize votes
 
-if(test=='TRUE'){
+if(test==TRUE){
 votes = as.data.frame(votes)
 stopifnot(nrow(votes)==length(list_obs_dir))
 for(o in list_obs_dir){ # write all the result inside their respective directory (in case of multiple observed data)

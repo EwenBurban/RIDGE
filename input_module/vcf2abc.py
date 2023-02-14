@@ -26,6 +26,19 @@ popB_index=list(np.where(np.in1d(data['samples'],popB_samples)==True)[0])
 acA = gt.count_alleles(subpop=popA_index)
 acB = gt.count_alleles(subpop=popB_index)
 
+def get_outlier(vec,method='supp'):
+    Q1=np.quantile(vec,0.25)
+    Q3=np.quantile(vec,0.75)
+    IQR=Q3-Q1
+    if method == 'supp' : 
+        upper_outlier_born=Q3+1.5*IQR
+        outlier=np.where(vec>upper_outlier_born)
+    elif method == 'inf' : 
+        under_outlier_born=Q1-1.5*IQR
+        outlier=np.where(vec<under_outlier_born)
+    return len(outlier[0])/len(vec)
+
+
 ### process data ###
 chr_stat_list = []
 for contig in set(bed['chr']):
@@ -49,7 +62,7 @@ for contig in set(bed['chr']):
             Fst_tmp = allel.average_hudson_fst(sub_acA[sel_snp_sfs,:],sub_acB[sel_snp_sfs,:],sfs_nsites)[0]
             thetaA_tmp = allel.watterson_theta(pos,acA,start=window[0],stop=window[1])
             thetaB_tmp =  allel.watterson_theta(pos,acB,start=window[0],stop=window[1])
-            sfs = allel.joint_sfs(acA[sel_snp_sfs,1],acB[sel_snp_sfs,1])
+            sfs = allel.joint_sfs(acA[:,1],acB[:,1],len(popA_index),len(popB_index))
             sxA = np.sum(sfs[1:-1,(0,-1)])/sfs_nsites
             sxB = np.sum(sfs[(0,-1),1:-1])/sfs_nsites
             sf = (sfs[-1,0] + sfs[0,-1])/sfs_nsites
@@ -105,6 +118,8 @@ if global_write == True:
             'noSs_sf':np.count_nonzero(np.logical_and(locus_stat['ss_avg']==0,locus_stat['sf_avg']>0)==True),
             'noSs_noSf':np.count_nonzero(np.logical_and(locus_stat['ss_avg']==0,locus_stat['sf_avg']==0)==True)
             }
-    glob_stat = pd.DataFrame(pd.concat([avg,std,med,pd.Series(pearson),pd.Series(ss_sf)])).T
+    outlier={'fst_outlier':get_outlier(locus_stat['FST_avg']),'divAB_outlier':get_outlier(locus_stat['divAB_avg']),'netDivAB_outlier':get_outlier(locus_stat['netDivAB_avg']),
+            'sf_outlier': get_outlier(locus_stat['sf_avg']),'piA_outlier':get_outlier(locus_stat['piA_avg'],method='inf'),'piB_outlier':get_outlier(locus_stat['piB_avg'],method='inf')}
+    glob_stat = pd.DataFrame(pd.concat([avg,std,med,pd.Series(pearson),pd.Series(ss_sf),pd.Series(outlier)])).T
 
     glob_stat.to_csv('{}/ABCstat_global.txt'.format(output_dir),sep='\t',header=True,index_label='dataset',float_format='%.5f',mode='w',na_rep='0')

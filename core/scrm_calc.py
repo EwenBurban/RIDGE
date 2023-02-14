@@ -27,6 +27,18 @@ def get_GT(locus_data):
         haplotype_list.append(np.array(snp[2:],dtype=int))
     return {'pos':np.array(pos_list,dtype=int) , 'GT':haplotype_list}
 
+def get_outlier(vec,method='supp'):
+    Q1=np.quantile(vec,0.25)
+    Q3=np.quantile(vec,0.75)
+    IQR=Q3-Q1
+    if method == 'supp' : 
+        upper_outlier_born=Q3+1.5*IQR
+        outlier=np.where(vec>upper_outlier_born)
+    elif method == 'inf' : 
+        under_outlier_born=Q1-1.5*IQR
+        outlier=np.where(vec<under_outlier_born)
+    return len(outlier[0])/len(vec)
+
 def get_abcstat(gt,locus_length,subpop,seed):
     # when biased is true, all statistics will be calculated infering missing position as 
     # invariant sites. If biased == False, stats are calculated only on given SNP.
@@ -46,7 +58,7 @@ def get_abcstat(gt,locus_length,subpop,seed):
             thetaB = allel.watterson_theta(pos,acB,start=1,stop=locus_length)
             TajDA = allel.tajima_d(acA,pos,start=1,stop=locus_length)
             TajDB = allel.tajima_d(acB,pos,start=1,stop=locus_length)
-            sfs = allel.joint_sfs(acA[:,1],acB[:,1])
+            sfs = allel.joint_sfs(acA[:,1],acB[:,1],len(subpop[0]),len(subpop[1]))
             sxA = np.sum(sfs[1:-1,(0,-1)])/nsites
             sxB = np.sum(sfs[(0,-1),1:-1])/nsites
             sf = (sfs[-1,0] + sfs[0,-1])/nsites
@@ -123,7 +135,9 @@ if global_write:
             'noSs_sf':np.count_nonzero(np.logical_and(locus_stat['ss_avg']==0,locus_stat['sf_avg']>0)==True),
             'noSs_noSf':np.count_nonzero(np.logical_and(locus_stat['ss_avg']==0,locus_stat['sf_avg']==0)==True)
             }
-    glob_stat = pd.DataFrame(pd.concat([avg,std,med,pd.Series(pearson),pd.Series(ss_sf)])).T
+    outlier={'fst_outlier':get_outlier(locus_stat['FST_avg']),'divAB_outlier':get_outlier(locus_stat['divAB_avg']),'netDivAB_outlier':get_outlier(locus_stat['netDivAB_avg']),
+        'sf_outlier': get_outlier(locus_stat['sf_avg']),'piA_outlier':get_outlier(locus_stat['piA_avg'],method='inf'),'piB_outlier':get_outlier(locus_stat['piB_avg'],method='inf')}
+    glob_stat = pd.DataFrame(pd.concat([avg,std,med,pd.Series(pearson),pd.Series(ss_sf),pd.Series(outlier)])).T
     glob_stat.set_index(glob_stat.index + num_dataset,inplace=True)
     if os.path.isfile('ABCstat_global.txt') == False:
         glob_stat.to_csv('ABCstat_global.txt',sep='\t',header=True,index_label='dataset',float_format='%.5f',mode='a',na_rep='0')

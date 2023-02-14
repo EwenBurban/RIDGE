@@ -38,7 +38,7 @@ for a in test:
 data.columns = header[-1].strip().split('\t')
 row_start=data.iloc[:,0:i]
 diplotypes = data.loc[:,popA + popB]
-haplotypes=diplotypes.apply(pick_haplo)
+haplotypes=diplotypes.apply(pick_haplo) #pick one haplotype for each sample
 final_data = pd.concat([row_start,haplotypes],1)
 with open(output_file,'w') as o:
     for l in header[:-1]:

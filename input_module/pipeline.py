@@ -37,6 +37,7 @@ rule targets: # edit at the end
             """
 
 rule format_vcf:
+## remove all format tags except GT 
     input:
         '{timeStamp}/rawdata/{vcf}'
     output:
@@ -47,6 +48,7 @@ rule format_vcf:
         """
 
 rule filtering:
+## remove all indels + SNP containing more than 2 alleles
     input:
         '{timeStamp}/formated/{vcf}'
     output:
@@ -57,6 +59,7 @@ rule filtering:
         """
 
 rule phasing:
+
     input:
         '{timeStamp}/filtered/{vcf}'
     output:

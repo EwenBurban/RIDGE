@@ -59,7 +59,8 @@ train_set$tag=tag
 test_set=train_data[locus_to_eval,param2kp]
 rf = abcrf(tag~.,data=train_set,ncores = ncores,ntree = ntree,paral = T,lda=F)
 pred = predict(rf,training =train_set ,obs =test_set ,paral = T,ncores=ncores)
-model_param_estimation = pred$vote[,'barrier'] / rowSums(pred$vote)
+pred$post.prob[which(pred$allocation=='non-barrier')]=1-pred$post.prob[which(pred$allocation=='non-barrier')]
+model_param_estimation=pred$post.prob
 ## roc estimation
 locus_estimation = read.table(locus_estimation,h=T)
 seq_trsh = seq(0,1,by=0.005)

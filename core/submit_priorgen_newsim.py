@@ -26,10 +26,11 @@ if "IM" in model:
     mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed} --print-model -transpose-segsites -SC abs"
 
 
-shape_bound = [0.1, 5]
+shape_bound = [0.1, 10]
 N_bound = [0, 0] # number of diploid individuals in the population
 T_bound = [0, 0] # number of generations
 M_bound = [0,0] # number of migrants per generation
+P_bound = [0,0.5]
 config_yaml = open(config_yaml, 'r')
 for i in config_yaml:
     i = i.strip().split(':')
@@ -45,8 +46,14 @@ for i in config_yaml:
         M_bound[0] = float(i[1])
     if(i[0] == 'M_max'):
         M_bound[1] = float(i[1])
+    if(i[0] == 'Pbarrier_max'):
+        P_bound[1] = float(i[1])
 config_yaml.close()
 
+import numpy as np
+
+def loguniform(low=0, high=1, size=1):
+    return np.power(10, np.random.uniform(np.log10(low), np.log10(high), size))
 
 ################## convert parameter values in coalescent units
 #Nref = (N_bound[1]+N_bound[0])/2.0
@@ -69,17 +76,19 @@ if 'SC' in model:
 if 'AM' in model:
     migration = 'M_ancestral'
     glob_prior['Tam'] = glob_prior['Tsplit'].apply(lambda x: np.random.uniform(low = min_Tam*x, high =x))
-    glob_prior[migration] = np.random.uniform(low=M_bound[0],high=M_bound[1],size = nMultilocus) 
+    glob_prior[migration] = loguniform(low=M_bound[0],high=M_bound[1],size = nMultilocus) 
 if 'SC' in model or 'IM' in model:
     migration = 'M_current'
-    glob_prior[migration] = np.random.uniform(low=M_bound[0],high=M_bound[1],size = nMultilocus)
+    glob_prior[migration] = loguniform(low=M_bound[0],high=M_bound[1],size = nMultilocus)
 if '2M' in model:
     glob_prior['shape_' + migration + '_a'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
     glob_prior['shape_' + migration + '_b'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
-    glob_prior['Pbarrier' + migration] = np.random.uniform(low=0,high=0.99,size=nMultilocus)
+    glob_prior['Pbarrier' + migration] = np.random.uniform(low=P_bound[0],high=P_bound[1],size=nMultilocus)
 if '2N' in model:
     glob_prior['shape_N_a'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
     glob_prior['shape_N_b'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
+if '3M' in model:
+    glob_prior['Pbarrier' + migration] = np.random.uniform(low=P_bound[0],high=P_bound[1],size=nMultilocus)
 
 ########################### Generate locus level parameters
 

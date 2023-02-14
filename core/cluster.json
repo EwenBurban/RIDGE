@@ -17,44 +17,23 @@
         "ntasks" : 4,
         "memPerCpu" : 2500
     },
-    "model_filtering" :
-    {
-        "ntasks" : 4,
-        "cpusPerTask" : 2,
-        "memPerCpu" : 2500
-    },
-    "model_averaging" :
-    {
-        "ntasks" : 4,
-        "cpusPerTask" : 2,
-        "memPerCpu" : 2500
-    },
-    "param_sim_2" :
+    "sim_posterior" :
     {
         "ntasks" : 4,
         "memPerCpu" : 2500
     },
-    "param_sim_3" :
+    "gof_prior" :
     {
-        "ntasks" : 4,
+        "ntasks" : 1,
         "memPerCpu" : 2500
     },
-    "param_sim_4" :
+	"estimation_posterior_and_model_weight" :
     {
-        "ntasks" : 4,
-        "memPerCpu" : 2500
-    },
-    "param_sim_5" :
-    {
-        "ntasks" : 4,
-        "memPerCpu" : 2500
+        "ntasks" : 10,
+        "cpusPerTask" : 1,
+        "memPerCpu" : 30000
     },
     "simulation_locus_roc" :
-    {
-        "ntasks" : 50,
-        "memPerCpu" : 1500
-    },
-    "simulation_locus" :
     {
         "ntasks" : 50,
         "memPerCpu" : 1500
@@ -68,11 +47,6 @@
     {
         "ntasks" : 10,
         "memPerCpu" : 50000
-    },
-    "PCA_SS" :
-    {
-	"cpusPerTask" : 1,
-	"memPerCpu" : 5000
     }
 }
 

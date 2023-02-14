@@ -24,6 +24,7 @@ popB_index=list(np.where(np.in1d(data['samples'],popB_samples)==True)[0])
 acA = gt.count_alleles(subpop=popA_index)
 acB = gt.count_alleles(subpop=popB_index)
 
+
 ### process data ###
 contig_list = list(contig_data['contig_name'])
 chr_stat_list = []
@@ -49,7 +50,7 @@ for contig in contig_list:
             Fst_tmp = allel.average_hudson_fst(sub_acA[sel_snp_sfs,:],sub_acB[sel_snp_sfs,:],sfs_nsites)[0]
             thetaA_tmp = allel.watterson_theta(pos,acA,start=window[0],stop=window[1])
             thetaB_tmp =  allel.watterson_theta(pos,acB,start=window[0],stop=window[1])
-            sfs = allel.joint_sfs(acA[sel_snp_sfs,1],acB[sel_snp_sfs,1])
+            sfs = allel.joint_sfs(acA[:,1],acB[:,1],len(popA_index),len(popB_index))
             sxA = np.sum(sfs[1:-1,(0,-1)])/sfs_nsites
             sxB = np.sum(sfs[(0,-1),1:-1])/sfs_nsites
             sf = (sfs[-1,0] + sfs[0,-1])/sfs_nsites

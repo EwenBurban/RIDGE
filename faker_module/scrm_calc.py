@@ -23,6 +23,14 @@ def get_GT(locus_data):
         haplotype_list.append(np.array(snp[2:],dtype=int))
     return {'pos':np.array(pos_list,dtype=int) , 'GT':haplotype_list}
 
+def get_P_outlier(vec):
+    Q1=np.quantile(vec,0.25)
+    Q3=np.quantile(vec,0.75)
+    IQR=Q3-Q1
+    upper_outlier_born=Q3+1.5*IQR
+    outlier=np.where(vec>upper_outlier_born)
+    return len(outlier)/len(vec)
+
 def get_abcstat(gt,locus_length,subpop):
     # when biased is true, all statistics will be calculated infering missing position as 
     # invariant sites. If biased == False, stats are calculated only on given SNP.
@@ -100,7 +108,9 @@ if global_write:
             'noSs_sf':np.count_nonzero(np.logical_and(locus_stat['ss_avg']==0,locus_stat['sf_avg']>0)==True),
             'noSs_noSf':np.count_nonzero(np.logical_and(locus_stat['ss_avg']==0,locus_stat['sf_avg']==0)==True)
             }
-    glob_stat = pd.DataFrame(pd.concat([avg,std,med,pd.Series(pearson),pd.Series(ss_sf)])).T
+    outlier={'fst_outlier':get_P_outlier(locus_stat['FST_avg']),'divAB_outlier':get_P_outlier(locus_stat['divAB_avg']),'netDivAB_outlier':get_P_outlier(locus_stat['netDivAB_avg']),
+            'piA_outlier':get_P_outlier(locus_stat['piA_avg']),'piB_outlier':get_P_outlier(locus_stat['piB_avg'])}
+    glob_stat = pd.DataFrame(pd.concat([avg,std,med,pd.Series(pearson),pd.Series(ss_sf),pd.Series(outlier)])).T
     glob_stat.set_index(glob_stat.index + num_dataset,inplace=True)
     if os.path.isfile('ABCstat_global.txt') == False:
         glob_stat.to_csv('ABCstat_global.txt',sep='\t',header=True,index_label='dataset',float_format='%.5f',mode='a',na_rep='NA')

@@ -33,7 +33,7 @@ min_Tsc = 0.05
 max_Tsc = 0.3
 min_Tam = 0.5
 max_m = 0.1
-shape_bound = [0.1,5]
+shape_bound = [5,5]
 Tsplit = Tsplit/(4*Nref)
 N = Nref/Nref
 ###### build global priors for nMultilocus datasets ######
@@ -43,21 +43,26 @@ glob_prior = pd.DataFrame({'Tsplit': np.full(nMultilocus,Tsplit),
         'N1': np.full(nMultilocus,N),
         'N2': np.full(nMultilocus,N)})
 if 'SC' in model:
-    glob_prior['Tsc'] = glob_prior['Tsplit'].apply(lambda x: np.random.uniform(low = min_Tsc * x, high = max_Tsc * x))
+    #glob_prior['Tsc'] = glob_prior['Tsplit'].apply(lambda x: np.random.uniform(low = min_Tsc * x, high = max_Tsc * x))
+    glob_prior['Tsc'] = glob_prior['Tsplit'].apply(lambda x: x*0.2)
 if 'AM' in model:
     migration = 'M_ancestral'
-    glob_prior['Tam'] = glob_prior['Tsplit'].apply(lambda x: np.random.uniform(low = min_Tam*x, high =x))
-    glob_prior[migration] = np.random.uniform(low=0,high=max_m,size = nMultilocus) * 4*Nref 
+    #glob_prior['Tam'] = glob_prior['Tsplit'].apply(lambda x: np.random.uniform(low = min_Tam*x, high =x))
+    glob_prior['Tam'] = glob_prior['Tsplit'].apply(lambda x: x* 0.7)
+    #glob_prior[migration] = np.random.uniform(low=0,high=max_m,size = nMultilocus) * 4*Nref 
+    glob_prior[migration] = np.full(nMultilocus,Mbasal) 
 if 'SC' in model or 'IM' in model:
     migration = 'M_current'
     glob_prior[migration] = np.full(nMultilocus,Mbasal) 
 if '2M' in model:
-    glob_prior['shape_' + migration + '_a'] = np.full(nMultilocus,10)   
-    glob_prior['shape_' + migration + '_b'] = np.full(nMultilocus,10)   
+    glob_prior['shape_' + migration + '_a'] = np.full(nMultilocus,5)   
+    glob_prior['shape_' + migration + '_b'] = np.full(nMultilocus,5)   
     glob_prior['Pbarrier' + migration] = np.full(nMultilocus,Pbarrier)
 if '2N' in model:
     glob_prior['shape_N_a'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
     glob_prior['shape_N_b'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
+if '3M' in model:
+    glob_prior['Pbarrier' + migration] = np.full(nMultilocus,Pbarrier)
 
 ########################### Generate locus level parameters
 
