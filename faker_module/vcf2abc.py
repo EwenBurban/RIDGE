@@ -16,7 +16,7 @@ print('Warning: window containing less than {} sites are rejected'.format(min_si
 contig_data = pd.read_csv(contig_file,sep='\t')
 popfile = pd.read_csv(popfile)
 data = allel.read_vcf(data_file)
-gt = allel.GenotypeArray(data['calldata/GT'])
+gt = allel.HaplotypeArray(data['calldata/GT'][:,:,0])
 popA_samples = popfile[nameA]
 popB_samples = popfile[nameB]
 popA_index=list(np.where(np.in1d(data['samples'],popA_samples)==True)[0])
@@ -26,6 +26,7 @@ acB = gt.count_alleles(subpop=popB_index)
 
 
 def get_outlier(vec,method='supp'):
+    vec=np.arcsin(np.sqrt(vec))
     Q1=np.quantile(vec,0.25)
     Q3=np.quantile(vec,0.75)
     IQR=Q3-Q1
@@ -60,9 +61,9 @@ for contig in contig_list:
             TajDA_tmp = allel.tajima_d(sub_acA,pos,start=window[0],stop=window[1])
             TajDB_tmp = allel.tajima_d(sub_acB,pos,start=window[0],stop=window[1])
             Fst_tmp = allel.average_hudson_fst(sub_acA[sel_snp_sfs,:],sub_acB[sel_snp_sfs,:],sfs_nsites)[0]
-            thetaA_tmp = allel.watterson_theta(pos,acA,start=window[0],stop=window[1])
-            thetaB_tmp =  allel.watterson_theta(pos,acB,start=window[0],stop=window[1])
-            sfs = allel.joint_sfs(acA[:,1],acB[:,1],len(popA_index),len(popB_index))
+            thetaA_tmp = allel.watterson_theta(pos,sub_acA,start=window[0],stop=window[1])
+            thetaB_tmp =  allel.watterson_theta(pos,sub_acB,start=window[0],stop=window[1])
+            sfs = allel.joint_sfs(sub_acA[:,1],sub_acB[:,1],len(popA_index),len(popB_index))
             sxA = np.sum(sfs[1:-1,(0,-1)])/sfs_nsites
             sxB = np.sum(sfs[(0,-1),1:-1])/sfs_nsites
             sf = (sfs[-1,0] + sfs[0,-1])/sfs_nsites

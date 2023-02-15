@@ -28,6 +28,7 @@ def get_GT(locus_data):
     return {'pos':np.array(pos_list,dtype=int) , 'GT':haplotype_list}
 
 def get_outlier(vec,method='supp'):
+    vec=np.arcsin(np.sqrt(vec))
     Q1=np.quantile(vec,0.25)
     Q3=np.quantile(vec,0.75)
     IQR=Q3-Q1
