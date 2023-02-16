@@ -56,7 +56,8 @@ zero[['AM']] = c('M_current'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,
 				 'PbarrierM_current'=0,'PbarrierM_ancestral'=0)
 zero[['IM']] = c('M_ancestral'='x["M_current"]','shape_N_a'=1e4,'shape_N_b'=1e4,
 				 'Tsc'='as.numeric(x["Tsplit"])*r',
-				 'Tam'='as.numeric(x["Tsplit"])*r','PbarrierM_current'=0,'PbarrierM_ancestral'=0)
+				 'Tam'='as.numeric(x["Tsplit"])*r','PbarrierM_current'=0,
+				 'PbarrierM_ancestral'='if(is.null(x["PbarrierM_current"])){0}else{x["PbarrierM_current"])}')
 get_zeros <- function (x,z,...) {# a function to generate the zero values for each row of a model posterior
 	r=runif(1)
 	m=sub('/','',sub('_.*','',x['model']))
