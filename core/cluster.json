@@ -29,9 +29,9 @@
     },
 	"estimation_posterior_and_model_weight" :
     {
-        "ntasks" : 10,
+        "ntasks" : 20,
         "cpusPerTask" : 1,
-        "memPerCpu" : 30000
+        "memPerCpu" : 5000
     },
     "simulation_locus_roc" :
     {

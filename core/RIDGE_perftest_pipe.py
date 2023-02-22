@@ -13,7 +13,7 @@ split_size_locus=int(nmultilocus/50)
 # data generation
 # model comparison
 if lightMode==False:
-    nCPU_R = 10 # number of CPUs for the model comp for the model forest R functions (8)
+    nCPU_R = 30 # number of CPUs for the model comp for the model forest R functions (8)
     ntree = 1000 # number of tree for the random forest (RF) model comparison (1000)
     nIterations_model_comp = 10 # number of subdirectories for the simulations used in the RF model comparison
     nIterations_estim = 8 # number of subdirectories for the simulations used in the nnet param estimates (500)
@@ -46,7 +46,6 @@ Nref = (0 + config['N_max'])/2.0 # Nref is the mid point of the prior
 window_size = config['window_size']
 config_yaml = timeStamp + '/'  +config['config_yaml']
 popfile= timeStamp + '/'  +  config['popfile']
-print(wdir)
 ############# singularity parametrisaiton #########
 container_path =binpath + '/container' 
 Sc='singularity exec --bind {0},{1} {2}'.format(binpath,timeStamp,container_path)
@@ -73,12 +72,11 @@ rule targets: # edit at the end
         ABCstat_global = expand("{wdir}/ABCstat_global.txt",wdir=wdir),
         ABCstat_locus = expand("{wdir}/ABCstat_locus.txt",wdir=wdir),
         sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
-##      gof_prior = expand("{wdir}/gof_prior.txt",wdir=wdir),
-##      posterior = expand("{wdir}/posterior.txt",wdir=wdir),
-##      mw = expand("{wdir}/model_weight.txt",wdir=wdir),
-##      sim_post_glob = expand('{wdir}/sim_posterior/ABCstat_global.txt',wdir=wdir),
-##      sim_post_loc = expand('{wdir}/sim_posterior/ABCstat_locus.txt',wdir=wdir),
-##      gof_posterior = expand("{wdir}/gof_posterior.txt",wdir=wdir),
+        gof_prior = expand("{wdir}/gof_prior.txt",wdir=wdir),
+        posterior = expand("{wdir}/posterior.txt",wdir=wdir),
+        mw = expand("{wdir}/model_weight.txt",wdir=wdir),
+        sim_post_glob = expand('{wdir}/sim_posterior/ABCstat_global.txt',wdir=wdir),
+        gof_posterior = expand("{wdir}/gof_posterior.txt",wdir=wdir)
 ##      barrier_assignation = expand('{wdir}/Pbarrier.txt',wdir=wdir),
 #        table = expand('{wdir}/roc_table.txt',wdir=wdir),
 #        fig = expand('{wdir}/roc.pdf',wdir=wdir)
@@ -136,11 +134,11 @@ rule simulationsModelComp:
 
 rule estimation_posterior_and_model_weight:
     input:
-        obs= expand("{timeStamp}/simdata/{list_dir}/ABCstat_global.txt",timeStamp=timeStamp,list_dir=list_dir),
+        obs= expand("{wdir}/ABCstat_global.txt",timeStamp=timeStamp,wdir=wdir),
         sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
     output:
-        expand("{timeStamp}/{list_dir}/posterior.txt",timeStamp=timeStamp,list_dir=list_dir),
-        expand("{timeStamp}/{list_dir}/model_weight.txt",timeStamp=timeStamp,list_dir=list_dir)
+        expand("{wdir}/posterior.txt",timeStamp=timeStamp,wdir=wdir),
+        expand("{wdir}/model_weight.txt",timeStamp=timeStamp,wdir=wdir)
     shell:
         """
         {Sc}/R.sif Rscript {core_path}/estimate_posterior_and_mw.R  \
@@ -160,7 +158,7 @@ rule gof_prior:
         expand("{timeStamp}/simdata/{list_dir}/gof_prior.txt",timeStamp=timeStamp,list_dir=list_dir)
     shell:
         """
-        {Sc}/R.sif Rscript obs_dir={timeStamp}/simdata sim_dir={timeStamp}/modelComp mode=multi output=gof_prior.txt nb_replicate={nPosterior_locus}
+        {Sc}/R.sif Rscript {core_path}/gof_estimate.R obs_dir={timeStamp}/simdata sim_dir={timeStamp}/modelComp mode=multi output=gof_prior.txt nb_replicate={nPosterior_locus} type=prior
         """
 
 
@@ -171,9 +169,7 @@ rule sim_posterior :
         gof_prior=expand("{timeStamp}/simdata/{list_dir}/gof_prior.txt",timeStamp=timeStamp,list_dir=list_dir)
     output:
         "{wdir}/sim_posterior/priorfile.txt",
-        "{wdir}/sim_posterior/priorfile_locus.txt",
         "{wdir}/sim_posterior/ABCstat_global.txt",
-        "{wdir}/sim_posterior/ABCstat_locus.txt"
     threads: 4
     resources:
         mem_mb=10000
@@ -182,7 +178,7 @@ rule sim_posterior :
         mkdir -p {wildcards.wdir}/sim_posterior/
         cd {wildcards.wdir}/sim_posterior/
         {Sc}/python.sif python3 {core_path}/submit_priorgen_gof.py \
-            locus_datafile={timeStamp}/locus_datafile locus_write=True global_write=True \
+            locus_datafile={timeStamp}/locus_datafile locus_write=False global_write=True \
             priorfile={input.posteriors} binpath={core_path} nMultilocus={nmultilocus} 
         split -l {split_size} exec.sh sub_
         chmod a+x sub_*
@@ -202,7 +198,7 @@ rule gof_posterior:
         "{wdir}/gof_posterior.txt"
     shell:
         """
-        {Sc}/R.sif Rscript obs_dir={input.obs} sim_dir={input.sim} mode=single output=gof_posterior.txt nb_replicate={nPosterior_locus}
+        {Sc}/R.sif Rscript {core_path}/gof_estimate.R obs_dir={wildcards.wdir} sim_dir={wildcards.wdir}/sim_posterior mode=single output=gof_posterior.txt nb_replicate={nPosterior_locus} type=post
         """
 ######################### Detect barrier locus ########################
 rule estimate_locus_param:

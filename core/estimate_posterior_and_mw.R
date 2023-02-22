@@ -17,34 +17,8 @@ print(nPosterior)
 ## zero params ## 
 #all_param = c('N1','N2','Na','M_current','M_ancestral','shape_N_a','shape_N_b','shape_M_current_a','shape_M_current_b','shape_M_ancestral_a','shape_M_ancestral_b','Tsc','Tam','Tsplit','PbarrierM_current','PbarrierM_ancestral')
 all_param = c('N1','N2','Na','M_current','M_ancestral','shape_N_a','shape_N_b','Tsc','Tam','Tsplit','PbarrierM_current','PbarrierM_ancestral')
-#all_param = c('M_current','Tsplit','PbarrierM_current')
 zero=list()
 
-zero[['SI']] = c('M_current'=0,'M_ancestral'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,'shape_M_current_a'=1e4,
-				 'shape_M_current_b'=1e4,'shape_M_ancestral_a'=1e4,'shape_M_ancestral_b'=1e4,'Tsc'=0,
-				 'Tam'='x["Tsplit"]','PbarrierM_current'='runif(1)','PbarrierM_ancestral'='runif(1)')
-zero[['SC']] = c('M_ancestral'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,'shape_M_current_a'=1e4,
-				 'shape_M_current_b'=1e4,'shape_M_ancestral_a'=1e4,'shape_M_ancestral_b'=1e4,
-				 'Tam'='x["Tsplit"]','PbarrierM_current'=0,'PbarrierM_ancestral'='runif(1)')
-zero[['AM']] = c('M_current'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,'shape_M_current_a'=1e4,
-				 'shape_M_current_b'=1e4,'shape_M_ancestral_a'=1e4,'shape_M_ancestral_b'=1e4,'Tsc'=0,
-				 'PbarrierM_current'='runif(1)','PbarrierM_ancestral'=0)
-zero[['IM']] = c('M_ancestral'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,'shape_M_current_a'=1e4,
-				 'shape_M_current_b'=1e4,'shape_M_ancestral_a'=1e4,'shape_M_ancestral_b'=1e4,'Tsc'='as.numeric(x["Tsplit"])*r',
-				 'Tam'='as.numeric(x["Tsplit"])*r','PbarrierM_current'=0,'PbarrierM_ancestral'=0)
-zero[['SI']] = c('M_current'=0,'M_ancestral'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,
-				 'Tsc'=0,
-				 'Tam'='x["Tsplit"]','PbarrierM_current'='runif(1,0,Pbarrier_max)','PbarrierM_ancestral'='runif(1,0,Pbarrier_max)')
-zero[['SC']] = c('M_ancestral'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,
-				 
-				 'Tam'='x["Tsplit"]','PbarrierM_current'=0,'PbarrierM_ancestral'='runif(1,0,Pbarrier_max)')
-zero[['AM']] = c('M_current'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,
-				 'Tsc'=0,
-				 'PbarrierM_current'='runif(1,0,Pbarrier_max)','PbarrierM_ancestral'=0)
-zero[['IM']] = c('M_ancestral'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,
-				 'Tsc'='as.numeric(x["Tsplit"])*r',
-				 'Tam'='as.numeric(x["Tsplit"])*r','PbarrierM_current'=0,'PbarrierM_ancestral'=0)
-### modif 2 : when no data on Pbarrier => Pbarrier=0
 zero[['SI']] = c('M_current'=0,'M_ancestral'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,
 				 'Tsc'=0,
 				 'Tam'='x["Tsplit"]','PbarrierM_current'=0,'PbarrierM_ancestral'=0)
@@ -57,11 +31,10 @@ zero[['AM']] = c('M_current'=0,'shape_N_a'=1e4,'shape_N_b'=1e4,
 zero[['IM']] = c('M_ancestral'='x["M_current"]','shape_N_a'=1e4,'shape_N_b'=1e4,
 				 'Tsc'='as.numeric(x["Tsplit"])*r',
 				 'Tam'='as.numeric(x["Tsplit"])*r','PbarrierM_current'=0,
-				 'PbarrierM_ancestral'='if(is.null(x["PbarrierM_current"])){0}else{x["PbarrierM_current"])}')
+				 'PbarrierM_ancestral'='if(is.na(x["PbarrierM_current"])){0}else{x["PbarrierM_current"]}')
 get_zeros <- function (x,z,...) {# a function to generate the zero values for each row of a model posterior
 	r=runif(1)
 	m=sub('/','',sub('_.*','',x['model']))
-	all_param = c('N1','N2','Na','M_current','M_ancestral','shape_N_a','shape_N_b','shape_M_current_a','shape_M_current_b','shape_M_ancestral_a','shape_M_ancestral_b','Tsc','Tam','Tsplit','PbarrierM_current','PbarrierM_ancestral')
 	all_param = c('N1','N2','Na','M_current','M_ancestral','shape_N_a','shape_N_b','Tsc','Tam','Tsplit','PbarrierM_current','PbarrierM_ancestral')
 	missing_param = setdiff(all_param,names(x))
 	z = zero[[m]][missing_param]
@@ -74,12 +47,16 @@ get_zeros <- function (x,z,...) {# a function to generate the zero values for ea
 ## each dataset is loaded and at same time, model of origin is extracted from file name
 ## and zero params are added
 ref_table_ld=list.dirs(ref_table_dir,full.names=T,recursive=F)
+exist=sapply(ref_table_ld,function(x){file.exists(file.path(x,'ABCstat_global.txt'))})
+ref_table_ld=ref_table_ld[exist]
+
 ref_table_data= lapply(ref_table_ld,function(x,...){
 						   ss_data=read.table(file.path(x,'ABCstat_global.txt'),h=T)
 						   prior_data=read.table(file.path(x,'priorfile.txt'),h=T)
 						   prior_data$model=sub('/','',sub('N_.*','N',sub(ref_table_dir,'',x)))
 						   zero_table=t(apply(prior_data,1,function(x,...) get_zeros(x,zero)))
 						   prior_data=as.data.frame(cbind(prior_data,zero_table))
+						   print(x)
 						   data=merge(ss_data,prior_data,by='dataset')
 						   return(data)
 				 })
@@ -106,13 +83,13 @@ print('obs data loaded')
 cv_vec=apply(ref_table_ss,2,sd,na.rm=T)/colMeans(ref_table_ss,na.rm=T)
 if(any(cv_vec<0.01)){
 	print(colnames(ref_table_ss)[which(cv_vec<0.01)])
-	sel_colnames=c(colnames(ref_table_ss)[-c(which(cv_vec<0.01),which(colnames(ref_table_ss)=='sf_outlier'))])
+	sel_colnames=c(colnames(ref_table_ss)[-which(cv_vec<0.01)])
 	print(setdiff(sel_colnames,colnames(obs_data)))
 	print(setdiff(colnames(obs_data),sel_colnames))
 	ref_table_ss=subset(ref_table_ss,select=sel_colnames)
 	obs_data=subset(obs_data,select=sel_colnames)
-}
-obs_data=subset(obs_data,select=-dataset)
+}else{
+obs_data=subset(obs_data,select=-dataset)}
 print('data filtered')
 ## generate the regression random forest for each parameter
 ## predict expected value + generate posterior for the parameter and store rf weigth in a vector
@@ -135,8 +112,11 @@ print('data filtered')
     names(res)=all_param
 ## generate posteriors
 list_posterior_table=lapply(1:nrow(obs_data),function(O,...){
-		   y=do.call(cbind,lapply(res,function(x,...) x[['posterior']][,O,drop=F]))
-		   colnames(y)=names(res)
+		weight_matrix=do.call(cbind,lapply(res,function(x,...) x$weights[,O,drop=F]))
+		quad_mean_vec=sqrt(rowMeans((weight_matrix^2)))
+		posteriors_table=ref_table_prior[sample(1:nrow(ref_table_prior),size=nPosterior-1,prob=quad_mean_vec,replace=T),]
+		posteriors_table=rbind(posteriors_table,sapply(res,function(x,...) x$posterior[nPosterior,O]))
+		return(posteriors_table)
 		   return(y)
 })
 
