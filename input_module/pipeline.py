@@ -11,6 +11,7 @@ window_size = config['window_size']
 popfile= timeStamp + '/'  +  config['popfile']
 contig_file=  timeStamp + '/'  + config['contig_file']
 rec_rate_map =  timeStamp + '/'  + config['rec_rate_map']
+ploidy=config['ploidy']
 Nthread_shape_it=20
 ############# vcfile gather ######################
 vcf_list_files = os.listdir(timeStamp + '/rawdata')
@@ -100,20 +101,15 @@ rule generate_bed_file:
         contig_file = contig_file
     params:
         nloci_per_chr_global=100,
-        nloci_per_chr_locus=1000,
         nloci_per_chr_full_locus=-1 # here -1 mean there is no sampling, all locus are analysed. 
     output:
         bed_global = '{timeStamp}/bed_global_dataset.txt',
-        bed_locus = '{timeStamp}/bed_locus_dataset.txt',
         bed_full_locus = '{timeStamp}/bed_full_locus_dataset.txt'
     shell:
         """
             {Sc}/R.sif Rscript {input_path}/generate_bed_sample.R contig_file={contig_file}\
                     window_size={window_size} nLoci_per_chr={params.nloci_per_chr_global}\
                     output={output.bed_global}
-            {Sc}/R.sif Rscript {input_path}/generate_bed_sample.R contig_file={contig_file}\
-                    window_size={window_size} nLoci_per_chr={params.nloci_per_chr_locus}\
-                    output={output.bed_locus}
             {Sc}/R.sif Rscript {input_path}/generate_bed_sample.R contig_file={contig_file}\
                     window_size={window_size} nLoci_per_chr={params.nloci_per_chr_full_locus}\
                     output={output.bed_full_locus}
@@ -138,18 +134,13 @@ rule generate_locus_datafile:
         bed_global = '{timeStamp}/bed_global_dataset.txt',
         bed_locus = '{timeStamp}/bed_locus_dataset.txt',
     output:
-        datafile = '{timeStamp}/locus_datafile',
-        datafile_locussp = '{timeStamp}/locus_datafile_locussp'
+        datafile = '{timeStamp}/locus_datafile'
     shell:
         """
             {Sc}/R.sif Rscript {input_path}/generate_locus_datafile.R \
                     rho_map={input.bed_rec_rate} bedfile={input.bed_global} mu={mu}\
                     Nref={Nref} window_size={window_size} nameA={nameA} nameB={nameB}\
-                    popfile={popfile} output={output.datafile}
-            {Sc}/R.sif Rscript {input_path}/generate_locus_datafile.R \
-                    rho_map={input.bed_rec_rate} bedfile={input.bed_locus} mu={mu}\
-                    Nref={Nref} window_size={window_size} nameA={nameA} nameB={nameB}\
-                    popfile={popfile} output={output.datafile_locussp}
+                    popfile={popfile} output={output.datafile} ploidy={ploidy}
         """
 
 rule generate_abc_stat: 

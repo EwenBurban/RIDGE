@@ -13,7 +13,7 @@ split_size_locus=int(nmultilocus/50)
 # data generation
 # model comparison
 if lightMode==False:
-    nCPU_R = 30 # number of CPUs for the model comp for the model forest R functions (8)
+    nCPU_R = 10 # number of CPUs for the model comp for the model forest R functions (8)
     ntree = 1000 # number of tree for the random forest (RF) model comparison (1000)
     nIterations_model_comp = 10 # number of subdirectories for the simulations used in the RF model comparison
     nIterations_estim = 8 # number of subdirectories for the simulations used in the nnet param estimates (500)

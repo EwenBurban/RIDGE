@@ -66,16 +66,85 @@ rule targets: # edit at the end
         ABCstat_global = expand("{timeStamp}/ABCstat_global.txt",timeStamp=timeStamp),
         ABCstat_locus = expand("{timeStamp}/ABCstat_locus.txt",timeStamp=timeStamp),
         sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
-        param_simulation = expand("{timeStamp}/sim_posterior_gof/ABCstat_global.txt",timeStamp=timeStamp),
-        param_estimation = expand("{timeStamp}posterior.txt",timeStamp=timeStamp),
-        locus_estimation = expand('{timeStamp}/locus_param_estimation/{locus_model}_{param_locus}_estimate_1Pd.txt',timeStamp=timeStamp,
-        locus_model=locus_model,param_locus=locus_param2estimate),
-        table = expand('{timeStamp}/roc_curve/roc_table.txt',timeStamp=timeStamp),
-        fig = expand('{timeStamp}/roc_curve/roc.pdf',timeStamp=timeStamp)
+        gof_prior = expand("{timeStamp}/gof_prior.txt",timeStamp=timeStamp),
+        posterior = expand("{timeStamp}/posterior.txt",timeStamp=timeStamp),
+        mw = expand("{timeStamp}/model_weight.txt",timeStamp=timeStamp),
+        sim_post_glob = expand('{timeStamp}/sim_posterior/ABCstat_global.txt',timeStamp=timeStamp),
+        gof_posterior = expand("{timeStamp}/gof_posterior.txt",timeStamp=timeStamp),
+        sim_locus = expand('{timeStamp}/sim_locus/ABCstat_locus.txt',timeStamp=timeStamp),
+        barrier_assignation = expand('{timeStamp}/Pbarrier.txt',timeStamp=timeStamp),
+        report = expand('{timeStamp}/report_barrier_detection.txt',timeStamp=timeStamp)
     shell:
             """
             echo 'done'
             """
+#### generate subsample #######
+
+rule generate_bed_file:
+    input:
+        contig_file = contig_file
+    params:
+        nloci_per_chr_global=100,
+        nloci_per_chr_full_locus=-1 # here -1 mean there is no sampling, all locus are analysed. 
+    output:
+        bed_global = '{timeStamp}/bed_global_dataset.txt',
+        bed_full_locus = '{timeStamp}/bed_full_locus_dataset.txt'
+    shell:
+        """
+            {Sc}/R.sif Rscript {core_path}/generate_bed_sample.R contig_file={contig_file}\
+                    window_size={window_size} nLoci_per_chr={params.nloci_per_chr_global}\
+                    output={output.bed_global}
+            {Sc}/R.sif Rscript {core_path}/generate_bed_sample.R contig_file={contig_file}\
+                    window_size={window_size} nLoci_per_chr={params.nloci_per_chr_full_locus}\
+                    output={output.bed_full_locus}
+        """
+rule get_rec_rate:
+    input:
+        rec_rate_map = rec_rate_map,
+        contig_file = contig_file
+    output:
+        '{timeStamp}/bed_rec_rate.txt'
+    shell:
+        """
+            {Sc}/R.sif Rscript {core_path}/get_rec_rate.R contig_file={contig_file}\
+                    window_size={window_size} rho_map={rec_rate_map} output={output}
+        """
+
+rule generate_locus_datafile:
+    input:
+        bed_rec_rate = '{timeStamp}/bed_rec_rate.txt',
+        contig_file = contig_file,
+        popfile = popfile,
+        bed_global = '{timeStamp}/bed_global_dataset.txt'
+    output:
+        datafile = '{timeStamp}/locus_datafile'
+    shell:
+        """
+            {Sc}/R.sif Rscript {core_path}/generate_locus_datafile.R \
+                    rho_map={input.bed_rec_rate} bedfile={input.bed_global} mu={mu}\
+                    Nref={Nref} window_size={window_size} nameA={nameA} nameB={nameB}\
+                    popfile={popfile} output={output.datafile} ploidy={ploidy}
+        """
+
+rule generate_abc_stat: 
+    input:
+        vcf_file = expand('{timeStamp}/haplotyped.vcf',timeStamp=timeStamp),
+        popfile = popfile,
+        bed_global = '{timeStamp}/bed_global_dataset.txt',
+        bed_locus = '{timeStamp}/bed_full_locus_dataset.txt'
+    output:
+        '{timeStamp}/ABCstat_global.txt',
+        '{timeStamp}/ABCstat_locus.txt'
+    shell:
+        """
+            {Sc}/scrm_py.sif python3 {core_path}/vcf2abc.py  data={input.vcf_file} bed_file={input.bed_global}\
+                    popfile={popfile} nameA={nameA} nameB={nameB} window_size={window_size}\
+                    locus_write="False" global_write="True" output_dir={timeStamp}
+            {Sc}/scrm_py.sif python3 {core_path}/vcf2abc.py  data={input.vcf_file} bed_file={input.bed_locus}\
+                    popfile={popfile} nameA={nameA} nameB={nameB} window_size={window_size}\
+                    locus_write="True" global_write="False" output_dir={timeStamp}
+        """
+
 ############################ generating global data ############
 
 rule simulationsModelComp:
@@ -117,45 +186,43 @@ rule estimation_posterior_and_model_weight:
         sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
     output:
         "{timeStamp}/posterior.txt",
-        "{timeStamp}/model_weight"
+        "{timeStamp}/model_weight.txt"
     shell:
         """
         {Sc}/R.sif Rscript {core_path}/estimate_posterior_and_mw.R  \
-                obs_dir={timeStamp} sim_dir={timeStamp}/modelComp ncores={nCPU_R} ntree={ntree} 
+                obs_dir={timeStamp} sim_dir={timeStamp}/modelComp ncores={nCPU_R} ntree={ntree} mode=single nPosterior={nPosterior_locus}
         """
 ### gof #####
-
 
 rule gof_prior:
     input: 
         obs= expand("{timeStamp}/ABCstat_global.txt",timeStamp=timeStamp),
         sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
     output:
-        "{timeStamp}/gof_prior.txt"
+        expand("{timeStamp}/gof_prior.txt",timeStamp=timeStamp)
     shell:
         """
-        {Sc}/R.sif Rscript obs_dir={timeStamp}/ sim_dir={timeStamp}/modelComp model=single output={output}
+        {Sc}/R.sif Rscript {core_path}/gof_estimate.R obs_dir={timeStamp} \
+                sim_dir={timeStamp}/modelComp mode=single output=gof_prior.txt \
+                nb_replicate={nPosterior_locus} type=prior
         """
 
-rule sim_posterior_gof :
+rule sim_posterior :
     input:
-        posteriors = "{timeStamp}/posterior.txt"
-    params:
-        iteration=2
+        posteriors = "{timeStamp}/posterior.txt",
+        gof_prior=expand("{timeStamp}/gof_prior.txt",timeStamp=timeStamp)
     output:
         "{timeStamp}/sim_posterior/priorfile.txt",
-        "{timeStamp}/sim_posterior/ABCstat_global.txt"
-    threads: 4
-    resources:
-        mem_mb=10000
+        "{timeStamp}/sim_posterior/ABCstat_global.txt",
+    threads: 50
     shell: 
         """
-        mkdir -p {timeStamp}/sim_posterior_gof/
-        cd {timeStamp}/sim_posterior_gof/
+        mkdir -p {timeStamp}/sim_posterior/
+        cd {timeStamp}/sim_posterior/
         {Sc}/python.sif python3 {core_path}/submit_priorgen_gof.py \
-            locus_datafile={timeStamp}/locus_datafile locus_write=True global_write=True \
+            locus_datafile={timeStamp}/locus_datafile locus_write=False global_write=True \
             priorfile={input.posteriors} binpath={core_path} nMultilocus={nmultilocus} 
-        split -l {split_size} exec.sh sub_
+        split -l {split_size_locus} exec.sh sub_
         chmod a+x sub_*
         list=(sub_*)
         for ll in ${{list[@]}}; do echo ./$ll >> tmp_exec.sh; done
@@ -166,53 +233,55 @@ rule sim_posterior_gof :
 
 rule gof_posterior:
     input:
-        obs= expand("{timeStamp}/ABCstat_global.txt",timeStamp=timeStamp),
-        sim=expand("{timeStamp}/sim_posterior/ABCstat_global.txt",timeStamp=timeStamp)
+        obs= "{timeStamp}/ABCstat_global.txt",
+        posteriors = "{timeStamp}/posterior.txt",
+        sim="{timeStamp}/sim_posterior/ABCstat_global.txt"
     output:
         "{timeStamp}/gof_posterior.txt"
     shell:
         """
-        {Sc}/R.sif Rscript obs_dir={timeStamp}/ sim_dir={timeStamp}/modelComp model=single output={output}
+        {Sc}/R.sif Rscript {core_path}/gof_estimate.R obs_dir={timeStamp} \
+                sim_dir={timeStamp}/sim_posterior mode=single \
+                output=gof_posterior.txt nb_replicate={nPosterior_locus} type=post
         """
-
 ########################### Generate locus data ####################
 
-rule simulation_locus_roc: 
+rule simulation_locus: 
     input:
-        post = "{timeStamp}/locus_posteriors_mw.txt",
-        locus_datafile = "{timeStamp}/locus_datafile_locussp"
+        post = "{timeStamp}/posterior.txt",
+        locus_datafile = "{timeStamp}/locus_datafile"
     output:
-        "{timeStamp}/locus_sim_param/{locus_model}_roc/ABCstat_locus.txt",
-        "{timeStamp}/locus_sim_param/{locus_model}_roc/priorfile_locus.txt"
+        "{timeStamp}/sim_locus/ABCstat_locus.txt",
+        "{timeStamp}/sim_locus/priorfile_locus.txt"
     threads: 50
     shell:
         """
-        mkdir -p {timeStamp}/locus_sim_param/{wildcards.locus_model}_roc
-        cd {timeStamp}/locus_sim_param/{wildcards.locus_model}_roc
-        {Sc}/python.sif python3 {core_path}/submit_priorgen_locus.py model={wildcards.locus_model} \
+        mkdir -p {timeStamp}/sim_locus
+        cd {timeStamp}/sim_locus
+        {Sc}/python.sif python3 {core_path}/submit_priorgen_locus.py  \
             locus_datafile={input.locus_datafile} \
-            config_yaml={config_yaml} binpath={core_path} nMultilocus={nmultilocus} priorfile={input.post} locus_write=True global_write=True 
+            config_yaml={config_yaml} binpath={core_path} nMultilocus=1000 priorfile={input.post} locus_write=True global_write=False 
         split exec.sh -l{split_size_locus} sub_exec
         list_sub=(sub_exec*)
         for sub in ${{list_sub[@]}}; do echo sh $sub >> tmp_exec.sh; done
         {Sc}/scrm_py.sif parallel -a tmp_exec.sh -j 50
         rm tmp_exec.sh sub_exec* exec.sh
         sed -i '2,${{/dataset/d}}' ABCstat_locus.txt
-        if [[ -e ABCjsfs_locus.txt ]] ;then sed -i '2,${{/dataset/d}}' ABCjsfs_locus.txt ;fi
         """
 
-rule estimate_roc:
+######################### Detect barrier locus ########################
+rule barrier_detection:
     input:
-        locus_estimation = expand('{timeStamp}/locus_param_estimation/{locus_model}_{param_locus}_estimate_1Pd.txt',timeStamp=timeStamp,locus_model=locus_model,param_locus=locus_param2estimate),
-        abc = expand("{timeStamp}/locus_sim_param/{locus_model}_roc/ABCstat_locus.txt",timeStamp=timeStamp,locus_model=locus_model),
-        prior = expand("{timeStamp}/locus_sim_param/{locus_model}_roc/priorfile_locus.txt",timeStamp=timeStamp,locus_model=locus_model)
-    params:
-        locus_model=locus_model
+        "{timeStamp}/sim_locus/ABCstat_locus.txt",
+        "{timeStamp}/sim_locus/priorfile_locus.txt"
     output:
-        table = '{timeStamp}/roc_curve/roc_table.txt',
-        fig = '{timeStamp}/roc_curve/roc.pdf'
+        '{timeStamp}/Pbarrier.txt',
+        '{timeStamp}/report_barrier_detection.txt'
+    threads: 8
     shell:
         """
-            {Sc}/R.sif Rscript {core_path}/roc_estimation.R ntree=1000 ncores=8 timeStamp={timeStamp} sim_dir=locus_sim_param/{params.locus_model}_roc\
-                    output_dir={timeStamp}/roc_curve mig_mod=M_current locus_estimation={input.locus_estimation}
+        {Sc}/R.sif Rscript {core_path}/barrier_detection.R  ncores=8\
+                ntree={ntree} obs_dir={timeStamp}/ \
+                sim_dir={wildcards.timeStamp}/sim_locus/ mode=normal \
+                posterior={timeStamp}/posterior.txt
         """

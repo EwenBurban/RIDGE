@@ -73,8 +73,6 @@ if (mode=='single'){
 if (mode=='multi'){
 	list_obs_dir=obs_dir
 	list_obs_dir = list.dirs(path=obs_dir,full.names = T,recursive=F)
-#	list_obs_dir = sample(list_obs_dir,size=720,replace=T)
-	print('Warning, subsampling has been added line 83 for testrun, remove it for real runs + remove the sf/df_outlier addition line 93')
 	print(list_obs_dir)
 	obs_data = do.call(rbind,lapply(file.path(list_obs_dir,'ABCstat_global.txt'),read.table,h=T))
 }
@@ -113,8 +111,9 @@ print('data filtered')
 ## generate posteriors
 list_posterior_table=lapply(1:nrow(obs_data),function(O,...){
 		weight_matrix=do.call(cbind,lapply(res,function(x,...) x$weights[,O,drop=F]))
-		quad_mean_vec=sqrt(rowMeans((weight_matrix^2)))
-		posteriors_table=ref_table_prior[sample(1:nrow(ref_table_prior),size=nPosterior-1,prob=quad_mean_vec,replace=T),]
+		mean_vec=rowMeans(weight_matrix)
+		## mean weigth are used to sample parameter set as a sampling probability
+		posteriors_table=ref_table_prior[sample(1:nrow(ref_table_prior),size=nPosterior-1,prob=mean_vec,replace=T),]
 		posteriors_table=rbind(posteriors_table,sapply(res,function(x,...) x$posterior[nPosterior,O]))
 		return(posteriors_table)
 		   return(y)

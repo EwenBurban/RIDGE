@@ -22,30 +22,20 @@
         "ntasks" : 4,
         "memPerCpu" : 2500
     },
-    "gof_prior" :
+    "estimation_posterior_and_model_weight" :
     {
-        "ntasks" : 1,
+        "ntasks" : 8,
+        "cpusPerTask" : 1,
+        "memPerCpu" : 3000
+    },
+    "simulation_locus" :
+    {
+        "ntasks" : 4,
         "memPerCpu" : 2500
     },
-	"estimation_posterior_and_model_weight" :
+    "barrier_detection":
     {
-        "ntasks" : 20,
-        "cpusPerTask" : 1,
-        "memPerCpu" : 5000
-    },
-    "simulation_locus_roc" :
-    {
-        "ntasks" : 50,
-        "memPerCpu" : 1500
-    },
-    "estimate_roc":
-    {
-        "ntasks" : 5,
-        "memPerCpu" : 50000
-    },
-    "estimate_locus_param":
-    {
-        "ntasks" : 10,
+        "ntasks" : 8,
         "memPerCpu" : 50000
     }
 }
