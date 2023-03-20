@@ -33,15 +33,16 @@ dna_window = function(start,end,size,step=NULL){
 rec_rate_list = list()
 for (i in 1:nrow(contig_data)){
 	contig_name = contig_data[i,'contig_name']
+	index = contig_data[i,'index']
 	contig_length = contig_data[i,'contig_length']
 	win_seq = dna_window(1,contig_length,size=window_size)
 	y = 0
 	tmp = lapply(win_seq,function(x,...){
 		mean_point = mean(x)
-		rec_rate = subset(rho_map,subset=rho_map$chr == contig_name & rho_map$start <= mean_point & rho_map$end >= mean_point)['rec_rate'][[1]]
+		rec_rate = subset(rho_map,subset=chr == index & start <= mean_point & end >= mean_point)['r'][[1]]
 		if(identical(rec_rate,numeric(0))){rec_rate=NA}
 		if(length(rec_rate)>1){rec_rate=mean(rec_rate,na.rm=T)}
-		res = c('chr' = contig_name, 'start' = x[,'start'] , 'end' = x[,'end'],'rec_rate' = rec_rate)
+		res = c('chr' = contig_name, 'start' = x[,'start'] , 'end' = x[,'end'],'rec.rate' = rec_rate)
 		return(res)
 		})
 	rec_rate_list[[i]] =  do.call(rbind,tmp)

@@ -17,11 +17,11 @@ cat ${binpath}/logo
 ## directory of the code
 if [[ $mode != cluster ]]; then 
 ## without slurm
-snakemake --snakefile ${binpath}/input_module/pipeline.py -p -j ${ntask_load} --configfile ${1} --config binpath=${binpath} --latency-wait 60 --nolock 
-snakemake --snakefile ${binpath}/gwscan/pipeline.py -p -j ${ntask_load} --configfile ${1} --config binpath=${binpath} --latency-wait 60 --nolock
-snakemake --snakefile ${binpath}/core/RIDGE_pipeline.py -p -j ${ntask_load} --until "model_filtering" --configfile ${1}  --config binpath=${binpath}  mode=single --latency-wait 60 --nolock
-snakemake --snakefile ${binpath}/core/RIDGE_pipeline.py   -p -j ${ntask_load} --configfile ${1}   --config binpath=${binpath}  mode=single --latency-wait 60 --nolock
-snakemake --snakefile ${binpath}/visualisation_module/pipeline.py -p -j ${ntask_load} --configfile ${1} --config binpath=${binpath} --latency-wait 60 --nolock 
+#snakemake --snakefile ${binpath}/input_module/pipeline.py -p -j ${ntask_load} --configfile ${1} --config binpath=${binpath} --latency-wait 60 --nolock 
+#snakemake --snakefile ${binpath}/gwscan/pipeline.py -p -j ${ntask_load} --configfile ${1} --config binpath=${binpath} --latency-wait 60 --nolock
+snakemake --snakefile ${binpath}/core/RIDGE_V2_pipeline.py -p -j ${ntask_load} --configfile ${1}  --config binpath=${binpath} --latency-wait 60 --nolock -r --max-threads=100
+#snakemake --snakefile ${binpath}/core/RIDGE_pipeline.py   -p -j ${ntask_load} --configfile ${1}   --config binpath=${binpath}  mode=single --latency-wait 60 --nolock
+#snakemake --snakefile ${binpath}/visualisation_module/pipeline.py -p -j ${ntask_load} --configfile ${1} --config binpath=${binpath} --latency-wait 60 --nolock 
 else
 ## cluster version with slurm | If you use the cluster version, you must edit the file cluster.json to adapt it to your cluster
 #snakemake --snakefile ${binpath}/input_module/pipeline.py -p -j ${ntask_load} --configfile ${1}  --config binpath=${binpath} --cluster-config ${binpath}/input_module/cluster.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.n} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p} "  --latency-wait 60 --nolock  

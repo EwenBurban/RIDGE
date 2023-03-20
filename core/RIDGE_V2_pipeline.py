@@ -31,14 +31,16 @@ MODELS_COMP = ['SC_1M_1N', 'SC_1M_2N', 'SC_3M_1N', 'SC_3M_2N', 'AM_1M_1N', 'AM_1
 # informations from the config.yaml file
 nameA = config['nameA']
 nameB = config['nameB']
-useSFS = config['useSFS']
 timeStamp = config['timeStamp']
-nMin = config['nMin']
 Nref = config['Nref'] # Nref is the mid point of the prior
 window_size = config['window_size']
 config_yaml = timeStamp + '/'  +config['config_yaml']
 popfile= timeStamp + '/'  +  config['popfile']
-mode= config['mode']
+contig_file=timeStamp + '/' + config['contig_data']
+rec_rate_map=timeStamp + '/' + config['rec_rate_map']
+vcf_file=timeStamp + '/' + config['vcf_file']
+ploidy=config['ploidy']
+mu=config['mu']
 ############# singularity parametrisaiton #########
 container_path =binpath + '/container' 
 Sc='singularity exec --bind {0},{1} {2}'.format(binpath,timeStamp,container_path)
@@ -128,7 +130,7 @@ rule generate_locus_datafile:
 
 rule generate_abc_stat: 
     input:
-        vcf_file = expand('{timeStamp}/haplotyped.vcf',timeStamp=timeStamp),
+        vcf_file = vcf_file,
         popfile = popfile,
         bed_global = '{timeStamp}/bed_global_dataset.txt',
         bed_locus = '{timeStamp}/bed_full_locus_dataset.txt'
@@ -139,10 +141,10 @@ rule generate_abc_stat:
         """
             {Sc}/scrm_py.sif python3 {core_path}/vcf2abc.py  data={input.vcf_file} bed_file={input.bed_global}\
                     popfile={popfile} nameA={nameA} nameB={nameB} window_size={window_size}\
-                    locus_write="False" global_write="True" output_dir={timeStamp}
+                    locus_write="False" global_write="True" output_dir={timeStamp} ploidy={ploidy}
             {Sc}/scrm_py.sif python3 {core_path}/vcf2abc.py  data={input.vcf_file} bed_file={input.bed_locus}\
                     popfile={popfile} nameA={nameA} nameB={nameB} window_size={window_size}\
-                    locus_write="True" global_write="False" output_dir={timeStamp}
+                    locus_write="True" global_write="False" output_dir={timeStamp} ploidy={ploidy}
         """
 
 ############################ generating global data ############
@@ -226,7 +228,7 @@ rule sim_posterior :
         chmod a+x sub_*
         list=(sub_*)
         for ll in ${{list[@]}}; do echo ./$ll >> tmp_exec.sh; done
-        {Sc}/scrm_py.sif parallel -a tmp_exec.sh -j 4 --halt now,fail=1
+        {Sc}/scrm_py.sif parallel -a tmp_exec.sh
         rm exec.sh tmp_exec.sh sub* 
         sed -i '2,${{/dataset/d}}' ABC*.txt
         """
@@ -264,7 +266,7 @@ rule simulation_locus:
         split exec.sh -l{split_size_locus} sub_exec
         list_sub=(sub_exec*)
         for sub in ${{list_sub[@]}}; do echo sh $sub >> tmp_exec.sh; done
-        {Sc}/scrm_py.sif parallel -a tmp_exec.sh -j 50
+        {Sc}/scrm_py.sif parallel -a tmp_exec.sh
         rm tmp_exec.sh sub_exec* exec.sh
         sed -i '2,${{/dataset/d}}' ABCstat_locus.txt
         """

@@ -9,7 +9,7 @@ popfile = argv['popfile']
 nameA = argv['nameA']
 nameB = argv['nameB']
 win_size = int(argv['window_size'])
-min_sites = 1 
+min_sites = 3 
 locus_write = eval(argv['locus_write'])
 global_write = eval(argv['global_write'])
 output_dir=argv['output_dir']
@@ -54,24 +54,25 @@ for contig in set(bed['chr']):
     for window in window_list:
         sel_snp_sfs = np.where(np.logical_and(pos>=window[0],pos<=window[1])==True)[0]
         sfs_nsites = len(sel_snp_sfs)
+
         if sfs_nsites >= min_sites:
             piA_tmp = allel.sequence_diversity(pos,sub_acA,start=window[0],stop=window[1])
+            piA_cc = np.sum(allel.mean_pairwise_difference(acA[sel_snp_sfs]))/win_size
             piB_tmp= allel.sequence_diversity(pos,sub_acB,start=window[0],stop=window[1])
             dxy_tmp = allel.sequence_divergence(pos,sub_acA,sub_acB,start=window[0],stop=window[1])
             da_tmp = dxy_tmp - (piA_tmp + piB_tmp)/2
             TajDA_tmp = allel.tajima_d(sub_acA,pos,start=window[0],stop=window[1])
             TajDB_tmp = allel.tajima_d(sub_acB,pos,start=window[0],stop=window[1])
-            Fst_tmp = allel.average_hudson_fst(sub_acA[sel_snp_sfs,:],sub_acB[sel_snp_sfs,:],sfs_nsites)[0]
+            Fst_tmp = np.sum(allel.hudson_fst(sub_acA[sel_snp_sfs,:],sub_acB[sel_snp_sfs,:]))/(window[1]-window[0])
             thetaA_tmp = allel.watterson_theta(pos,sub_acA,start=window[0],stop=window[1])
             thetaB_tmp =  allel.watterson_theta(pos,sub_acB,start=window[0],stop=window[1])
-            sfs = allel.joint_sfs(sub_acA[:,1],sub_acB[:,1],len(popA_index)*ploidy,len(popB_index)*ploidy)
+            sfs_acA=acA[sel_snp_sfs]
+            sfs_acB=acB[sel_snp_sfs]
+            sfs = allel.joint_sfs(sfs_acA[:,1],sfs_acB[:,1],len(popA_index)*ploidy,len(popB_index)*ploidy)
             sxA = np.sum(sfs[1:-1,(0,-1)])/sfs_nsites
             sxB = np.sum(sfs[(0,-1),1:-1])/sfs_nsites
             sf = (sfs[-1,0] + sfs[0,-1])/sfs_nsites
             ss = np.sum(sfs[1:-1,1:-1])/sfs_nsites
-            if sxA + sxB + sf + ss != 1:
-                print('sum of joint sfs summary stats != 1, there is a mispecification on diploidy')
-                exit()
             dataset_tmp = '{}:{}-{}'.format(contig,window[0],window[1])
             nsites = np.append(nsites,sfs_nsites)
             sxA_arr = np.append(sxA_arr,sxA)
