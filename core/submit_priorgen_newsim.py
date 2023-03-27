@@ -48,6 +48,8 @@ for i in config_yaml:
         M_bound[1] = float(i[1])
     if(i[0] == 'Pbarrier_max'):
         P_bound[1] = float(i[1])
+    if(i[0] == 'ploidy'):
+        ploidy = int(i[1])
 config_yaml.close()
 
 import numpy as np
@@ -60,8 +62,8 @@ def loguniform(low=0, high=1, size=1):
 Nref = (0+N_bound[1])/2.0
 N_bound[0] /= Nref
 N_bound[1] /= Nref
-T_bound[0] /= (4*Nref)
-T_bound[1] /= (4*Nref)
+T_bound[0] /= (2*ploidy*Nref)
+T_bound[1] /= (2*ploidy*Nref)
 min_Tsc = 0.05
 max_Tsc = 0.3
 min_Tam = 0.5

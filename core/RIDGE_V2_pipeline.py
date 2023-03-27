@@ -41,75 +41,75 @@ rec_rate_map=timeStamp + '/' + config['rec_rate_map']
 vcf_file=timeStamp + '/' + config['vcf_file']
 ploidy=config['ploidy']
 mu=config['mu']
+homo_rec=config['homo_rec']
+homo_rec_rate=config['homo_rec_rate']
+mode=config['mode']
+nlocus_per_chr=config['nlocus_per_chr']
 ############# singularity parametrisaiton #########
 container_path =binpath + '/container' 
 Sc='singularity exec --bind {0},{1} {2}'.format(binpath,timeStamp,container_path)
-def_container='python3-pd.sif'
-############### locus model ################
-locus_model=['IM_3M_2N'] # list of model used to test the barrier
-# IM test for current and ancestral barriers
-# SC test for recent current barriers
-# AM test for ancestral barriers
-locus_param2estimate = ['M_current']
 ############### wildcards management ############## 
 # Prevent Snakemake to use regex behavior on wildcards
 wildcard_constraints:
     timeStamp=timeStamp,
     binpath=binpath,
-    model='|'.join(MODELS_COMP),
-    locus_model = '|'.join(locus_model),
-    param_locus = '|'.join(locus_param2estimate),
-    j='|'.join([str(x) for x in range(100)])
+    model='|'.join(MODELS_COMP)
 
 ############## End of Pipeline & Targets ############
+if mode=='scan' : 
+    expected_output=['ABCstat_locus.txt']
+elif mode=='test' : 
+    expected_output=['ABCstat_locus.txt','locus_datafile']
+else :
+    expected_output=['ABCstat_global.txt','ABCstat_locus.txt','gof_prior.txt',
+            'gof_posterior.txt','posterior.txt','model_weight.txt',
+            'Pbarrier.txt','report_barrier_detection.txt','QC_plot/QC_prior.pdf','QC_plot/QC_posterior_density.pdf','QC_plot/QC_posterior_acp.pdf']
+
 rule targets: # edit at the end 
     input:
-        bpfile = expand("{timeStamp}/locus_datafile", timeStamp=timeStamp),
-        ABCstat_global = expand("{timeStamp}/ABCstat_global.txt",timeStamp=timeStamp),
-        ABCstat_locus = expand("{timeStamp}/ABCstat_locus.txt",timeStamp=timeStamp),
-        sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
-        gof_prior = expand("{timeStamp}/gof_prior.txt",timeStamp=timeStamp),
-        posterior = expand("{timeStamp}/posterior.txt",timeStamp=timeStamp),
-        mw = expand("{timeStamp}/model_weight.txt",timeStamp=timeStamp),
-        sim_post_glob = expand('{timeStamp}/sim_posterior/ABCstat_global.txt',timeStamp=timeStamp),
-        gof_posterior = expand("{timeStamp}/gof_posterior.txt",timeStamp=timeStamp),
-        sim_locus = expand('{timeStamp}/sim_locus/ABCstat_locus.txt',timeStamp=timeStamp),
-        barrier_assignation = expand('{timeStamp}/Pbarrier.txt',timeStamp=timeStamp),
-        report = expand('{timeStamp}/report_barrier_detection.txt',timeStamp=timeStamp)
+        outputs=expand('{timeStamp}/{expected_output}',timeStamp=timeStamp,expected_output=expected_output)
     shell:
             """
             echo 'done'
             """
 #### generate subsample #######
 
-rule generate_bed_file:
+rule generate_bed_file_global:
     input:
         contig_file = contig_file
     params:
-        nloci_per_chr_global=100,
-        nloci_per_chr_full_locus=-1 # here -1 mean there is no sampling, all locus are analysed. 
+        nloci_per_chr_global=nlocus_per_chr
     output:
-        bed_global = '{timeStamp}/bed_global_dataset.txt',
-        bed_full_locus = '{timeStamp}/bed_full_locus_dataset.txt'
+        bed_global = '{timeStamp}/bed_global_dataset.txt'
     shell:
         """
             {Sc}/R.sif Rscript {core_path}/generate_bed_sample.R contig_file={contig_file}\
                     window_size={window_size} nLoci_per_chr={params.nloci_per_chr_global}\
                     output={output.bed_global}
+        """
+rule generate_bed_file_locus:
+    input:
+        contig_file = contig_file
+    params:
+        nloci_per_chr_full_locus=-1 # here -1 mean there is no sampling, all locus are analysed. 
+    output:
+        bed_full_locus = '{timeStamp}/bed_full_locus_dataset.txt'
+    shell:
+        """
             {Sc}/R.sif Rscript {core_path}/generate_bed_sample.R contig_file={contig_file}\
                     window_size={window_size} nLoci_per_chr={params.nloci_per_chr_full_locus}\
                     output={output.bed_full_locus}
         """
 rule get_rec_rate:
     input:
-        rec_rate_map = rec_rate_map,
         contig_file = contig_file
     output:
         '{timeStamp}/bed_rec_rate.txt'
     shell:
         """
             {Sc}/R.sif Rscript {core_path}/get_rec_rate.R contig_file={contig_file}\
-                    window_size={window_size} rho_map={rec_rate_map} output={output}
+                    window_size={window_size} rho_map={rec_rate_map} output={output}\
+                    homo_rec={homo_rec} homo_rec_rate={homo_rec_rate}
         """
 
 rule generate_locus_datafile:
@@ -128,25 +128,33 @@ rule generate_locus_datafile:
                     popfile={popfile} output={output.datafile} ploidy={ploidy}
         """
 
-rule generate_abc_stat: 
+rule generate_abc_stat_global: 
     input:
         vcf_file = vcf_file,
         popfile = popfile,
-        bed_global = '{timeStamp}/bed_global_dataset.txt',
-        bed_locus = '{timeStamp}/bed_full_locus_dataset.txt'
+        bed_global = '{timeStamp}/bed_global_dataset.txt'
     output:
-        '{timeStamp}/ABCstat_global.txt',
-        '{timeStamp}/ABCstat_locus.txt'
+        '{timeStamp}/ABCstat_global.txt'
     shell:
         """
             {Sc}/scrm_py.sif python3 {core_path}/vcf2abc.py  data={input.vcf_file} bed_file={input.bed_global}\
                     popfile={popfile} nameA={nameA} nameB={nameB} window_size={window_size}\
                     locus_write="False" global_write="True" output_dir={timeStamp} ploidy={ploidy}
+        """
+
+rule generate_abc_stat_locus: 
+    input:
+        vcf_file = vcf_file,
+        popfile = popfile,
+        bed_locus = '{timeStamp}/bed_full_locus_dataset.txt'
+    output:
+        '{timeStamp}/ABCstat_locus.txt'
+    shell:
+        """
             {Sc}/scrm_py.sif python3 {core_path}/vcf2abc.py  data={input.vcf_file} bed_file={input.bed_locus}\
                     popfile={popfile} nameA={nameA} nameB={nameB} window_size={window_size}\
                     locus_write="True" global_write="False" output_dir={timeStamp} ploidy={ploidy}
         """
-
 ############################ generating global data ############
 
 rule simulationsModelComp:
@@ -154,6 +162,7 @@ rule simulationsModelComp:
         nmultilocus={nmultilocus}
     input:
         locus_datafile = "{timeStamp}/locus_datafile",
+        acb_global = "{timeStamp}/ABCstat_global.txt",
     output:
         "{timeStamp}/modelComp/{model}_{i}/priorfile.txt",
         "{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",
@@ -287,3 +296,33 @@ rule barrier_detection:
                 sim_dir={wildcards.timeStamp}/sim_locus/ mode=normal \
                 posterior={timeStamp}/posterior.txt
         """
+
+
+####################### QC_plot ############################
+
+rule QC_prior:
+    input:
+        '{timeStamp}/ABCstat_locus.txt',
+        '{timeStamp}/ABCstat_global.txt'
+    output:
+        '{timeStamp}/QC_plot/QC_prior.pdf'
+    shell:
+        """
+        {Sc}/R_visual.sif Rscript {core_path}/QC_prior.R\
+            data_locus={timeStamp}/ABCstat_locus.txt data_global={timeStamp}/ABCstat_global.txt\
+            output={output}
+        """
+rule QC_posterior:
+    input:
+        '{timeStamp}/ABCstat_global.txt',
+        '{timeStamp}/posterior.txt'
+    output:
+        '{timeStamp}/QC_plot/QC_posterior_density.pdf',
+        '{timeStamp}/QC_plot/QC_posterior_acp.pdf'
+    shell:
+        """
+        {Sc}/R_visual.sif Rscript {core_path}/QC_posterior.R\
+            dir={timeStamp} output={timeStamp}/QC_plot
+        """
+
+

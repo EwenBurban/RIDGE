@@ -15,6 +15,8 @@ nMin: 20
 N_max: 170000
 N_min: 50000
 mu: 3e-8
+homo_rec: False
+homo_rec_rate: NA
 Tsplit_min: 1000
 Tsplit_max: 20000
 M_min: 0.1

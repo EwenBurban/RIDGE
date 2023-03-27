@@ -7,7 +7,9 @@ apt install -y curl
 apt install -y cmake
 R -e 'install.packages("ggpubr")'
 R -e 'install.packages("FactoMineR")'
+R -e 'install.packages("factoextra")'
 
 %test
 R -e 'library("ggpubr")'
 R -e 'library("FactoMineR")'
+R -e 'library("factoextra")'

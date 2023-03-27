@@ -17,7 +17,7 @@ ploidy=int(argv['ploidy'])
 print('Warning: window containing less than {} sites are rejected'.format(min_sites))
 ### load data ####
 bed = pd.read_csv(bed_file,sep='\t')
-popfile = pd.read_csv(popfile)
+popfile = pd.read_csv(popfile,dtype=str)
 data = allel.read_vcf(data_file)
 gt = allel.GenotypeArray(data['calldata/GT'])
 popA_samples = popfile[nameA]

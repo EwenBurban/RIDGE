@@ -111,7 +111,8 @@ print('data filtered')
 ## generate posteriors
 list_posterior_table=lapply(1:nrow(obs_data),function(O,...){
 		weight_matrix=do.call(cbind,lapply(res,function(x,...) x$weights[,O,drop=F]))
-		mean_vec=rowMeans(weight_matrix)
+#		old_mean_vec=rowMeans(weight_matrix)
+		mean_vec=sqrt(rowMeans(weight_matrix^2))
 		## mean weigth are used to sample parameter set as a sampling probability
 		posteriors_table=ref_table_prior[sample(1:nrow(ref_table_prior),size=nPosterior-1,prob=mean_vec,replace=T),]
 		posteriors_table=rbind(posteriors_table,sapply(res,function(x,...) x$posterior[nPosterior,O]))
