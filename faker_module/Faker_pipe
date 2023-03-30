@@ -52,7 +52,6 @@ rule targets: # edit at the end
     input:
         locus_datafile = expand("{timeStamp}/locus_datafile", timeStamp=timeStamp) ,
         locus_datafile_locussp = expand("{timeStamp}/locus_datafile_locussp",timeStamp=timeStamp),
-        resume=expand("{timeStamp}/resume.txt",timeStamp=timeStamp),
         config = expand('{timeStamp}/config.yaml',timeStamp=timeStamp),
         popfile= expand('{timeStamp}/popfile.csv',timeStamp=timeStamp),
         contig_file = expand('{timeStamp}/contig_data.txt',timeStamp=timeStamp),
@@ -110,6 +109,7 @@ rule generate_global_data:
     output:
         "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/ABCstat_global.txt", 
         "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/ABCstat_locus.txt", 
+	priority: 100
     threads: 4
     resources: 
         mem_mb=10000
@@ -121,15 +121,6 @@ rule generate_global_data:
          rm {input.vcf}
          """
 
-######################## Generate Resume ###############
-rule create_resume: # replace resume by a list of all model use. model = combination of dem model + sim params
-    output:
-        expand("{timeStamp}/resume.txt",timeStamp=timeStamp)
-    run:
-        comb = product(SIMULATED_MODEL,n,Tsplit,Pbar,Mbasal)
-        with open(timeStamp + "/resume.txt","w") as o:
-            for i in comb :
-                o.write('{}_{}_Ts~{}_Pb~{}_Mb~{}'.format(*i) + '\n')
 
 rule create_RIDGE_config:
     output:
