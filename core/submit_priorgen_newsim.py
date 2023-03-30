@@ -50,6 +50,8 @@ for i in config_yaml:
         P_bound[1] = float(i[1])
     if(i[0] == 'ploidy'):
         ploidy = int(i[1])
+    if(i[0] == 'Nref'):
+        Nref = float(i[1])
 config_yaml.close()
 
 import numpy as np
@@ -59,9 +61,9 @@ def loguniform(low=0, high=1, size=1):
 
 ################## convert parameter values in coalescent units
 #Nref = (N_bound[1]+N_bound[0])/2.0
-Nref = (0+N_bound[1])/2.0
 N_bound[0] /= Nref
 N_bound[1] /= Nref
+print(N_bound)
 T_bound[0] /= (2*ploidy*Nref)
 T_bound[1] /= (2*ploidy*Nref)
 min_Tsc = 0.05

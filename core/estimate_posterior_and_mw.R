@@ -111,21 +111,24 @@ print('data filtered')
 ## generate posteriors
 list_posterior_table=lapply(1:nrow(obs_data),function(O,...){
 		weight_matrix=do.call(cbind,lapply(res,function(x,...) x$weights[,O,drop=F]))
-#		old_mean_vec=rowMeans(weight_matrix)
-		mean_vec=sqrt(rowMeans(weight_matrix^2))
+		mean_vec=rowMeans(weight_matrix)
 		## mean weigth are used to sample parameter set as a sampling probability
-		posteriors_table=ref_table_prior[sample(1:nrow(ref_table_prior),size=nPosterior-1,prob=mean_vec,replace=T),]
-		posteriors_table=rbind(posteriors_table,sapply(res,function(x,...) x$posterior[nPosterior,O]))
-		return(posteriors_table)
-		   return(y)
+		sample_mean_W=sample(1:nrow(ref_table_prior),size=nPosterior,prob=mean_vec,replace=T)
+		posteriors_table=ref_table_prior[sample_mean_W,]
+		ss_table_posterior=ref_table_data[sample_mean_W,]
+		ss_table_posterior=ss_table_posterior[!names(ss_table_posterior) %in% all_param]
+		point_estimate_table=as.data.frame(lapply(res,function(x,...) x$posterior[nPosterior,O]))
+		return(list('post_table'=posteriors_table,'point_post'=point_estimate_table,'ss_table'=ss_table_posterior))
 })
 
 i=1
 for ( dir in list_obs_dir){
 	output_posterior_file=file.path(dir,paste0('posterior',tag,'.txt'))
-	write.table(list_posterior_table[[i]],file=output_posterior_file,sep='\t',quote=F,row.names=F)
+	write.table(list_posterior_table[[i]]['post_table'],file=output_posterior_file,sep='\t',quote=F,row.names=F)
 	output_point_posterior_file=file.path(dir,paste0('point_posterior',tag,'.txt'))
-	write.table(list_posterior_table[[i]][nPosterior,,drop=F],file=output_point_posterior_file,sep='\t',quote=F,row.names=F)
+	write.table(list_posterior_table[[i]]['point_post'],file=output_point_posterior_file,sep='\t',quote=F,row.names=F)
+	ss_posterior_file=file.path(dir,paste0('sim_posterior/ABCstat_global',tag,'.txt'))
+	write.table(list_posterior_table[[i]]['ss_table'],file=ss_posterior_file,sep='\t',quote=F,row.names=F)
 	i=i+1
 }
 ## generate model weight using the sum of all parameter weight 

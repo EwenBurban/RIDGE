@@ -59,10 +59,14 @@ wildcard_constraints:
 if mode=='scan' : 
     expected_output=['ABCstat_locus.txt']
 elif mode=='test' : 
-    expected_output=['ABCstat_locus.txt','locus_datafile']
+    expected_output=['ABCstat_global.txt','ABCstat_locus.txt','gof_prior.txt','QC_plot/QC_prior_density.pdf','QC_plot/QC_prior_acp.pdf']
+    nIterations_model_comp = 1
+    ITERATIONS_MODEL_COMP = range(nIterations_model_comp)
+    nmultilocus = 10 # number of multilocus simulations per iteration (500)
+    nPosterior_locus = 100
 else :
     expected_output=['ABCstat_global.txt','ABCstat_locus.txt','gof_prior.txt',
-            'gof_posterior.txt','posterior.txt','model_weight.txt',
+            'gof_posterior.txt','posterior.txt','model_weight.txt','QC_plot/QC_prior_density.pdf','QC_plot/QC_prior_acp.pdf',
             'Pbarrier.txt','report_barrier_detection.txt','QC_plot/QC_prior.pdf','QC_plot/QC_posterior_density.pdf','QC_plot/QC_posterior_acp.pdf']
 
 rule targets: # edit at the end 
@@ -197,7 +201,8 @@ rule estimation_posterior_and_model_weight:
         sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
     output:
         "{timeStamp}/posterior.txt",
-        "{timeStamp}/model_weight.txt"
+        "{timeStamp}/model_weight.txt",
+        "{timeStamp}/sim_posterior/ABCstat_global.txt"
     shell:
         """
         {Sc}/R.sif Rscript {core_path}/estimate_posterior_and_mw.R  \
@@ -216,30 +221,6 @@ rule gof_prior:
         {Sc}/R.sif Rscript {core_path}/gof_estimate.R obs_dir={timeStamp} \
                 sim_dir={timeStamp}/modelComp mode=single output=gof_prior.txt \
                 nb_replicate={nPosterior_locus} type=prior
-        """
-
-rule sim_posterior :
-    input:
-        posteriors = "{timeStamp}/posterior.txt",
-        gof_prior=expand("{timeStamp}/gof_prior.txt",timeStamp=timeStamp)
-    output:
-        "{timeStamp}/sim_posterior/priorfile.txt",
-        "{timeStamp}/sim_posterior/ABCstat_global.txt",
-    threads: 50
-    shell: 
-        """
-        mkdir -p {timeStamp}/sim_posterior/
-        cd {timeStamp}/sim_posterior/
-        {Sc}/python.sif python3 {core_path}/submit_priorgen_gof.py \
-            locus_datafile={timeStamp}/locus_datafile locus_write=False global_write=True \
-            priorfile={input.posteriors} binpath={core_path} nMultilocus={nmultilocus} 
-        split -l {split_size_locus} exec.sh sub_
-        chmod a+x sub_*
-        list=(sub_*)
-        for ll in ${{list[@]}}; do echo ./$ll >> tmp_exec.sh; done
-        {Sc}/scrm_py.sif parallel -a tmp_exec.sh
-        rm exec.sh tmp_exec.sh sub* 
-        sed -i '2,${{/dataset/d}}' ABC*.txt
         """
 
 rule gof_posterior:
@@ -309,9 +290,23 @@ rule QC_prior:
     shell:
         """
         {Sc}/R_visual.sif Rscript {core_path}/QC_prior.R\
-            data_locus={timeStamp}/ABCstat_locus.txt data_global={timeStamp}/ABCstat_global.txt\
+            locus_data={timeStamp}/ABCstat_locus.txt global_data={timeStamp}/ABCstat_global.txt\
             output={output}
         """
+rule QC_prior_sim:
+    input:
+        '{timeStamp}/ABCstat_global.txt',
+        '{timeStamp}/gof_prior.txt'
+    output:
+        '{timeStamp}/QC_plot/QC_prior_density.pdf',
+        '{timeStamp}/QC_plot/QC_prior_acp.pdf'
+    shell:
+        """
+        {Sc}/R_visual.sif Rscript {core_path}/QC_prior_sim.R\
+            dir={timeStamp} output_dir={timeStamp}/QC_plot
+        """
+
+
 rule QC_posterior:
     input:
         '{timeStamp}/ABCstat_global.txt',
@@ -322,7 +317,5 @@ rule QC_posterior:
     shell:
         """
         {Sc}/R_visual.sif Rscript {core_path}/QC_posterior.R\
-            dir={timeStamp} output={timeStamp}/QC_plot
+            dir={timeStamp} output_dir={timeStamp}/QC_plot
         """
-
-

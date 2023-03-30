@@ -64,7 +64,7 @@ def get_abcstat(gt,locus_length,subpop,seed):
             sxB = np.sum(sfs[(0,-1),1:-1])/nsites
             sf = (sfs[-1,0] + sfs[0,-1])/nsites
             ss = np.sum(sfs[1:-1,1:-1])/nsites
-            Fst = np.sum(allel.hudson_fst(acA,acB,nsites)[0])/locus_length
+            Fst = np.sum(allel.hudson_fst(acA,acB))/locus_length
             return {'bialsite_avg':nsites,'piA_avg':piA,'piB_avg':piB,'divAB_avg':dxy,
                     'netDivAB_avg':da,'thetaA_avg':thetaA,
                     'thetaB_avg':thetaB,'DtajA_avg':TajDA,'DtajB_avg':TajDB,'sxA_avg':sxA,
