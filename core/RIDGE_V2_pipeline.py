@@ -15,15 +15,10 @@ if lightMode==False:
     nCPU_R = 8 # number of CPUs for the model comp for the model forest R functions (8)
     ntree = 1000 # number of tree for the random forest (RF) model comparison (1000)
     nIterations_model_comp = 10 # number of subdirectories for the simulations used in the RF model comparison
-    nIterations_estim = 8 # number of subdirectories for the simulations used in the nnet param estimates (500)
-    n_estimation=5
 else:
-    nCPU_R = 2 # number of CPUs for the model comp for the model forest R functions (8)
+    nCPU_R = 8 # number of CPUs for the model comp for the model forest R functions (8)
     ntree = 1000 # number of tree for the random forest (RF) model comparison (1000)
-    nIterations_model_comp = 5 # number of subdirectories for the simulations used in the RF model comparison
-    nIterations_estim = 4 # number of subdirectories for the simulations used in the nnet param estimates (500)
-    n_estimation=2
-Nthread_shape_it=8
+    nIterations_model_comp = 2 # number of subdirectories for the simulations used in the RF model comparison
 ITERATIONS_MODEL_COMP = range(nIterations_model_comp)
 MODELS_COMP = ['SC_1M_1N', 'SC_1M_2N', 'SC_3M_1N', 'SC_3M_2N', 'AM_1M_1N', 'AM_1M_2N', 'AM_3M_1N', 'AM_3M_2N', 'IM_1M_1N', 'IM_1M_2N', 'IM_3M_1N', 'IM_3M_2N', 'SI_1N', 'SI_2N']
 
