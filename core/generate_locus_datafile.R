@@ -22,7 +22,7 @@ data = merge(bedfile,rho_map,by=c('chr','start','end'),all=F)
 head(data)
 colnames(data) = c('chr','start','end','rec_rate')
 data$rho = data$rec_rate * 4 * Nref * window_size
-data[is.na(data$rho),'rho'] = 0
+data[is.na(data$rho) | data$rho < 0,'rho'] = 0
 data$theta = rep(mu * 4 * Nref * window_size,nrow(data))
 data$locus_length = rep(window_size,nrow(data))
 data$size_popA  = rep(size_popA,nrow(data))

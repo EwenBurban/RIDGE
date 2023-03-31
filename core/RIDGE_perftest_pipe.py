@@ -138,7 +138,8 @@ rule estimation_posterior_and_model_weight:
         sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
     output:
         expand("{wdir}/posterior.txt",timeStamp=timeStamp,wdir=wdir),
-        expand("{wdir}/model_weight.txt",timeStamp=timeStamp,wdir=wdir)
+        expand("{wdir}/model_weight.txt",timeStamp=timeStamp,wdir=wdir),
+        expand("{wdir}/sim_posterior/ABCstat_global.txt",timeStamp=timeStamp,wdir=wdir)
     shell:
         """
         {Sc}/R.sif Rscript {core_path}/estimate_posterior_and_mw.R  \
@@ -161,33 +162,6 @@ rule gof_prior:
         {Sc}/R.sif Rscript {core_path}/gof_estimate.R obs_dir={timeStamp}/simdata sim_dir={timeStamp}/modelComp mode=multi output=gof_prior.txt nb_replicate={nPosterior_locus} type=prior
         """
 
-
-
-rule sim_posterior :
-    input:
-        posteriors = "{wdir}/posterior.txt",
-        gof_prior=expand("{timeStamp}/simdata/{list_dir}/gof_prior.txt",timeStamp=timeStamp,list_dir=list_dir)
-    output:
-        "{wdir}/sim_posterior/priorfile.txt",
-        "{wdir}/sim_posterior/ABCstat_global.txt",
-    threads: 4
-    resources:
-        mem_mb=10000
-    shell: 
-        """
-        mkdir -p {wildcards.wdir}/sim_posterior/
-        cd {wildcards.wdir}/sim_posterior/
-        {Sc}/python.sif python3 {core_path}/submit_priorgen_gof.py \
-            locus_datafile={timeStamp}/locus_datafile locus_write=False global_write=True \
-            priorfile={input.posteriors} binpath={core_path} nMultilocus={nmultilocus} 
-        split -l {split_size} exec.sh sub_
-        chmod a+x sub_*
-        list=(sub_*)
-        for ll in ${{list[@]}}; do echo ./$ll >> tmp_exec.sh; done
-        {Sc}/scrm_py.sif parallel -a tmp_exec.sh -j 4 --halt now,fail=1
-        rm exec.sh tmp_exec.sh sub* 
-        sed -i '2,${{/dataset/d}}' ABC*.txt
-        """
 
 rule gof_posterior:
     input:

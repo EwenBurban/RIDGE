@@ -79,9 +79,9 @@ if (mode=='multi'){
 print('obs data loaded')
 ## data purification (remove uneccessary summary stats)
 cv_vec=apply(ref_table_ss,2,sd,na.rm=T)/colMeans(ref_table_ss,na.rm=T)
-if(any(cv_vec<0.01)){
-	print(colnames(ref_table_ss)[which(cv_vec<0.01)])
-	sel_colnames=c(colnames(ref_table_ss)[-which(cv_vec<0.01)])
+if(any(cv_vec<0.1)){
+	print(colnames(ref_table_ss)[which(cv_vec<0.1)])
+	sel_colnames=c(colnames(ref_table_ss)[-which(cv_vec<0.1)])
 	print(setdiff(sel_colnames,colnames(obs_data)))
 	print(setdiff(colnames(obs_data),sel_colnames))
 	ref_table_ss=subset(ref_table_ss,select=sel_colnames)
@@ -116,7 +116,7 @@ list_posterior_table=lapply(1:nrow(obs_data),function(O,...){
 		sample_mean_W=sample(1:nrow(ref_table_prior),size=nPosterior,prob=mean_vec,replace=T)
 		posteriors_table=ref_table_prior[sample_mean_W,]
 		ss_table_posterior=ref_table_data[sample_mean_W,]
-		ss_table_posterior=ss_table_posterior[!names(ss_table_posterior) %in% all_param]
+		ss_table_posterior=ss_table_posterior[!names(ss_table_posterior) %in% c(all_param,'model')]
 		point_estimate_table=as.data.frame(lapply(res,function(x,...) x$posterior[nPosterior,O]))
 		return(list('post_table'=posteriors_table,'point_post'=point_estimate_table,'ss_table'=ss_table_posterior))
 })
@@ -124,11 +124,17 @@ list_posterior_table=lapply(1:nrow(obs_data),function(O,...){
 i=1
 for ( dir in list_obs_dir){
 	output_posterior_file=file.path(dir,paste0('posterior',tag,'.txt'))
-	write.table(list_posterior_table[[i]]['post_table'],file=output_posterior_file,sep='\t',quote=F,row.names=F)
+	posterior=list_posterior_table[[i]]['post_table']
+	colnames(posterior)=all_param
+	write.table(posterior,file=output_posterior_file,sep='\t',quote=F,row.names=F)
 	output_point_posterior_file=file.path(dir,paste0('point_posterior',tag,'.txt'))
-	write.table(list_posterior_table[[i]]['point_post'],file=output_point_posterior_file,sep='\t',quote=F,row.names=F)
+	point_posterior=list_posterior_table[[i]]['point_post']
+	colnames(point_posterior)=all_param
+	write.table(point_posterior,file=output_point_posterior_file,sep='\t',quote=F,row.names=F)
 	ss_posterior_file=file.path(dir,paste0('sim_posterior/ABCstat_global',tag,'.txt'))
-	write.table(list_posterior_table[[i]]['ss_table'],file=ss_posterior_file,sep='\t',quote=F,row.names=F)
+	ss_posterior=list_posterior_table[[i]]['ss_table']
+	colnames(ss_posterior)=c('dataset',colnames(obs_data))
+	write.table(ss_posterior,file=ss_posterior_file,sep='\t',quote=F,row.names=F)
 	i=i+1
 }
 ## generate model weight using the sum of all parameter weight 

@@ -108,7 +108,7 @@ rule generate_global_data:
         vcf = "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/simulation.vcf"
     output:
         "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/ABCstat_global.txt", 
-        "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/ABCstat_locus.txt", 
+        "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/ABCstat_locus.txt" 
 	priority: 100
     threads: 4
     resources: 
