@@ -15,6 +15,7 @@ dna_window = function(start,end,size,step=NULL){
 	if(is.null(step)){step=size}
 	a=vector()
 	b=vector()
+	if(pos + size -1 > end){print(paste0('little chr of ',end));return(data.frame('start'=1,'end'=end))}
 	while(pos + size -1 <= end){
 		a[length(a) + 1] = pos
 		b[length(b) + 1] = pos + size -1
@@ -37,11 +38,10 @@ for (i in 1:nrow(contig_data)){
 	if(nLoci_per_chr == -1){sel_win = win_seq} else{
 	sel_win = sample(win_seq,nLoci_per_chr,replace=F)}
 	sel_win = do.call(rbind,sel_win)
-	print(nrow(sel_win))
 	sel_win = cbind(rep(contig_name,nrow(sel_win)),sel_win)
 	sel_win_list[[i]] = sel_win
 }
-
+print('sampling window DONE')
 bed = do.call(rbind,sel_win_list)
 colnames(bed)= c('chr','start','end')
 write.table(bed,file=output,sep='\t',row.names=F)
