@@ -24,7 +24,7 @@ else
 snakemake --snakefile ${binpath}/core/RIDGE_V2_pipeline.py -p -j ${ntask_load} \
 	--config binpath=${binpath}  mode=${2} --configfile ${1} \
 	--cluster-config ${binpath}/core/cluster.json \
-	--cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p}" \
+	--cluster "sbatch -A ${ID} --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p}" \
 	--latency-wait 60  --nolock --restart-times 3  --rerun-incomplete -r 
 fi
 
