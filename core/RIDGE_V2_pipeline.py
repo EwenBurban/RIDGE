@@ -53,6 +53,8 @@ wildcard_constraints:
 ############## End of Pipeline & Targets ############
 if mode=='scan' : 
     expected_output=['ABCstat_locus.txt']
+elif mode=='prior' :
+    expected_output=['ABCstat_global.txt','locus_datafile']
 elif mode=='test' : 
     expected_output=['ABCstat_global.txt','ABCstat_locus.txt','gof_prior.txt','QC_plot/QC_prior_density.pdf','QC_plot/QC_prior_acp.pdf']
     nIterations_model_comp = 1
