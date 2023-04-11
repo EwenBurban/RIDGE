@@ -124,15 +124,15 @@ list_posterior_table=lapply(1:nrow(obs_data),function(O,...){
 i=1
 for ( dir in list_obs_dir){
 	output_posterior_file=file.path(dir,paste0('posterior',tag,'.txt'))
-	posterior=list_posterior_table[[i]]['post_table']
+	posterior=list_posterior_table[[i]][['post_table']]
 	colnames(posterior)=all_param
 	write.table(posterior,file=output_posterior_file,sep='\t',quote=F,row.names=F)
 	output_point_posterior_file=file.path(dir,paste0('point_posterior',tag,'.txt'))
-	point_posterior=list_posterior_table[[i]]['point_post']
+	point_posterior=list_posterior_table[[i]][['point_post']]
 	colnames(point_posterior)=all_param
 	write.table(point_posterior,file=output_point_posterior_file,sep='\t',quote=F,row.names=F)
 	ss_posterior_file=file.path(dir,paste0('sim_posterior/ABCstat_global',tag,'.txt'))
-	ss_posterior=list_posterior_table[[i]]['ss_table']
+	ss_posterior=list_posterior_table[[i]][['ss_table']]
 	colnames(ss_posterior)=c('dataset',colnames(obs_data))
 	write.table(ss_posterior,file=ss_posterior_file,sep='\t',quote=F,row.names=F)
 	i=i+1
