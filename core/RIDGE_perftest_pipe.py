@@ -217,4 +217,3 @@ rule barrier_detection:
                 posterior={wildcards.wdir}/posterior.txt
         """
 
-       """
