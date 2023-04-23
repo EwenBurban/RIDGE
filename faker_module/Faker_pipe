@@ -109,7 +109,6 @@ rule generate_global_data:
     output:
         "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/ABCstat_global.txt", 
         "{timeStamp}/simdata/{sim_model}_{n}_Ts~{Tsplit}_Pb~{Pbar}_Mb~{Mbasal}/ABCstat_locus.txt" 
-	priority: 100
     threads: 4
     resources: 
         mem_mb=10000
@@ -159,3 +158,4 @@ rule create_contig_data:
         df = pd.DataFrame({'contig_name': ['contig_{}'.format(x) for x in range(nLoci)],'contig_length': [L for x in range(nLoci)]})
         df.to_csv('{timeStamp}/contig_data.txt'.format(timeStamp=timeStamp),header=True,sep='\t',index=False)
         
+       

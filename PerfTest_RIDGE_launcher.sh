@@ -16,17 +16,11 @@ cat ${binpath}/logo
 ## directory of the code
 if [[ $mode != cluster ]]; then 
 ## without slurm
-snakemake --snakefile ${binpath}/core/Quick_perftest_pipe.py -p -j ${ntask_load} --until "simulationsModelComp" --configfile ${1}  --config binpath=${binpath}   --latency-wait 60 --nolock
-snakemake --snakefile ${binpath}/core/Quick_perftest_pipe.py   -p -j ${ntask_load} --configfile ${1}   --config binpath=${binpath}   --latency-wait 60 --nolock
+snakemake --snakefile ${binpath}/core/RIDGE_perftest_pipe.py   -p -j ${ntask_load} --configfile ${1}   --config binpath=${binpath}   --latency-wait 60 --nolock
 else
-## cluster version with slurm | If you use the cluster version, you must edit the file cluster.json to adapt it to your cluster
-#snakemake --snakefile ${binpath}/core/Quick_perftest_pipe.py -p -j ${ntask_load} --until "simulationsModelComp"  --config binpath=${binpath}  simdata_dir=${first} --configfile ${1} --cluster-config ${binpath}/core/cluster.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p}"  --latency-wait 60  --nolock --restart-times 3  --rerun-incomplete
-#snakemake --snakefile ${binpath}/core/RIDGE_perftest_pipe.py -p -j ${ntask_load}   --config binpath=${binpath}  --configfile ${1} --cluster-config ${binpath}/core/cluster.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p}"  --latency-wait 60  --nolock --restart-times 3  --rerun-incomplete 
-snakemake --snakefile ${binpath}/core/RIDGE_perftest_pipe.py -p -j ${ntask_load} --config binpath=${binpath}  --configfile ${1} --cluster-config ${binpath}/core/cluster.json --cluster "sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p}"  --latency-wait 60  --nolock --restart-times 3  --rerun-incomplete -r  
-#cat ${2} | while read simdata ; do 
-#echo "snakemake --snakefile ${binpath}/core/Quick_perftest_pipe.py  -p -j ${ntask_load} --configfile ${1}  --config binpath=${binpath} simdata_dir=${simdata}   --cluster-config ${binpath}/core/cluster.json --cluster 'sbatch --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p} '  --latency-wait 60  --nolock" >> tmp.sh
-#done
-#. /local/env/envparallel-20190122.sh
-#parallel -a tmp.sh -j 10 
+snakemake --snakefile ${binpath}/core/RIDGE_perftest_pipe.py -p -j ${ntask_load}\
+	--config binpath=${binpath}  --configfile ${1} --cluster-config ${binpath}/config/cluster.json \
+	--cluster "sbatch -A ${ID} --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p}" \
+	--latency-wait 60  --nolock -r  
 fi
 

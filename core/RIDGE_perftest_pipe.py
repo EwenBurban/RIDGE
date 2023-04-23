@@ -1,3 +1,4 @@
+
 # links to the codes
 import os
 binpath = config['binpath']
@@ -6,7 +7,7 @@ core_path = binpath + '/core'
 lightMode = config['lightMode']
 
 # general property
-nmultilocus = 1000 # number of multilocus simulations per iteration (500)
+nmultilocus = 100 # number of multilocus simulations per iteration (500)
 nPosterior_locus = 1000
 split_size=int(nmultilocus/4)
 split_size_locus=int(nmultilocus/50)
@@ -76,9 +77,9 @@ rule targets: # edit at the end
         posterior = expand("{wdir}/posterior.txt",wdir=wdir),
         mw = expand("{wdir}/model_weight.txt",wdir=wdir),
         sim_post_glob = expand('{wdir}/sim_posterior/ABCstat_global.txt',wdir=wdir),
-        gof_posterior = expand("{wdir}/gof_posterior.txt",wdir=wdir)
-##      barrier_assignation = expand('{wdir}/Pbarrier.txt',wdir=wdir),
-#        table = expand('{wdir}/roc_table.txt',wdir=wdir),
+        gof_posterior = expand("{wdir}/gof_posterior.txt",wdir=wdir),
+        barrier_assignation = expand('{wdir}/Pbarrier.txt',wdir=wdir),
+ #       table = expand('{wdir}/roc_table.txt',wdir=wdir),
 #        fig = expand('{wdir}/roc.pdf',wdir=wdir)
     shell:
             """
@@ -132,7 +133,7 @@ rule simulationsModelComp:
 # At the end it will estimate the global parameters of each model and do the ponderated mean on all models values
 
 
-rule estimation_posterior_and_model_weight:
+rule estimation_posterior_and_model_weight_test:
     input:
         obs= expand("{wdir}/ABCstat_global.txt",timeStamp=timeStamp,wdir=wdir),
         sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
@@ -175,39 +176,22 @@ rule gof_posterior:
         {Sc}/R.sif Rscript {core_path}/gof_estimate.R obs_dir={wildcards.wdir} sim_dir={wildcards.wdir}/sim_posterior mode=single output=gof_posterior.txt nb_replicate={nPosterior_locus} type=post
         """
 ######################### Detect barrier locus ########################
-rule estimate_locus_param:
-    input:
-        "{wdir}/sim_posterior/ABCstat_locus.txt",
-        "{wdir}/sim_posterior/priorfile_locus.txt"
-    output:
-        '{wdir}/Pbarrier.txt'
-    threads: nCPU_R
-    shell:
-        """
-        {Sc}/R.sif Rscript {core_path}/estimate_locus_param_rf.R timeStamp={wildcards.wdir} ncores={nCPU_R}\
-                ntree={ntree} obs_dir={wildcards.wdir}/ \
-                sim_dir={wildcards.wdir}/sim_posterior/ \
-                output={output}  param=M_current 
-        """
 
-########################### Calculate theoritical ROC AUC of barrier inference ####################
-
-rule simulation_locus_roc: 
+rule simulation_locus: 
     input:
-        pbarrier='{wdir}/Pbarrier.txt',
         post = "{wdir}/posterior.txt",
-        locus_datafile = "{wdir}/locus_datafile_locussp"
+        locus_datafile = expand("{timeStamp}/locus_datafile",timeStamp=timeStamp)
     output:
-        "{wdir}/sim_roc/ABCstat_locus.txt",
-        "{wdir}/sim_roc/priorfile_locus.txt"
+        "{wdir}/sim_locus/ABCstat_locus.txt",
+        "{wdir}/sim_locus/priorfile_locus.txt"
     threads: 50
     shell:
         """
-        mkdir -p {wildcards.wdir}/sim_roc
-        cd {wildcards.wdir}/sim_roc
-        {Sc}/python.sif python3 {core_path}/submit_priorgen_gof.py  \
+        mkdir -p {wildcards.wdir}/sim_locus
+        cd {wildcards.wdir}/sim_locus
+        {Sc}/python.sif python3 {core_path}/submit_priorgen_locus.py  \
             locus_datafile={input.locus_datafile} \
-            config_yaml={config_yaml} binpath={core_path} nMultilocus=100 priorfile={input.post} locus_write=True global_write=False 
+            config_yaml={config_yaml} binpath={core_path} nMultilocus=1000 priorfile={input.post} locus_write=True global_write=False 
         split exec.sh -l{split_size_locus} sub_exec
         list_sub=(sub_exec*)
         for sub in ${{list_sub[@]}}; do echo sh $sub >> tmp_exec.sh; done
@@ -217,17 +201,20 @@ rule simulation_locus_roc:
         if [[ -e ABCjsfs_locus.txt ]] ;then sed -i '2,${{/dataset/d}}' ABCjsfs_locus.txt ;fi
         """
 
-rule estimate_roc:
+rule barrier_detection:
     input:
-        locus_estimation = '{wdir}/Pbarrier.txt',
-        abc = "{wdir}/sim_roc/ABCstat_locus.txt",
-        prior = "{wdir}/sim_roc/priorfile_locus.txt"
-    group: 'locus'
+        "{wdir}/sim_locus/ABCstat_locus.txt",
+        "{wdir}/sim_locus/priorfile_locus.txt"
     output:
-        table = '{wdir}/roc_table.txt',
-        fig = '{wdir}/roc.pdf'
+        '{wdir}/Pbarrier.txt',
+        '{wdir}/report_barrier_detection.txt'
+    threads: 8
     shell:
         """
-            {Sc}/R.sif Rscript {core_path}/roc_estimation.R ntree=1000 ncores=8 timeStamp={wildcards.wdir} sim_dir=sim_roc\
-                    output_dir={wildcards.wdir} mig_mod=M_current locus_estimation={input.locus_estimation}
+        {Sc}/R.sif Rscript {core_path}/barrier_detection.R  ncores=8\
+                ntree={ntree} obs_dir={wildcards.wdir}/ \
+                sim_dir={wildcards.wdir}/sim_locus/ mode=test \
+                posterior={wildcards.wdir}/posterior.txt
         """
+
+       """

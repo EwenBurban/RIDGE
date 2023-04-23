@@ -142,8 +142,8 @@ if global_write:
     glob_stat = pd.DataFrame(pd.concat([avg,std,med,pd.Series(pearson),pd.Series(ss_sf),pd.Series(outlier)])).T
     glob_stat.set_index(glob_stat.index + num_dataset,inplace=True)
     if os.path.isfile('ABCstat_global.txt') == False:
-        glob_stat.to_csv('ABCstat_global.txt',sep='\t',header=True,index_label='dataset',float_format='%.5f',mode='a',na_rep='0')
+        glob_stat.to_csv('ABCstat_global.txt',sep='\t',header=True,index_label='dataset',float_format='%.10f',mode='a',na_rep='0')
     else:
-        glob_stat.to_csv('ABCstat_global.txt',sep='\t',header=False,index_label='dataset',float_format='%.5f',mode='a',na_rep='0')
+        glob_stat.to_csv('ABCstat_global.txt',sep='\t',header=False,index_label='dataset',float_format='%.10f',mode='a',na_rep='0')
 
 

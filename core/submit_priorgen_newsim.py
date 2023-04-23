@@ -71,7 +71,7 @@ max_Tsc = 0.3
 min_Tam = 0.5
 ###### build global priors for nMultilocus datasets ######
 
-glob_prior = pd.DataFrame({'Tsplit': np.random.uniform(low = T_bound[0], high = T_bound[1], size = nMultilocus),
+glob_prior = pd.DataFrame({'Tsplit': loguniform(low = T_bound[0], high = T_bound[1], size = nMultilocus),
         'Na': np.random.uniform(low = N_bound[0], high = N_bound[1], size = nMultilocus) ,
         'N1': np.random.uniform(low = N_bound[0], high = N_bound[1], size = nMultilocus) ,
         'N2': np.random.uniform(low = N_bound[0], high = N_bound[1], size = nMultilocus) })

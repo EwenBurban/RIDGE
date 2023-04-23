@@ -63,6 +63,7 @@ ref_table_data= lapply(ref_table_ld,function(x,...){
 ref_table_data=do.call(rbind,ref_table_data)
 print(unique(ref_table_data$model))
 ref_table_ss=ref_table_data[!names(ref_table_data) %in% c(all_param,'model','dataset')]
+
 ref_table_prior=subset(ref_table_data,select=all_param)
 print('ref data loaded')
 ## load observed dataset
@@ -77,6 +78,7 @@ if (mode=='multi'){
 	obs_data = do.call(rbind,lapply(file.path(list_obs_dir,'ABCstat_global.txt'),read.table,h=T))
 }
 print('obs data loaded')
+ss_colnames=colnames(obs_data)
 ## data purification (remove uneccessary summary stats)
 cv_vec=apply(ref_table_ss,2,sd,na.rm=T)/colMeans(ref_table_ss,na.rm=T)
 if(any(cv_vec<0.1)){
@@ -133,7 +135,7 @@ for ( dir in list_obs_dir){
 	write.table(point_posterior,file=output_point_posterior_file,sep='\t',quote=F,row.names=F)
 	ss_posterior_file=file.path(dir,paste0('sim_posterior/ABCstat_global',tag,'.txt'))
 	ss_posterior=list_posterior_table[[i]][['ss_table']]
-	colnames(ss_posterior)=c('dataset',colnames(obs_data))
+	colnames(ss_posterior)=ss_colnames
 	write.table(ss_posterior,file=ss_posterior_file,sep='\t',quote=F,row.names=F)
 	i=i+1
 }

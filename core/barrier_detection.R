@@ -12,12 +12,11 @@ ncores=as.numeric(args['ncores'])
 obs_dir=args['obs_dir']
 sim_dir=args['sim_dir']
 mode=args['mode']
-migration='M_current'
 roc_smooth=0.001 # the lower the value is, the smoother the roc will be
 n_subset=5
 posterior_file=args['posterior']
 posterior=read.table(posterior_file,h=T)
-pbarrier=posterior[,'PbarrierM_current']
+pbarrier=sapply(1:nrow(posterior),function(x,...) weighted.mean(posterior[x,c('PbarrierM_ancestral','PbarrierM_current')],w=c(posterior[x,'Tsplit']-posterior[x,'Tam'],posterior[x,'Tsc'])))
 mean_prior_ratio=mean(pbarrier/(1-pbarrier),na.rm=T)
 
 ######## defining functions ############
@@ -80,6 +79,10 @@ auc <-function(x, y, from = min(x, na.rm=TRUE), to = max(x, na.rm=TRUE),absolute
 obs_data = read.table(file.path(obs_dir,'ABCstat_locus.txt'),h=T)
 if(mode=='test'){
 	obs_prior=read.table(file.path(obs_dir,'priorfile_locus.txt'),h=T)
+	col=colnames(obs_prior)
+	if(any(colnames(obs_prior)=='M_current')){migration='M_current'}
+	if(any(colnames(obs_prior)=='M_ancestral')){migration='M_ancestral'}else{
+		migration='null_mig'; obs_prior['null_mig']=rep(1000,nrow(obs_prior))}
 	obs_all=merge(obs_data,obs_prior,by='dataset')
 }
 
