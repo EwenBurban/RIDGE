@@ -80,9 +80,9 @@ obs_data = read.table(file.path(obs_dir,'ABCstat_locus.txt'),h=T)
 if(mode=='test'){
 	obs_prior=read.table(file.path(obs_dir,'priorfile_locus.txt'),h=T)
 	col=colnames(obs_prior)
-	if(any(colnames(obs_prior)=='M_current')){migration='M_current'}
-	if(any(colnames(obs_prior)=='M_ancestral')){migration='M_ancestral'}else{
-		migration='null_mig'; obs_prior['null_mig']=rep(1000,nrow(obs_prior))}
+	if(any(colnames(obs_prior)=='M_current')){migration='M_current';print('M_current')
+	} else if (any(colnames(obs_prior)=='M_ancestral')){migration='M_ancestral';print('M_ancestral')}else{
+		migration='null_mig'; obs_prior[,'null_mig']=rep(1000,nrow(obs_prior));print('no_mig')}
 	obs_all=merge(obs_data,obs_prior,by='dataset')
 }
 
@@ -101,18 +101,19 @@ obs_roc_all=all
 ### obs roc & prediction
 train_set=obs_roc_all[,col_data]
 prior_train_set=obs_roc_all[,col_prior]
+if(migration=='null_mig'){prior_train_set[,migration]=rep(1000,nrow(prior_train_set))}
 status=	convert2bar(prior_train_set[,migration])
 train_set=data.frame(train_set,status)
 rf = abcrf(status~.,data=train_set,ncores = ncores,ntree = ntree,paral = T,lda=F)
 pred = predict(rf,training = train_set,obs = obs_data[,col_data],paral = T,ncores=ncores)
-
 if(mode=='test'){
 	obs_prediction=data.frame('allocation'=pred$allocation,'post.prob'=pred$post.prob,'true_status'=convert2bar(obs_prior[,migration]),'migration'=obs_prior[,migration])
 	obs_prediction$post.prob[which(obs_prediction$allocation=='non-barrier')]=1-obs_prediction$post.prob[which(obs_prediction$allocation=='non-barrier')]
 	
 	threshold_seq=seq(0,1,by=roc_smooth)
 	roc_stat=as.data.frame(do.call(rbind,lapply(threshold_seq,function(x,...) get_roc(prior=obs_prediction$migration,est=obs_prediction$post.prob,trsh=x))))
-	obs_AUC=auc(roc_stat$FPR,roc_stat$TPR,absolutearea=T)
+	if(migration=='null_mig'){obs_AUC=0.5}else{
+	obs_AUC=auc(roc_stat$FPR,roc_stat$TPR,absolutearea=T)}
 	if(is.na(obs_AUC)){obs_AUC=mean(roc_stat$TPR)/(mean(roc_stat$TPR)+mean(roc_stat$FPR))}
 
 	p_barrier_obs_obs=length(which(obs_prediction$true_status=='barrier'))/nrow(obs_prediction)
@@ -122,7 +123,8 @@ if(mode=='test'){
 	names(obs_bayes_stat)=paste0('obs_bayes_',names(obs_bayes_stat))
 	threshold_seq=seq(0,10,by=roc_smooth)
 	obs_roc_bayes_stat=as.data.frame(do.call(rbind,lapply(threshold_seq,function(x,...) get_roc(prior=obs_prior[,migration],est=obs_prediction$bayes_factor,trsh=x))))
-	obs_bayes_AUC=auc(obs_roc_bayes_stat$FPR,obs_roc_bayes_stat$TPR,absolutearea=F)
+	if(migration=='null_mig'){obs_bayes_AUC=0.5}else
+	{obs_bayes_AUC=auc(obs_roc_bayes_stat$FPR,obs_roc_bayes_stat$TPR,absolutearea=F)}
 	if(is.na(obs_bayes_AUC)){obs_bayes_AUC=mean(obs_roc_bayes_stat$TPR)/(mean(obs_roc_bayes_stat$TPR)+mean(obs_roc_bayes_stat$FPR))}
 } else {
 	obs_prediction=data.frame('allocation'=pred$allocation,'post.prob'=pred$post.prob)
