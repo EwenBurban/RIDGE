@@ -83,6 +83,8 @@ if(mode=='test'){
 	if(any(colnames(obs_prior)=='M_current')){migration='M_current';print('M_current')
 	} else if (any(colnames(obs_prior)=='M_ancestral')){migration='M_ancestral';print('M_ancestral')}else{
 		migration='null_mig'; obs_prior[,'null_mig']=rep(1000,nrow(obs_prior));print('no_mig')}
+	if(length(unique(obs_prior[,migration]))=1){
+		migration='null_mig'; obs_prior[,'null_mig']=rep(1000,nrow(obs_prior));print('no_mig')}
 	obs_all=merge(obs_data,obs_prior,by='dataset')
 }
 
