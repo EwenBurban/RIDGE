@@ -17,7 +17,7 @@ n_subset=5
 posterior_file=args['posterior']
 posterior=read.table(posterior_file,h=T)
 pbarrier=sapply(1:nrow(posterior),function(x,...) weighted.mean(posterior[x,c('PbarrierM_ancestral','PbarrierM_current')],w=c(posterior[x,'Tsplit']-posterior[x,'Tam'],posterior[x,'Tsc'])))
-mean_prior_ratio=mean(pbarrier/(1-pbarrier),na.rm=T)
+mean_prior_ratio=mean((1-pbarrier)/(pbarrier),na.rm=T)
 
 ######## defining functions ############
 convert2bar = function(mvec){
