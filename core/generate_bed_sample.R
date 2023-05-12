@@ -36,7 +36,8 @@ for (i in 1:nrow(contig_data)){
 	contig_length = contig_data[i,'contig_length']
 	win_seq = dna_window(1,contig_length,size=window_size)
 	if(nLoci_per_chr == -1){sel_win = win_seq} else{
-	sel_win = sample(win_seq,nLoci_per_chr,replace=F)}
+		if(length(win_seq)<nLoci_per_chr){nLoci=length(win_seq)}else{nLoci=nLoci_per_chr}
+	sel_win = sample(win_seq,nLoci,replace=F)}
 	sel_win = do.call(rbind,sel_win)
 	sel_win = cbind(rep(contig_name,nrow(sel_win)),sel_win)
 	sel_win_list[[i]] = sel_win
