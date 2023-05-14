@@ -12,6 +12,7 @@ ncores=as.numeric(args['ncores'])
 obs_dir=args['obs_dir']
 sim_dir=args['sim_dir']
 mode=args['mode']
+barrier_type=args['barrier_type']
 roc_smooth=0.001 # the lower the value is, the smoother the roc will be
 n_subset=5
 posterior_file=args['posterior']
@@ -86,7 +87,7 @@ if(mode=='test'){
 	if(length(unique(obs_prior[,migration]))==1){
 		migration='null_mig'; obs_prior[,'null_mig']=rep(1000,nrow(obs_prior));print('no_mig')}
 	obs_all=merge(obs_data,obs_prior,by='dataset')
-}
+}else if (barrier_type=='current'){migration='M_current'}else if (barrier_type=='ancestral'){migration='M_ancestral'}
 
 ### load Training set and set up for next usages
 train_data =read.table(file.path(sim_dir,'ABCstat_locus.txt'),h=T)
@@ -138,7 +139,7 @@ p_barrier_obs_est=length(which(obs_prediction$allocation=='barrier'))/nrow(obs_p
 
 ####### generate output
 
-write.table(obs_prediction,file=file.path(obs_dir,'Pbarrier.txt'),sep='\t',row.names=F)
+write.table(obs_prediction,file=file.path(obs_dir,paste0('Pbarrier_',barrier_type,'.txt')),sep='\t',row.names=F)
 ### report
 report=c('obs_bayes_p'=length(which(obs_prediction$bayes_factor>1))/nrow(obs_data),'p_barrier_obs_est'=p_barrier_obs_est)
 if (mode=='test'){
@@ -146,5 +147,5 @@ if (mode=='test'){
 	write.table(roc_stat,file=file.path(obs_dir,'true_roc_table.txt'),sep='\t',row.names=F)
 
 }
-write.table(t(report),file.path(obs_dir,'report_barrier_detection.txt'),sep='\t',row.names=F)
+write.table(t(report),file.path(obs_dir,paste0('report_barrier_',barrier_type,'_detection.txt')),sep='\t',row.names=F)
 	
