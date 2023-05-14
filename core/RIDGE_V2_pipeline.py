@@ -64,7 +64,7 @@ elif mode=='test' :
 else :
     expected_output=['ABCstat_global.txt','ABCstat_locus.txt','gof_prior.txt',
             'gof_posterior.txt','posterior.txt','model_weight.txt','QC_plot/QC_prior_density.pdf','QC_plot/QC_prior_acp.pdf',
-            'Pbarrier_current.txt','Pbarrier_ancestral.txt','report_barrier_detection.txt','QC_plot/QC_prior.pdf','QC_plot/QC_posterior_density.pdf','QC_plot/QC_posterior_acp.pdf']
+            'Pbarrier_current.txt','Pbarrier_ancestral.txt','report_barrier_current_detection.txt','report_barrier_ancestral_detection.txt','QC_plot/QC_prior.pdf','QC_plot/QC_posterior_density.pdf','QC_plot/QC_posterior_acp.pdf']
 
 rule targets: # edit at the end 
     input:
