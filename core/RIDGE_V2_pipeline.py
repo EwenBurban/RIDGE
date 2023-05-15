@@ -262,6 +262,7 @@ rule simulation_locus:
 rule barrier_detection_current:
     input:
         "{timeStamp}/sim_locus/ABCstat_locus.txt",
+        "{timeStamp}/ABCstat_locus.txt",
         "{timeStamp}/sim_locus/priorfile_locus.txt"
     output:
         '{timeStamp}/Pbarrier_current.txt',
@@ -278,6 +279,7 @@ rule barrier_detection_current:
 rule barrier_detection_ancestral:
     input:
         "{timeStamp}/sim_locus/ABCstat_locus.txt",
+        "{timeStamp}/ABCstat_locus.txt",
         "{timeStamp}/sim_locus/priorfile_locus.txt"
     output:
         '{timeStamp}/Pbarrier_ancestral.txt',
