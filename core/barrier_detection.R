@@ -89,7 +89,9 @@ if(mode=='test'){
 	if(length(unique(obs_prior[,migration]))==1){
 		migration='null_mig'; obs_prior[,'null_mig']=rep(1000,nrow(obs_prior));print('no_mig')}
 	obs_all=merge(obs_data,obs_prior,by='dataset')
-}else if (barrier_type=='current'){migration='M_current'}else if (barrier_type=='ancestral'){migration='M_ancestral'}
+}else {
+	if (barrier_type=='current'){migration='M_current'}else if (barrier_type=='ancestral'){migration='M_ancestral'}
+}
 
 ### load Training set and set up for next usages
 train_data =read.table(file.path(sim_dir,'ABCstat_locus.txt'),h=T)
