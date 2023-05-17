@@ -78,8 +78,7 @@ rule targets: # edit at the end
         mw = expand("{wdir}/model_weight.txt",wdir=wdir),
         sim_post_glob = expand('{wdir}/sim_posterior/ABCstat_global.txt',wdir=wdir),
         gof_posterior = expand("{wdir}/gof_posterior.txt",wdir=wdir),
-        barrier_assignation_cur = expand('{wdir}/Pbarrier_current.txt',wdir=wdir),
-        barrier_assignation_anc = expand('{wdir}/Pbarrier_ancestral.txt',wdir=wdir),
+        barrier_assignation = expand('{wdir}/Pbarrier_null.txt',wdir=wdir),
  #       table = expand('{wdir}/roc_table.txt',wdir=wdir),
 #        fig = expand('{wdir}/roc.pdf',wdir=wdir)
     shell:
@@ -202,35 +201,19 @@ rule simulation_locus:
         if [[ -e ABCjsfs_locus.txt ]] ;then sed -i '2,${{/dataset/d}}' ABCjsfs_locus.txt ;fi
         """
 
-rule barrier_detection_current:
+rule barrier_detection:
     input:
         "{wdir}/sim_locus/ABCstat_locus.txt",
         "{wdir}/sim_locus/priorfile_locus.txt"
     output:
-        '{wdir}/Pbarrier_current.txt',
-        '{wdir}/report_barrier_current_detection.txt'
+        '{wdir}/Pbarrier_null.txt',
+        '{wdir}/report_barrier_null_detection.txt'
     threads: 8
     shell:
         """
         {Sc}/R.sif Rscript {core_path}/barrier_detection.R  ncores=8\
                 ntree={ntree} obs_dir={wildcards.wdir}/ \
                 sim_dir={wildcards.wdir}/sim_locus/ mode=test \
-                posterior={wildcards.wdir}/posterior.txt barrier_type=current
-        """
-
-rule barrier_detection_ancestral:
-    input:
-        "{wdir}/sim_locus/ABCstat_locus.txt",
-        "{wdir}/sim_locus/priorfile_locus.txt"
-    output:
-        '{wdir}/Pbarrier_ancestral.txt',
-        '{wdir}/report_barrier_ancestral_detection.txt'
-    threads: 8
-    shell:
-        """
-        {Sc}/R.sif Rscript {core_path}/barrier_detection.R  ncores=8\
-                ntree={ntree} obs_dir={wildcards.wdir}/ \
-                sim_dir={wildcards.wdir}/sim_locus/ mode=test \
-                posterior={wildcards.wdir}/posterior.txt barrier_type=ancestral
+                posterior={wildcards.wdir}/posterior.txt barrier_type=null
         """
 
