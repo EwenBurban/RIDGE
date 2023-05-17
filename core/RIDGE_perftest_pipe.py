@@ -181,7 +181,7 @@ rule gof_posterior:
 rule simulation_locus: 
     input:
         post = "{wdir}/posterior.txt",
-        locus_datafile = expand("{timeStamp}/locus_datafile",timeStamp=timeStamp)
+        locus_datafile = expand("{timeStamp}/locus_datafile_locussp",timeStamp=timeStamp)
     output:
         "{wdir}/sim_locus/ABCstat_locus.txt",
         "{wdir}/sim_locus/priorfile_locus.txt"
