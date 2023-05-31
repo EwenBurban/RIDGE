@@ -81,22 +81,23 @@ print('obs data loaded')
 ss_colnames=colnames(obs_data)
 ## data purification (remove uneccessary summary stats)
 cv_vec=apply(ref_table_ss,2,sd,na.rm=T)/colMeans(ref_table_ss,na.rm=T)
-if(any(cv_vec<0.1)){
-	print(colnames(ref_table_ss)[which(cv_vec<0.1)])
-	sel_colnames=c(colnames(ref_table_ss)[-which(cv_vec<0.1)])
-	print(setdiff(sel_colnames,colnames(obs_data)))
-	print(setdiff(colnames(obs_data),sel_colnames))
-	ref_table_ss=subset(ref_table_ss,select=sel_colnames)
-	obs_data=subset(obs_data,select=sel_colnames)
-}else{
-obs_data=subset(obs_data,select=-dataset)}
+#if(any(cv_vec<0.1)){
+#	print(colnames(ref_table_ss)[which(cv_vec<0.1)])
+#	sel_colnames=c(colnames(ref_table_ss)[-which(cv_vec<0.1)])
+#	print(setdiff(sel_colnames,colnames(obs_data)))
+#	print(setdiff(colnames(obs_data),sel_colnames))
+#	ref_table_ss=subset(ref_table_ss,select=sel_colnames)
+#	obs_data=subset(obs_data,select=sel_colnames)
+#}else{
+obs_data=subset(obs_data,select=-dataset)
+#}
 print('data filtered')
 ## generate the regression random forest for each parameter
 ## predict expected value + generate posterior for the parameter and store rf weigth in a vector
     res=lapply(all_param,function(p,...){
     	target=ref_table_prior[,p]
     	rf_data=data.frame(ref_table_ss,target)
-    	rf=regAbcrf(target~.,data=rf_data,ntree=ntree,paral=T,ncores=ncores)
+    	rf=regAbcrf(target~.,data=rf_data,ntree=ntree,paral=T,ncores=ncores,lda=F)
     	pred=predict(rf,training=rf_data,obs=obs_data,paral=T,ncores=ncores,rf.weights=T)
     	## It return a table with O columns (with O the number of observed dataset) and nPosterior rows
     	print(dim(pred$weights))

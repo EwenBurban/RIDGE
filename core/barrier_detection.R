@@ -12,7 +12,7 @@ ncores=as.numeric(args['ncores'])
 obs_dir=args['obs_dir']
 sim_dir=args['sim_dir']
 mode=args['mode']
-barrier_type=args['barrier_type']
+barrier_type=''
 roc_smooth=0.001 # the lower the value is, the smoother the roc will be
 n_subset=5
 posterior_file=args['posterior']
@@ -90,7 +90,7 @@ if(mode=='test'){
 		migration='null_mig'; obs_prior[,'null_mig']=rep(1000,nrow(obs_prior));print('no_mig')}
 	obs_all=merge(obs_data,obs_prior,by='dataset')
 }else {
-	if (barrier_type=='current'){migration='M_current'}else if (barrier_type=='ancestral'){migration='M_ancestral'}
+		migration='M_current'
 }
 
 ### load Training set and set up for next usages
@@ -128,11 +128,7 @@ if(mode=='test'){
 	obs_prediction$bayes_factor=mean_prior_ratio * (obs_prediction$post.prob/(1-obs_prediction$post.prob))
 	obs_bayes_stat=get_roc(prior=obs_prior[,migration],est=obs_prediction$bayes_factor,trsh=1.000001)
 	names(obs_bayes_stat)=paste0('obs_bayes_',names(obs_bayes_stat))
-	threshold_seq=seq(0,10,by=roc_smooth)
-	obs_roc_bayes_stat=as.data.frame(do.call(rbind,lapply(threshold_seq,function(x,...) get_roc(prior=obs_prior[,migration],est=obs_prediction$bayes_factor,trsh=x))))
-	if(migration=='null_mig'){obs_bayes_AUC=0.5}else
-	{obs_bayes_AUC=auc(obs_roc_bayes_stat$FPR,obs_roc_bayes_stat$TPR,absolutearea=F)}
-	if(is.na(obs_bayes_AUC)){obs_bayes_AUC=mean(obs_roc_bayes_stat$TPR)/(mean(obs_roc_bayes_stat$TPR)+mean(obs_roc_bayes_stat$FPR))}
+	threshold_seq=seq(0,max(obs_prior[,migration]),by=roc_smooth)
 } else {
 	obs_prediction=data.frame('allocation'=pred$allocation,'post.prob'=pred$post.prob)
 	obs_prediction$post.prob[which(obs_prediction$allocation=='non-barrier')]=1-obs_prediction$post.prob[which(obs_prediction$allocation=='non-barrier')]
@@ -143,13 +139,13 @@ p_barrier_obs_est=length(which(obs_prediction$allocation=='barrier'))/nrow(obs_p
 
 ####### generate output
 
-write.table(obs_prediction,file=file.path(obs_dir,paste0('Pbarrier_',barrier_type,'.txt')),sep='\t',row.names=F)
+write.table(obs_prediction,file=file.path(obs_dir,paste0('Pbarrier.txt')),sep='\t',row.names=F)
 ### report
-report=c('obs_bayes_p'=length(which(obs_prediction$bayes_factor>1))/nrow(obs_data),'p_barrier_obs_est'=p_barrier_obs_est)
+report=c('obs_bayes_p'=length(which(obs_prediction$bayes_factor>100))/nrow(obs_data),'p_barrier_obs_est'=p_barrier_obs_est)
 if (mode=='test'){
-	report=c(report,'obs_AUC'=obs_AUC,'p_barrier_obs_obs'=p_barrier_obs_obs,'obs_bayes_AUC'=obs_bayes_AUC,obs_bayes_stat)
+	report=c(report,'obs_AUC'=obs_AUC,'p_barrier_obs_obs'=p_barrier_obs_obs)
 	write.table(roc_stat,file=file.path(obs_dir,'true_roc_table.txt'),sep='\t',row.names=F)
 
 }
-write.table(t(report),file.path(obs_dir,paste0('report_barrier_',barrier_type,'_detection.txt')),sep='\t',row.names=F)
+write.table(t(report),file.path(obs_dir,paste0('report_barrier_detection.txt')),sep='\t',row.names=F)
 	

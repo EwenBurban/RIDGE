@@ -64,7 +64,7 @@ elif mode=='test' :
 else :
     expected_output=['ABCstat_global.txt','ABCstat_locus.txt','gof_prior.txt',
             'gof_posterior.txt','posterior.txt','model_weight.txt','QC_plot/QC_prior_density.pdf','QC_plot/QC_prior_acp.pdf',
-            'Pbarrier_current.txt','Pbarrier_ancestral.txt','report_barrier_current_detection.txt','report_barrier_ancestral_detection.txt','QC_plot/QC_prior.pdf','QC_plot/QC_posterior_density.pdf','QC_plot/QC_posterior_acp.pdf']
+            'Pbarrier.txt','report_barrier_detection.txt','QC_plot/QC_prior.pdf','QC_plot/QC_posterior_density.pdf','QC_plot/QC_posterior_acp.pdf']
 
 rule targets: # edit at the end 
     input:
@@ -265,33 +265,17 @@ rule barrier_detection_current:
         "{timeStamp}/ABCstat_locus.txt",
         "{timeStamp}/sim_locus/priorfile_locus.txt"
     output:
-        '{timeStamp}/Pbarrier_current.txt',
-        '{timeStamp}/report_barrier_current_detection.txt'
+        '{timeStamp}/Pbarrier.txt',
+        '{timeStamp}/report_barrier_detection.txt'
     threads: 8
     shell:
         """
         {Sc}/R.sif Rscript {core_path}/barrier_detection.R  ncores=8\
                 ntree={ntree} obs_dir={timeStamp}/ \
                 sim_dir={wildcards.timeStamp}/sim_locus/ mode=normal \
-                posterior={timeStamp}/posterior.txt barrier_type=current
+                posterior={timeStamp}/posterior.txt
         """
 
-rule barrier_detection_ancestral:
-    input:
-        "{timeStamp}/sim_locus/ABCstat_locus.txt",
-        "{timeStamp}/ABCstat_locus.txt",
-        "{timeStamp}/sim_locus/priorfile_locus.txt"
-    output:
-        '{timeStamp}/Pbarrier_ancestral.txt',
-        '{timeStamp}/report_barrier_ancestral_detection.txt'
-    threads: 8
-    shell:
-        """
-        {Sc}/R.sif Rscript {core_path}/barrier_detection.R  ncores=8\
-                ntree={ntree} obs_dir={timeStamp}/ \
-                sim_dir={wildcards.timeStamp}/sim_locus/ mode=normal \
-                posterior={timeStamp}/posterior.txt barrier_type=ancestral
-        """
 
 ####################### QC_plot ############################
 
