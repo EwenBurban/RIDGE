@@ -5,7 +5,7 @@ core_path = binpath + '/core'
 lightMode = config['lightMode']
 
 # general property
-if lightmode==False:
+if lightMode==False:
     nmultilocus = 1000 # number of multilocus simulations per iteration (500)
     nPosterior_locus = 1000
     split_size=int(nmultilocus/4)
