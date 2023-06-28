@@ -53,36 +53,34 @@ for contig in set(bed['chr']):
         sel_snp_sfs = np.where(np.logical_and(pos>=window[0],pos<=window[1])==True)[0]
         sfs_nsites = len(sel_snp_sfs)
         sub_pos=pos[sel_snp_sfs]
-        sub_acA=acA[sel_snp_sfs]
-        sub_acB=acB[sel_snp_sfs]
 
         if sfs_nsites >= min_sites:
-            piA_tmp = allel.sequence_diversity(sub_pos,sub_acA,start=window[0],stop=window[1])
-            piB_tmp= allel.sequence_diversity(sub_pos,sub_acB,start=window[0],stop=window[1])
-            thetaA_tmp = allel.watterson_theta(sub_pos,sub_acA,start=window[0],stop=window[1])
-            thetaB_tmp =  allel.watterson_theta(sub_pos,sub_acB,start=window[0],stop=window[1])
+            piA_tmp = allel.sequence_diversity(sub_pos,acA[sel_snp],start=window[0],stop=window[1])
+            piB_tmp= allel.sequence_diversity(sub_pos,acB[sel_snp],start=window[0],stop=window[1])
+            thetaA_tmp = allel.watterson_theta(sub_pos,acA[sel_snp],start=window[0],stop=window[1])
+            thetaB_tmp =  allel.watterson_theta(sub_pos,acB[sel_snp],start=window[0],stop=window[1])
 
-            TajDA_tmp = allel.tajima_d(sub_acA,sub_pos,start=window[0],stop=window[1])
-            TajDB_tmp = allel.tajima_d(sub_acB,sub_pos,start=window[0],stop=window[1])
+            TajDA_tmp = allel.tajima_d(acA[sel_snp],sub_pos,start=window[0],stop=window[1])
+            TajDB_tmp = allel.tajima_d(acB[sel_snp],sub_pos,start=window[0],stop=window[1])
 
-            dxy_tmp = allel.sequence_divergence(sub_pos,sub_acA,sub_acB,start=window[0],stop=window[1])
+            dxy_tmp = allel.sequence_divergence(sub_pos,acA[sel_snp],acB[sel_snp],start=window[0],stop=window[1])
             da_tmp = dxy_tmp - (piA_tmp + piB_tmp)/2
-            num,den=allel.hudson_fst(sub_acA,sub_acB)
+            num,den=allel.hudson_fst(acA[sel_snp],acB[sel_snp])
             Fst_tmp = np.nansum(num)/np.nansum(den)
 ## gt sub sampling may bug
 #            sub_gt=gt[sel_snp_sfs,]
 #            a,b,c=allel.weir_cockerham_fst(sub_gt,[popA_index,popB_index])
 #            Fst_tmp= np.nansum(a)/(np.nansum(a)+np.nansum(b)+np.nansum(c))
 
-            sfs = allel.joint_sfs(sub_acA[:,1],sub_acB[:,1],len(popA_index)*ploidy,len(popB_index)*ploidy)
+            sfs = allel.joint_sfs(acA[sel_snp,1],acB[sel_snp,1],len(popA_index)*ploidy,len(popB_index)*ploidy)
             sxA = np.sum(sfs[1:-1,(0,-1)])/sfs_nsites
             sxB = np.sum(sfs[(0,-1),1:-1])/sfs_nsites
             sf = (sfs[-1,0] + sfs[0,-1])/sfs_nsites
             ss = np.sum(sfs[1:-1,1:-1])/sfs_nsites
 
             dataset_tmp = '{}:{}-{}'.format(contig,window[0],window[1])
-            nsites = np.append(nsites,sfs_nsites)
 
+            nsites = np.append(nsites,sfs_nsites)
             sxA_arr = np.append(sxA_arr,sxA)
             sxB_arr = np.append(sxB_arr,sxB)
             sf_arr = np.append(sf_arr,sf)
