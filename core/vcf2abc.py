@@ -72,7 +72,7 @@ for contig in set(bed['chr']):
 #            a,b,c=allel.weir_cockerham_fst(sub_gt,[popA_index,popB_index])
 #            Fst_tmp= np.nansum(a)/(np.nansum(a)+np.nansum(b)+np.nansum(c))
 
-            sfs = allel.joint_sfs(acA[sel_snp,1],acB[sel_snp,1],len(popA_index)*ploidy,len(popB_index)*ploidy)
+            sfs = allel.joint_sfs(acA[sel_snp,1].reshape(len(sel_snp[0])),acB[sel_snp,1].reshape(len(sel_snp[0])),len(popA_index)*ploidy,len(popB_index)*ploidy)
             sxA = np.sum(sfs[1:-1,(0,-1)])/sfs_nsites
             sxB = np.sum(sfs[(0,-1),1:-1])/sfs_nsites
             sf = (sfs[-1,0] + sfs[0,-1])/sfs_nsites
