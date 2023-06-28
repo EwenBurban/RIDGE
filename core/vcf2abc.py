@@ -65,8 +65,9 @@ for contig in set(bed['chr']):
 
             dxy_tmp = allel.sequence_divergence(sub_pos,acA[sel_snp_sfs],acB[sel_snp_sfs],start=window[0],stop=window[1])
             da_tmp = dxy_tmp - (piA_tmp + piB_tmp)/2
-            num,den=allel.hudson_fst(acA[sel_snp_sfs],acB[sel_snp_sfs])
-            Fst_tmp = np.nansum(num)/np.nansum(den)
+            a,b,c=allel.weir_cockerham_fst(gt[sel_snp_sfs],[popA_index,popB_index])
+            Fst_tmp = np.nansum(a)/(np.nansum(a)+np.nansum(b)+np.nansum(c))
+
             sfs = allel.joint_sfs(acA[sel_snp_sfs,1],acB[sel_snp_sfs,1],len(popA_index)*ploidy,len(popB_index)*ploidy)
             sxA = np.sum(sfs[1:-1,(0,-1)])/sfs_nsites
             sxB = np.sum(sfs[(0,-1),1:-1])/sfs_nsites
