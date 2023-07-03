@@ -164,8 +164,7 @@ rule simulationsModelComp:
     params:
         nmultilocus={nmultilocus}
     input:
-        locus_datafile = "{timeStamp}/locus_datafile",
-        acb_global = "{timeStamp}/ABCstat_global.txt",
+        locus_datafile = "{timeStamp}/locus_datafile"
     output:
         "{timeStamp}/modelComp/{model}_{i}/priorfile.txt",
         "{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",
