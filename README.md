@@ -39,9 +39,6 @@ It will take sometime to build up all container
 Before launching anything, ensure that the config/ folder contains at least one file named `config.sh`. If your cluster uses SLURM as the job manager, you must also fill the `cluster_config.yaml` file. Simply refer to the `example/config` folder and adjust it to match your cluster's configuration. 
 For more details, consult the `user_manual.pdf`.
 
-## 2.4 Check installation
-
-TO-DO
 # 3. Usage
 ---
 Please refer to the `user_manual.pdf` for information on this section. Note that the file to launch RIDGE is `RIDGE.sh`, and `core/RIDGE_V2_pipeline.py` manages all of the code.
@@ -49,7 +46,7 @@ Please refer to the `user_manual.pdf` for information on this section. Note that
 # 4. Troubleshooting
 ---
 
-If you encounter any issues, report them on GitHub.
+If you encounter any issues, report them on issues section on GitHub or by mail : burban_ewen@mailfence.com .
 
 # 5. License
 ---
