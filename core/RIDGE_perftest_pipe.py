@@ -78,7 +78,7 @@ rule targets: # edit at the end
         mw = expand("{wdir}/model_weight.txt",wdir=wdir),
         sim_post_glob = expand('{wdir}/sim_posterior/ABCstat_global.txt',wdir=wdir),
         gof_posterior = expand("{wdir}/gof_posterior.txt",wdir=wdir),
-        barrier_assignation = expand('{wdir}/Pbarrier_null.txt',wdir=wdir),
+        barrier_assignation = expand('{wdir}/Pbarrier.txt',wdir=wdir),
  #       table = expand('{wdir}/roc_table.txt',wdir=wdir),
 #        fig = expand('{wdir}/roc.pdf',wdir=wdir)
     shell:
@@ -206,14 +206,14 @@ rule barrier_detection:
         "{wdir}/sim_locus/ABCstat_locus.txt",
         "{wdir}/sim_locus/priorfile_locus.txt"
     output:
-        '{wdir}/Pbarrier_null.txt',
-        '{wdir}/report_barrier_null_detection.txt'
+        '{wdir}/Pbarrier.txt',
+        '{wdir}/report_barrier_detection.txt'
     threads: 8
     shell:
         """
         {Sc}/R.sif Rscript {core_path}/barrier_detection.R  ncores=8\
                 ntree={ntree} obs_dir={wildcards.wdir}/ \
                 sim_dir={wildcards.wdir}/sim_locus/ mode=test \
-                posterior={wildcards.wdir}/posterior.txt barrier_type=null
+                posterior={wildcards.wdir}/posterior.txt
         """
 
