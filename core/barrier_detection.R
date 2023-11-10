@@ -22,14 +22,15 @@ pbarrier=sapply(1:nrow(posterior),function(x,...){
 					# this line weight the barrier proportion estimated for ancestral and current migration by their respective time of effect during divergence
 					# TO-DO : directly implement the pbarrier parameter in ABC model, allowing direct estimation of this parameter rather than estimating it at posteriori - E.BURBAN 9/11/2023
 				weighted.mean(posterior[x,c('PbarrierM_ancestral','PbarrierM_current')],w=c(posterior[x,'Tsplit']-posterior[x,'Tam'],posterior[x,'Tsc']))})
-
+## in case where there is no barrier, weighted mean produce NaN. So NaN are replace by 0
+pbarrier[is.nan(pbarrier)]=0
 ######## pbarrier ratio computation (pbarrier is called Q in text)
 # correct way is to compute the average ratio (1-Q)/Q but this way produce Inf when Q=0. 
 # In model averaging, by construction some  posteriors might have a Q=0. 
 # Consequently, we remove Inf value from the mean and so increase the mean value. 
 # To avoid this pitfall, an aproximate way is to compute the ratio as mean(1-Q)/mean(Q)
 correct_pbarrier_ratio=(1-pbarrier)/(pbarrier)
-correct_mean_pbarrier_ratio=mean(v[is.infinite(v)==F],na.rm=T)
+correct_mean_pbarrier_ratio=mean(correct_pbarrier_ratio[is.infinite(correct_pbarrier_ratio)==F],na.rm=T)
 aproxmate_mean_pbarrier_ratio=(1-mean(pbarrier))/mean(pbarrier)
 
 #mean_prior_ratio=
@@ -122,14 +123,14 @@ obs_roc_all=all
 train_set=obs_roc_all[,col_data]
 prior_train_set=obs_roc_all[,col_prior]
 #if(migration=='null_mig'){prior_train_set[,migration]=rep(1000,nrow(prior_train_set))}
-status=	convert2bar(prior_train_set[,migration])
+if(migration=='null_mig'){status=convert2bar(prior_train_set[,'M_current'])}else {status=	convert2bar(prior_train_set[,migration])}
 train_set=data.frame(train_set,status)
 rf = abcrf(status~.,data=train_set,ncores = ncores,ntree = ntree,paral = T,lda=F)
 pred = predict(rf,training = train_set,obs = obs_data[,col_data],paral = T,ncores=ncores)
 if(mode=='test'){
 	obs_prediction=data.frame('allocation'=pred$allocation,'post.prob'=pred$post.prob,
 							  'true_status'=convert2bar(obs_prior[,migration]),'migration'=obs_prior[,migration],
-							  'tree_vote'=pred$vote[,'barrier']/ntree) ### new feature !!!! to test
+							  'tree_vote'=pred$vote[,'barrier']/rowSums(pred$vote)) ### new feature !!!! to test ! Reminder : line 144 there is another occurance of this code
 	obs_prediction$post.prob[which(obs_prediction$allocation=='non-barrier')]=1-obs_prediction$post.prob[which(obs_prediction$allocation=='non-barrier')]
 	### roc curve computation	
 	threshold_seq=seq(0,1,by=roc_smooth)
@@ -138,28 +139,32 @@ if(mode=='test'){
 	if(is.na(obs_AUC)){obs_AUC=mean(roc_stat$TPR)/(mean(roc_stat$TPR)+mean(roc_stat$FPR))}
 	### computing bayes factor ####
 	obs_prediction$bayes_factor=correct_mean_pbarrier_ratio * (obs_prediction$post.prob/(1-obs_prediction$post.prob))
-	#p_barrier_obs_obs=length(which(obs_prediction$true_status=='barrier'))/nrow(obs_prediction)
+	p_barrier_obs_obs=length(which(obs_prediction$true_status=='barrier'))/nrow(obs_prediction)
 	#### bayes part ###
 } else {
-	obs_prediction=data.frame('allocation'=pred$allocation,'post.prob'=pred$post.prob)
+	obs_prediction=data.frame('allocation'=pred$allocation,'post.prob'=pred$post.prob,'tree_vote'=pred$vote[,'barrier']/rowSums(pred$vote))
 	obs_prediction$post.prob[which(obs_prediction$allocation=='non-barrier')]=1-obs_prediction$post.prob[which(obs_prediction$allocation=='non-barrier')]
 
 }
 
 ### computing bayes factor ####
 obs_prediction$bayes_factor=correct_mean_pbarrier_ratio * (obs_prediction$post.prob/(1-obs_prediction$post.prob))
-obs_prediction$BF_approxQ=…
-# To continue 09/11/23 
+obs_prediction$BF_approxQ_treevote=aproxmate_mean_pbarrier_ratio *  (obs_prediction$tree_vote/(1-obs_prediction$tree_vote))
+obs_prediction$BF_treevote=correct_mean_pbarrier_ratio * (obs_prediction$tree_vote/(1-obs_prediction$tree_vote))
+obs_prediction$BF_approxQ=aproxmate_mean_pbarrier_ratio *  (obs_prediction$post.prob/(1-obs_prediction$post.prob))
 
-p_barrier_obs_est=length(which(obs_prediction$allocation=='barrier'))/nrow(obs_prediction)
+
+
+#p_barrier_obs_est=length(which(obs_prediction$allocation=='barrier'))/nrow(obs_prediction)
 
 ####### generate output
 
 write.table(obs_prediction,file=file.path(obs_dir,paste0('Pbarrier.txt')),sep='\t',row.names=F)
 ### report
-report=c('obs_bayes_p'=length(which(obs_prediction$bayes_factor>100))/nrow(obs_data),'p_barrier_obs_est'=p_barrier_obs_est)
+#report=c('obs_bayes_p'=length(which(obs_prediction$bayes_factor>100))/nrow(obs_data),'p_barrier_obs_est'=p_barrier_obs_est)
+report=c('correct_pbarrier_ratio'=correct_mean_pbarrier_ratio,'average_pbarrier'=mean(pbarrier),'aproximate_pbarrier_ratio'=aproxmate_mean_pbarrier_ratio)
 if (mode=='test'){
-	report=c(report,'obs_AUC'=obs_AUC,'p_barrier_obs_obs'=p_barrier_obs_obs)
+	report=c(report,'obs_AUC'=obs_AUC,'true_pbarrier'=p_barrier_obs_obs)
 	write.table(roc_stat,file=file.path(obs_dir,'true_roc_table.txt'),sep='\t',row.names=F)
 
 }
