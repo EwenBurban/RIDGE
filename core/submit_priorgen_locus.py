@@ -20,7 +20,7 @@ priorfile=argv['priorfile']
 locus_data = pd.read_csv(locus_datafile,sep='\t')
 nLoci = locus_data.shape[0]
 
-mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -n 1 {N1} -n 2 {N2}  -ema {Tsc} 0 0 0 0 -ema {Tam} 0 {M_ancestral} {M_ancestral} 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -ema {Tsplit} 0 0 0 0  -seed {seed}--print-model -transpose-segsites -SC abs"
+mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -m 1 2 {M12_current} -m 2 1 {M21_current} -n 1 {N1} -n 2 {N2}  -ema {Tsc} 0 0 0 0 -ema {Tam} 0 {M12_ancestral} {M21_ancestral} 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -ema {Tsplit} 0 0 0 0  -seed {seed}--print-model -transpose-segsites -SC abs"
 
 #### read priorfile and correct for aberation and remove useless prior
 #glob_prior = pd.read_csv(priorfile,sep='\t',index_col='dataset') 
@@ -54,8 +54,12 @@ def build_locusDf(param,locus_df,nLoci):# This function apply the genomic mode d
     locus_sim[N] = locus_sim[N].apply(lambda x: beta_dis(x,param['shape_N_a'],param['shape_N_b']),axis=1)
     migration= 'M_current'
     locus_sim[migration] = locus_sim[migration].multiply(np.random.choice([0,1],nLoci,p= [param['Pbarrier'+ migration ],1-param['Pbarrier'+ migration ]]),axis=0)
+    locus_sim['M12_current'] = locus_sim['N1'] * Nref * locus_sim[migration]
+    locus_sim['M21_current']= locus_sim['N2'] * Nref * locus_sim[migration]
     migration= 'M_ancestral'
     locus_sim[migration] = locus_sim[migration].multiply(np.random.choice([0,1],nLoci,p= [param['Pbarrier'+ migration ],1-param['Pbarrier'+ migration ]]),axis=0)
+    locus_sim['M12_ancestral'] = locus_sim['N1'] * Nref * locus_sim[migration]
+    locus_sim['M21_ancestral']= locus_sim['N2'] * Nref * locus_sim[migration]
     return locus_sim
 
 # For each multilocus dataset, transform it in a dataframe containing prior for each locus in the multilocus dataset

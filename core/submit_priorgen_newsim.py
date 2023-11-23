@@ -26,11 +26,11 @@ mscommand = ""
 if "SI" in model:
     mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed} --print-model -transpose-segsites -SC abs"
 if "AM" in model:
-    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2} -ema {Tam} 0 {M_ancestral} {M_ancestral} 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -ema {Tsplit} 0 0 0 0 -seed {seed} --print-model -transpose-segsites -SC abs"
+    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2} -ema {Tam} 0 {M12} {M21} 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -ema {Tsplit} 0 0 0 0 -seed {seed} --print-model -transpose-segsites -SC abs"
 if "SC" in model:
-    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -n 1 {N1} -n 2 {N2}  -ema {Tsc} 0 0 0 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed}--print-model -transpose-segsites -SC abs"
+    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -m 1 2 {M12} -m 2 1 {M21} -n 1 {N1} -n 2 {N2}  -ema {Tsc} 0 0 0 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed}--print-model -transpose-segsites -SC abs"
 if "IM" in model:
-    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed} --print-model -transpose-segsites -SC abs"
+    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -m 1 2 {M12} -m 2 1 {M21} -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed} --print-model -transpose-segsites -SC abs"
 
 # Define default prior bound
 shape_bound = [0.1, 10]
@@ -79,8 +79,10 @@ def loguniform(low=0, high=1, size=1):
 ################## convert parameter values in coalescent units
 N_bound[0] /= Nref
 N_bound[1] /= Nref
-T_bound[0] /= (2*ploidy*Nref)
-T_bound[1] /= (2*ploidy*Nref)
+T_bound[0] /= (4*Nref)
+T_bound[1] /= (4*Nref)
+m_bound[0] /= (4*Nref)
+m_bound[1] /= (4*Nref)
 
 ###### build global priors for {nMultilocus} datasets ######
 
@@ -93,10 +95,10 @@ if 'SC' in model:
 if 'AM' in model:
     migration = 'M_ancestral'
     glob_prior['Tam'] = glob_prior['Tsplit'].apply(lambda x: np.random.uniform(low = min_Tam*x, high =x))
-    glob_prior[migration] = loguniform(low=M_bound[0],high=M_bound[1],size = nMultilocus) 
+    glob_prior[migration] = loguniform(low=m_bound[0],high=m_bound[1],size = nMultilocus) 
 if 'SC' in model or 'IM' in model:
     migration = 'M_current'
-    glob_prior[migration] = loguniform(low=M_bound[0],high=M_bound[1],size = nMultilocus)
+    glob_prior[migration] = loguniform(low=m_bound[0],high=m_bound[1],size = nMultilocus)
 if '2M' in model: # old method ; to remove
     glob_prior['shape_' + migration + '_a'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
     glob_prior['shape_' + migration + '_b'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
@@ -128,12 +130,17 @@ def build_locusDf(param,locus_df,nLoci): # This function apply the genomic mode 
     if 'shape_N_a' in param :
         N = ['Na','N1','N2']
         locus_sim[N] = locus_sim[N].apply(lambda x: beta_dis(x,param['shape_N_a'],param['shape_N_b']),axis=1)
-        locus_sim[N] = np.clip(locus_sim[N],9e-4,1e9)
+        #locus_sim[N] = np.clip(locus_sim[N],9e-4,1e9)
     if 'Pbarrier'+ migration  in param:
         if 'shape_' + migration + '_a' in param : 
             locus_sim[migration] = locus_sim[migration].apply(lambda x: beta_dis(x,param['shape_' + migration + '_a'],param['shape_' + migration + '_b']))
             locus_sim[migration] = np.clip(locus_sim[migration],M_bound[0],M_bound[1])
         locus_sim[migration] = locus_sim[migration].multiply(np.random.choice([0,1],nLoci,p= [param['Pbarrier'+ migration ],1-param['Pbarrier'+ migration ]]),axis=0)
+    if migration != 'null'
+    locus_sim['M12']=locus_sim['N1']*Nref*locus_sim[migration] 
+    locus_sim['M21']=locus_sim['N2']*Nref*locus_sim[migration] 
+
+
     return locus_sim
 
 
