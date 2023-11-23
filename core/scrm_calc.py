@@ -4,21 +4,25 @@ import re
 import sys
 import os
 import pandas as pd
-# TODO:switch to sgkit  <22-04-22, yourname> #
+# Goal of script
+# This script take in input from sys.stdin (standar input)  where is place simulation results and transform the sequence data into summary statistics
+
 argv={x.split('=')[0]: x.split('=')[1] for x in sys.argv[1:]}
 locus_write=eval(argv['locus_write'])
 global_write=eval(argv['global_write'])
-locus_datafile=argv['locus_datafile']
+locus_datafile=argv['locus_datafile'] 
 num_dataset=int(argv['num_dataset'])
-min_sites = 1 #TODO add a warning about this
+min_sites = 1 # Locus with less than 2 SNP will be rejected
+
 locus_data = pd.read_csv(locus_datafile,sep='\t')
 locus_size_it = iter(locus_data['locus_length'])
 subpop_it = ([range(0,locus_data.loc[i,'size_popA']),range(locus_data.loc[i,'size_popA'],(locus_data.loc[i,'size_popA'] + locus_data.loc[i,'size_popB']))] for i in range(locus_data.shape[0]))
 ### control ###
 log = open('error.log','w')
 loc_num = iter(range(locus_data.shape[0]))
-#######
-def get_GT(locus_data):
+
+####### Defining custom function
+def get_GT(locus_data): # this function transform raw output from scrm simulator into data compatible with scikit-allel modul
     pos_list = []
     haplotype_list = []
     for snp in locus_data:
@@ -27,7 +31,7 @@ def get_GT(locus_data):
         haplotype_list.append(np.array(snp[2:],dtype=int))
     return {'pos':np.array(pos_list,dtype=int) , 'GT':haplotype_list}
 
-def get_outlier(vec,method='supp'):
+def get_outlier(vec,method='supp'): # It compute the proportion of outlier in a distribution of value using Tukey’s fences definition. 
     vec=np.arcsin(np.sqrt(vec))
     Q1=np.quantile(vec,0.25)
     Q3=np.quantile(vec,0.75)
@@ -40,9 +44,7 @@ def get_outlier(vec,method='supp'):
         outlier=np.where(vec<under_outlier_born)
     return len(outlier[0])/len(vec)
 
-def get_abcstat(gt,locus_length,subpop,seed):
-    # when biased is true, all statistics will be calculated infering missing position as 
-    # invariant sites. If biased == False, stats are calculated only on given SNP.
+def get_abcstat(gt,locus_length,subpop,seed): # Compute all the summary statistic over a defined loci 
         l_n = next(loc_num)
         nsites = len(gt['pos'])
         if nsites > min_sites:
@@ -50,6 +52,7 @@ def get_abcstat(gt,locus_length,subpop,seed):
             h = allel.HaplotypeArray(gt['GT'])
             acA  = h.count_alleles(subpop=subpop[0])
             acB  = h.count_alleles(subpop=subpop[1])
+            
             piA = allel.sequence_diversity(pos,acA,start=1,stop=locus_length)
             piB = allel.sequence_diversity(pos,acB,start=1,stop=locus_length)
             dxy = allel.sequence_divergence(pos,acA,acB,start=1,stop=locus_length)
@@ -60,14 +63,12 @@ def get_abcstat(gt,locus_length,subpop,seed):
             TajDA = allel.tajima_d(acA,pos,start=1,stop=locus_length)
             TajDB = allel.tajima_d(acB,pos,start=1,stop=locus_length)
             sfs = allel.joint_sfs(acA[:,1],acB[:,1],len(subpop[0]),len(subpop[1]))
-            sxA = np.sum(sfs[1:-1,(0,-1)])/nsites
-            sxB = np.sum(sfs[(0,-1),1:-1])/nsites
-            sf = (sfs[-1,0] + sfs[0,-1])/nsites
-            ss = np.sum(sfs[1:-1,1:-1])/nsites
+            sxA = np.sum(sfs[1:-1,(0,-1)])/nsites # sxA is the proportion of site which are polymorphic in A pop and not in B pop
+            sxB = np.sum(sfs[(0,-1),1:-1])/nsites # sxB is the reverse of sxA
+            sf = (sfs[-1,0] + sfs[0,-1])/nsites # sf is the proportion of sites which are differentialy fixed between 2 pops
+            ss = np.sum(sfs[1:-1,1:-1])/nsites# ss is the proportion of sites which are polymorphic in both pop
             num,den=allel.hudson_fst(acA,acB)
-            Fst = np.nansum(num)/np.nansum(den)
-#            a,b,c=allel.weir_cockerham_fst(gt,subpop)
-#            Fst= np.sum(a)/(np.sum(a)+np.sum(b)+np.sum(c))
+            Fst = np.nansum(num)/np.nansum(den) # Fst using hudson definition
 
             return {'bialsite_avg':nsites,'piA_avg':piA,'piB_avg':piB,'divAB_avg':dxy,
                     'netDivAB_avg':da,'thetaA_avg':thetaA,
@@ -76,13 +77,19 @@ def get_abcstat(gt,locus_length,subpop,seed):
         else :
             log.write(str(l_n) + '\n')
 
+
+
+######## processing raw data into ABC summary statistics
+
+## set up variable 
 locus_nb = 0
-in_locus = False
-in_head_locus = False
-locus_str = []
-stat = []
+in_locus = False # state the fact that the current line is inside a locus sequences
+in_head_locus = False # state the fact that the current line is inside the header of a locus
+locus_str = [] # list of sequences strings
+stat = [] # list of summary stats after sequence processing
 header ='position'
-for line in sys.stdin:
+
+for line in sys.stdin: # process raw standar input line by line to isolate raw sequences from the rest of scrm output
     line = line.strip()
 
     if in_head_locus == False and re.search('scrm',line) and in_locus==False :
@@ -122,7 +129,7 @@ if locus_write:
     else:
         locus_stat.to_csv('ABCstat_locus.txt',sep='\t',header=None,index_label='dataset',float_format='%.5f',mode='a',na_rep='0')
 
-if global_write:
+if global_write: # apply to locus scale rawdata and transformation to compute summary statistics at the multilocus scale
     locus_stat.drop('seed',axis=1,inplace=True)
     avg = locus_stat.apply(np.nanmean,axis=0)
     med = locus_stat.apply(np.nanmedian,axis=0)

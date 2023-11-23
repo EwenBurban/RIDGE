@@ -4,6 +4,10 @@ import pandas as pd
 import itertools as it
 import numpy as np
 import re
+## Goal of the script
+# It produce command line in the file exec.sh, when executed will generate coalescent simulation through scrm tool and then the result of simulation will be converted by the
+# script named scrm_calc.py into summary statistics stored in ABCstat_global.txt [if {global_write}==True] or/and ABCstat_locus.txt [if {locus_write}==True]
+# This script use parameters specified in {priorfile}
 argv={x.split('=')[0]: x.split('=')[1] for x in sys.argv[1:]}
 nMultilocus=int(argv['nMultilocus'])
 config_yaml = argv['config_yaml']
@@ -34,18 +38,18 @@ glob_prior['Tam'] = glob_prior.apply(lambda x: x['Tam'] if x['Tam'] < x['Tsplit'
 for migration in ['M_current','M_ancestral'] : 
     glob_prior['Pbarrier' + migration ]=0.5
 ########################### Generate locus level parameters
-def beta_dis(X,a,b): # In case of modeBarrier == beta, apply the a and b values to a vector X of values
+def beta_dis(X,a,b): # Create rescale beta distribution
     scalar = np.random.beta(a,b)
     rescale = a / (a +b)
     _ =  X * scalar/rescale 
     return(_)
 
 
-def build_locusDf(param,locus_df,nLoci):
+def build_locusDf(param,locus_df,nLoci):# This function apply the genomic mode defined before to create heterogeneity among locus
     locus_sim = pd.DataFrame([param for x in range(nLoci)]) # repeat the param line nLoci times into a DF
     locus_sim.reset_index(inplace=True,drop=True)
     locus_sim = pd.concat([locus_sim,locus_df],axis=1)
-    locus_sim['seed'] = np.random.randint(0,high = 1e18, size = nLoci)
+    locus_sim['seed'] = np.random.randint(0,high = 1e18, size = nLoci) # add unique seed number to each locus simulation. It’s used as a tag to avoid confusion and mismatch during reference table
     N = ['Na','N1','N2']
     locus_sim[N] = locus_sim[N].apply(lambda x: beta_dis(x,param['shape_N_a'],param['shape_N_b']),axis=1)
     migration= 'M_current'
@@ -54,6 +58,7 @@ def build_locusDf(param,locus_df,nLoci):
     locus_sim[migration] = locus_sim[migration].multiply(np.random.choice([0,1],nLoci,p= [param['Pbarrier'+ migration ],1-param['Pbarrier'+ migration ]]),axis=0)
     return locus_sim
 
+# For each multilocus dataset, transform it in a dataframe containing prior for each locus in the multilocus dataset
 locus_param_df = [build_locusDf(glob_prior.loc[x,:],locus_data,nLoci) for x in range(nMultilocus)]
 
 
@@ -69,10 +74,10 @@ if locus_write == True:
         locus_param_df_full.reset_index(drop=True,inplace=True)
         lo.write(locus_param_df_full.to_csv(sep="\t",header=True,index_label='dataset',float_format='%.5f'))
 
-def short(x,digits=5):
+def short(x,digits=5): # In order to limit storage cost, each numerical value is shorten to 5 digits
     if type(x) == np.dtype('float64'):
         y = round(x,digits)
-        if y <= 0:
+        if y <= 0: # in case of negative value, set to 1e-5. Because negative value should not happen. 
             y = 10 ** -digits
         return y
     else:
