@@ -54,12 +54,12 @@ def build_locusDf(param,locus_df,nLoci):# This function apply the genomic mode d
     locus_sim[N] = locus_sim[N].apply(lambda x: beta_dis(x,param['shape_N_a'],param['shape_N_b']),axis=1)
     migration= 'M_current'
     locus_sim[migration] = locus_sim[migration].multiply(np.random.choice([0,1],nLoci,p= [param['Pbarrier'+ migration ],1-param['Pbarrier'+ migration ]]),axis=0)
-    locus_sim['M12_current'] = locus_sim['N1'] * Nref * locus_sim[migration]
-    locus_sim['M21_current']= locus_sim['N2'] * Nref * locus_sim[migration]
+    locus_sim['M12_current'] = locus_sim['N1'] *4* Nref * locus_sim[migration]
+    locus_sim['M21_current']= locus_sim['N2'] *4* Nref * locus_sim[migration]
     migration= 'M_ancestral'
     locus_sim[migration] = locus_sim[migration].multiply(np.random.choice([0,1],nLoci,p= [param['Pbarrier'+ migration ],1-param['Pbarrier'+ migration ]]),axis=0)
-    locus_sim['M12_ancestral'] = locus_sim['N1'] * Nref * locus_sim[migration]
-    locus_sim['M21_ancestral']= locus_sim['N2'] * Nref * locus_sim[migration]
+    locus_sim['M12_ancestral'] = locus_sim['N1'] *4* Nref * locus_sim[migration]
+    locus_sim['M21_ancestral']= locus_sim['N2'] *4* Nref * locus_sim[migration]
     return locus_sim
 
 # For each multilocus dataset, transform it in a dataframe containing prior for each locus in the multilocus dataset
