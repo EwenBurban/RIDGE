@@ -81,8 +81,8 @@ N_bound[0] /= Nref
 N_bound[1] /= Nref
 T_bound[0] /= (4*Nref)
 T_bound[1] /= (4*Nref)
-m_bound[0] /= (4*Nref)
-m_bound[1] /= (4*Nref)
+M_bound[0] /= (4*Nref)
+M_bound[1] /= (4*Nref)
 
 ###### build global priors for {nMultilocus} datasets ######
 
@@ -95,10 +95,10 @@ if 'SC' in model:
 if 'AM' in model:
     migration = 'M_ancestral'
     glob_prior['Tam'] = glob_prior['Tsplit'].apply(lambda x: np.random.uniform(low = min_Tam*x, high =x))
-    glob_prior[migration] = loguniform(low=m_bound[0],high=m_bound[1],size = nMultilocus) 
+    glob_prior[migration] = loguniform(low=M_bound[0],high=M_bound[1],size = nMultilocus) 
 if 'SC' in model or 'IM' in model:
     migration = 'M_current'
-    glob_prior[migration] = loguniform(low=m_bound[0],high=m_bound[1],size = nMultilocus)
+    glob_prior[migration] = loguniform(low=M_bound[0],high=M_bound[1],size = nMultilocus)
 if '2M' in model: # old method ; to remove
     glob_prior['shape_' + migration + '_a'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
     glob_prior['shape_' + migration + '_b'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
