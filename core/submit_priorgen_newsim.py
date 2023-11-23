@@ -137,8 +137,8 @@ def build_locusDf(param,locus_df,nLoci): # This function apply the genomic mode 
             locus_sim[migration] = np.clip(locus_sim[migration],M_bound[0],M_bound[1])
         locus_sim[migration] = locus_sim[migration].multiply(np.random.choice([0,1],nLoci,p= [param['Pbarrier'+ migration ],1-param['Pbarrier'+ migration ]]),axis=0)
     if migration != 'null' :
-    locus_sim['M12']=locus_sim['N1']*Nref*locus_sim[migration] 
-    locus_sim['M21']=locus_sim['N2']*Nref*locus_sim[migration] 
+        locus_sim['M12']=locus_sim['N1']*Nref*locus_sim[migration] 
+        locus_sim['M21']=locus_sim['N2']*Nref*locus_sim[migration] 
 
 
     return locus_sim
