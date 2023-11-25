@@ -6,13 +6,13 @@ lightMode = config['lightMode']
 
 # general property
 if lightMode==False:
-    nmultilocus = 1000 # number of multilocus simulations per iteration (500)
+    nmultilocus = 250 # number of multilocus simulations per iteration (500)
     nPosterior_locus = 1000
     split_size=int(nmultilocus/4)
     split_size_locus=int(nmultilocus/50)
     nCPU_R = 8 # number of CPUs for the model comp for the model forest R functions (8)
     ntree = 1000 # number of tree for the random forest (RF) model comparison (1000)
-    nIterations_model_comp = 10 # number of subdirectories for the simulations used in the RF model comparison
+    nIterations_model_comp = 40# number of subdirectories for the simulations used in the RF model comparison
 else:
     nmultilocus = 250 # number of multilocus simulations per iteration (500)
     nPosterior_locus = 1000
@@ -20,7 +20,7 @@ else:
     split_size_locus=int(nmultilocus/50)
     nCPU_R = 8 # number of CPUs for the model comp for the model forest R functions (8)
     ntree = 1000 # number of tree for the random forest (RF) model comparison (1000)
-    nIterations_model_comp = 8 # number of subdirectories for the simulations used in the RF model comparison
+    nIterations_model_comp = 10 # number of subdirectories for the simulations used in the RF model comparison
 ITERATIONS_MODEL_COMP = range(nIterations_model_comp)
 MODELS_COMP = ['SC_1M_1N', 'SC_1M_2N', 'SC_3M_1N', 'SC_3M_2N', 'AM_1M_1N', 'AM_1M_2N', 'AM_3M_1N', 'AM_3M_2N', 'IM_1M_1N', 'IM_1M_2N', 'IM_3M_1N', 'IM_3M_2N', 'SI_1N', 'SI_2N']
 
