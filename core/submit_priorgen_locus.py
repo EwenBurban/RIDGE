@@ -16,6 +16,7 @@ locus_write=eval(argv['locus_write'])
 global_write=eval(argv['global_write'])
 binpath=argv['binpath']
 priorfile=argv['priorfile']
+Nref=argv['Nref']
 #### read locus_datafile
 locus_data = pd.read_csv(locus_datafile,sep='\t')
 nLoci = locus_data.shape[0]
@@ -70,15 +71,15 @@ locus_param_df = [build_locusDf(glob_prior.loc[x,:],locus_data,nLoci) for x in r
 # write priorfile.txt which contains global simulation parameters
 if global_write == True:
     with open('priorfile.txt','w') as o:
-        o.write(glob_prior.to_csv(sep="\t",header=True,index_label='dataset',float_format='%.5f'))
+        o.write(glob_prior.to_csv(sep="\t",header=True,index_label='dataset',float_format='%.10f'))
 
 if locus_write == True:
     with open('priorfile_locus.txt','w') as lo:
         locus_param_df_full = pd.concat(locus_param_df,axis=0)
         locus_param_df_full.reset_index(drop=True,inplace=True)
-        lo.write(locus_param_df_full.to_csv(sep="\t",header=True,index_label='dataset',float_format='%.5f'))
+        lo.write(locus_param_df_full.to_csv(sep="\t",header=True,index_label='dataset',float_format='%.10f'))
 
-def short(x,digits=5): # In order to limit storage cost, each numerical value is shorten to 5 digits
+def short(x,digits=10): # In order to limit storage cost, each numerical value is shorten to 10 digits
     if type(x) == np.dtype('float64'):
         y = round(x,digits)
         if y <= 0: # in case of negative value, set to 1e-5. Because negative value should not happen. 
