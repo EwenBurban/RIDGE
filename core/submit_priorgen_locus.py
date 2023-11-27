@@ -16,7 +16,7 @@ locus_write=eval(argv['locus_write'])
 global_write=eval(argv['global_write'])
 binpath=argv['binpath']
 priorfile=argv['priorfile']
-Nref=argv['Nref']
+Nref=float(argv['Nref'])
 #### read locus_datafile
 locus_data = pd.read_csv(locus_datafile,sep='\t')
 nLoci = locus_data.shape[0]
