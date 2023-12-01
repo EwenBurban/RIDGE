@@ -53,3 +53,8 @@ If you encounter any issues, report them on issues section on GitHub or by mail 
 
 You can freely use all code in this project under the conditions of the GNU GPL Version 3 or later.
 
+# 6. Reference
+---
+
+RIDGE is published in the following preprint : https://doi.org/10.1101/2023.09.16.558049
+
