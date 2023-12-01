@@ -63,17 +63,10 @@ def get_abcstat(gt,locus_length,subpop,seed): # Compute all the summary statisti
             TajDA = allel.tajima_d(acA,pos,start=1,stop=locus_length)
             TajDB = allel.tajima_d(acB,pos,start=1,stop=locus_length)
             sfs = allel.joint_sfs(acA[:,1],acB[:,1],len(subpop[0]),len(subpop[1]))
-<<<<<<< HEAD
-            sxA = np.sum(sfs[1:-1,(0,-1)])/nsites # sxA is the proportion of site which are polymorphic in A pop and not in B pop
-            sxB = np.sum(sfs[(0,-1),1:-1])/nsites # sxB is the reverse of sxA
-            sf = (sfs[-1,0] + sfs[0,-1])/nsites # sf is the proportion of sites which are differentialy fixed between 2 pops
-            ss = np.sum(sfs[1:-1,1:-1])/nsites# ss is the proportion of sites which are polymorphic in both pop
-=======
             sxA = np.sum(sfs[1:-1,(0,-1)])/nsites#sxA is the proportion of site which are polymorphic in A pop and not in B pop
             sxB = np.sum(sfs[(0,-1),1:-1])/nsites#sxB is the reverse of sxA
             sf = (sfs[-1,0] + sfs[0,-1])/nsites#sf is the proportion of sites which are differentialy fixed between 2 pops
             ss = np.sum(sfs[1:-1,1:-1])/nsites#ss is the proportion of sites which are polymorphic in both pop
->>>>>>> realistic_migration
             num,den=allel.hudson_fst(acA,acB)
             Fst = np.nansum(num)/np.nansum(den) # Fst using hudson definition
 

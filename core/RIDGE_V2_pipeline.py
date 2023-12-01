@@ -12,9 +12,6 @@ if lightMode==False:
     split_size_locus=int(nmultilocus/50)
     nCPU_R = 8 # number of CPUs for the model comp for the model forest R functions (8)
     ntree = 1000 # number of tree for the random forest (RF) model comparison (1000)
-<<<<<<< HEAD
-    nIterations_model_comp = 40 # number of subdirectories for the simulations used in the RF model comparison
-=======
     nIterations_model_comp = 40# number of subdirectories for the simulations used in the RF model comparison
 >>>>>>> realistic_migration
 else:
