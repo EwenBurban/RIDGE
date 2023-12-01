@@ -6,13 +6,13 @@ lightMode = config['lightMode']
 
 # general property
 if lightMode==False:
-    nmultilocus = 1000 # number of multilocus simulations per iteration (500)
+    nmultilocus = 250 # number of multilocus simulations per iteration (500)
     nPosterior_locus = 1000
     split_size=int(nmultilocus/4)
     split_size_locus=int(nmultilocus/50)
     nCPU_R = 8 # number of CPUs for the model comp for the model forest R functions (8)
     ntree = 1000 # number of tree for the random forest (RF) model comparison (1000)
-    nIterations_model_comp = 10 # number of subdirectories for the simulations used in the RF model comparison
+    nIterations_model_comp = 40 # number of subdirectories for the simulations used in the RF model comparison
 else:
     nmultilocus = 250 # number of multilocus simulations per iteration (500)
     nPosterior_locus = 1000
@@ -20,7 +20,7 @@ else:
     split_size_locus=int(nmultilocus/50)
     nCPU_R = 8 # number of CPUs for the model comp for the model forest R functions (8)
     ntree = 1000 # number of tree for the random forest (RF) model comparison (1000)
-    nIterations_model_comp = 8 # number of subdirectories for the simulations used in the RF model comparison
+    nIterations_model_comp = 10 # number of subdirectories for the simulations used in the RF model comparison
 ITERATIONS_MODEL_COMP = range(nIterations_model_comp)
 MODELS_COMP = ['SC_1M_1N', 'SC_1M_2N', 'SC_3M_1N', 'SC_3M_2N', 'AM_1M_1N', 'AM_1M_2N', 'AM_3M_1N', 'AM_3M_2N', 'IM_1M_1N', 'IM_1M_2N', 'IM_3M_1N', 'IM_3M_2N', 'SI_1N', 'SI_2N']
 
@@ -54,14 +54,14 @@ wildcard_constraints:
 
 ############## End of Pipeline & Targets ############
 if mode=='scan' : 
-    expected_output=['ABCstat_locus.txt']
+    expected_output=['ABCstat_locus.txt','prior_bound_suggestion.txt']
 elif mode=='prior' :
     expected_output=['ABCstat_global.txt','locus_datafile']
 elif mode=='test' : 
     expected_output=['ABCstat_global.txt','ABCstat_locus.txt','gof_prior.txt','QC_plot/QC_prior_density.pdf','QC_plot/QC_prior_acp.pdf']
     nIterations_model_comp = 1
     ITERATIONS_MODEL_COMP = range(nIterations_model_comp)
-    nmultilocus = 10 # number of multilocus simulations per iteration (500)
+    nmultilocus = 10 
     nPosterior_locus = 100
 else :
     expected_output=['ABCstat_global.txt','ABCstat_locus.txt','gof_prior.txt',
@@ -158,6 +158,17 @@ rule generate_abc_stat_locus:
                     popfile={popfile} nameA={nameA} nameB={nameB} window_size={window_size}\
                     locus_write="True" global_write="False" output_dir={timeStamp} ploidy={ploidy}
         """
+
+rule generate_suggestion:
+    input:
+        abc_locus='{timeStamp}/ABCstat_locus.txt'
+    output:
+        '{timeStamp}/prior_bound_suggestion.txt'
+    shell:
+        """
+            {Sc}/R.sif Rscript {core_path}/make_prior_bound_suggestion.R data={input.abc_locus} output={output} mu={mu}
+        """
+
 ############################ generating global data ############
 
 rule simulationsModelComp:
