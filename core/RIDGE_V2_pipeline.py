@@ -12,7 +12,11 @@ if lightMode==False:
     split_size_locus=int(nmultilocus/50)
     nCPU_R = 8 # number of CPUs for the model comp for the model forest R functions (8)
     ntree = 1000 # number of tree for the random forest (RF) model comparison (1000)
+<<<<<<< HEAD
     nIterations_model_comp = 40 # number of subdirectories for the simulations used in the RF model comparison
+=======
+    nIterations_model_comp = 40# number of subdirectories for the simulations used in the RF model comparison
+>>>>>>> realistic_migration
 else:
     nmultilocus = 250 # number of multilocus simulations per iteration (500)
     nPosterior_locus = 1000
@@ -261,7 +265,7 @@ rule simulation_locus:
         cd {timeStamp}/sim_locus
         {Sc}/python.sif python3 {core_path}/submit_priorgen_locus.py  \
             locus_datafile={input.locus_datafile} \
-            config_yaml={config_yaml} binpath={core_path} nMultilocus=1000 priorfile={input.post} locus_write=True global_write=False 
+            config_yaml={config_yaml} binpath={core_path} nMultilocus=1000 priorfile={input.post} locus_write=True global_write=False Nref={Nref}
         split exec.sh -l{split_size_locus} sub_exec
         list_sub=(sub_exec*)
         for sub in ${{list_sub[@]}}; do echo sh $sub >> tmp_exec.sh; done

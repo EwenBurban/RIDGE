@@ -26,11 +26,11 @@ mscommand = ""
 if "SI" in model:
     mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed} --print-model -transpose-segsites -SC abs"
 if "AM" in model:
-    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2} -ema {Tam} 0 {M_ancestral} {M_ancestral} 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -ema {Tsplit} 0 0 0 0 -seed {seed} --print-model -transpose-segsites -SC abs"
+    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2} -ema {Tam} 0 {M12} {M21} 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -ema {Tsplit} 0 0 0 0 -seed {seed} --print-model -transpose-segsites -SC abs"
 if "SC" in model:
-    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -n 1 {N1} -n 2 {N2}  -ema {Tsc} 0 0 0 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed}--print-model -transpose-segsites -SC abs"
+    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -m 1 2 {M12} -m 2 1 {M21} -n 1 {N1} -n 2 {N2}  -ema {Tsc} 0 0 0 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed}--print-model -transpose-segsites -SC abs"
 if "IM" in model:
-    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed} --print-model -transpose-segsites -SC abs"
+    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -m 1 2 {M12} -m 2 1 {M21} -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed} --print-model -transpose-segsites -SC abs"
 
 # Define default prior bound
 shape_bound = [0.1, 10]
@@ -79,8 +79,10 @@ def loguniform(low=0, high=1, size=1):
 ################## convert parameter values in coalescent units
 N_bound[0] /= Nref
 N_bound[1] /= Nref
-T_bound[0] /= (2*ploidy*Nref)
-T_bound[1] /= (2*ploidy*Nref)
+T_bound[0] /= (4*Nref)
+T_bound[1] /= (4*Nref)
+M_bound[0] /= (4*Nref)
+M_bound[1] /= (4*Nref)
 
 ###### build global priors for {nMultilocus} datasets ######
 
@@ -128,12 +130,17 @@ def build_locusDf(param,locus_df,nLoci): # This function apply the genomic mode 
     if 'shape_N_a' in param :
         N = ['Na','N1','N2']
         locus_sim[N] = locus_sim[N].apply(lambda x: beta_dis(x,param['shape_N_a'],param['shape_N_b']),axis=1)
-        locus_sim[N] = np.clip(locus_sim[N],9e-4,1e9)
+        #locus_sim[N] = np.clip(locus_sim[N],9e-4,1e9)
     if 'Pbarrier'+ migration  in param:
         if 'shape_' + migration + '_a' in param : 
             locus_sim[migration] = locus_sim[migration].apply(lambda x: beta_dis(x,param['shape_' + migration + '_a'],param['shape_' + migration + '_b']))
             locus_sim[migration] = np.clip(locus_sim[migration],M_bound[0],M_bound[1])
         locus_sim[migration] = locus_sim[migration].multiply(np.random.choice([0,1],nLoci,p= [param['Pbarrier'+ migration ],1-param['Pbarrier'+ migration ]]),axis=0)
+    if migration != 'null' :
+        locus_sim['M12']=locus_sim['N1']*4*Nref*locus_sim[migration] 
+        locus_sim['M21']=locus_sim['N2']*4*Nref*locus_sim[migration] 
+
+
     return locus_sim
 
 
@@ -145,15 +152,15 @@ locus_param_df = [build_locusDf(glob_prior.loc[x,:],locus_data,nLoci) for x in r
 # write priorfile.txt which contains global simulation parameters
 if global_write == True:
     with open('priorfile.txt','w') as o:
-        o.write(glob_prior.to_csv(sep="\t",header=True,index_label='dataset',float_format='%.5f'))
+        o.write(glob_prior.to_csv(sep="\t",header=True,index_label='dataset',float_format='%.10f'))
 
 if locus_write == True:
     with open('priorfile_locus.txt','w') as lo:
         locus_param_df_full = pd.concat(locus_param_df,axis=0)
         locus_param_df_full.reset_index(drop=True,inplace=True)
-        lo.write(locus_param_df_full.to_csv(sep="\t",header=True,index_label='dataset',float_format='%.5f'))
+        lo.write(locus_param_df_full.to_csv(sep="\t",header=True,index_label='dataset',float_format='%.10f'))
 
-def short(x,digits=5): # In order to limit storage cost, each numerical value is shorten to 5 digits
+def short(x,digits=10): # In order to limit storage cost, each numerical value is shorten to 10 digits
     if type(x) == np.dtype('float64'):
         y = round(x,digits)
         if y <= 0: # in case of negative value, set to 1e-5. Because negative value should not happen. 
