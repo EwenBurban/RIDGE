@@ -126,7 +126,7 @@ if global_write == True:
             'noSs_noSf':np.count_nonzero(np.logical_and(locus_stat['ss_avg']==0,locus_stat['sf_avg']==0)==True)
             }
     outlier={'fst_outlier':get_outlier(locus_stat['FST_avg']),'divAB_outlier':get_outlier(locus_stat['divAB_avg']),'netDivAB_outlier':get_outlier(locus_stat['netDivAB_avg']),
-            'sf_outlier': get_outlier(locus_stat['sf_avg']),'piA_outlier':get_outlier(locus_stat['piA_avg'],method='inf'),'piB_outlier':get_outlier(locus_stat['piB_avg'],method='inf')}
+            'sf_outlier': get_outlier(locus_stat['sf_avg']),'piA_outlier':get_outlier(locus_stat['piA_avg'],method='inf'),'piB_outlier':get_outlier(locus_stat['piB_avg'],method='inf'),'ss_outlier':get_outlier(locus_stat['ss_avg'],method='inf')}
     glob_stat = pd.DataFrame(pd.concat([avg,std,med,pd.Series(pearson),pd.Series(ss_sf),pd.Series(outlier)])).T
 
     glob_stat.to_csv('{}/ABCstat_global.txt'.format(output_dir),sep='\t',header=True,index_label='dataset',float_format='%.5f',mode='w',na_rep='0')

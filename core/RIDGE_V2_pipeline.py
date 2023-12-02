@@ -13,7 +13,6 @@ if lightMode==False:
     nCPU_R = 8 # number of CPUs for the model comp for the model forest R functions (8)
     ntree = 1000 # number of tree for the random forest (RF) model comparison (1000)
     nIterations_model_comp = 40# number of subdirectories for the simulations used in the RF model comparison
->>>>>>> realistic_migration
 else:
     nmultilocus = 250 # number of multilocus simulations per iteration (500)
     nPosterior_locus = 1000
@@ -42,7 +41,7 @@ mu=config['mu']
 homo_rec=config['homo_rec']
 homo_rec_rate=config['homo_rec_rate']
 mode=config['mode']
-nlocus_per_chr=config['nlocus_per_chr']
+nLoci=config['nLoci']
 ############# singularity parametrisaiton #########
 container_path =binpath + '/container' 
 Sc='singularity exec --bind {0},{1} {2}'.format(binpath,timeStamp,container_path)
@@ -67,7 +66,7 @@ elif mode=='test' :
 else :
     expected_output=['ABCstat_global.txt','ABCstat_locus.txt','gof_prior.txt',
             'gof_posterior.txt','posterior.txt','model_weight.txt','QC_plot/QC_prior_density.pdf','QC_plot/QC_prior_acp.pdf',
-            'Pbarrier.txt','report_barrier_detection.txt','QC_plot/QC_prior.pdf','QC_plot/QC_posterior_density.pdf','QC_plot/QC_posterior_acp.pdf']
+            'Pbarrier.txt','report_barrier_detection.txt','QC_plot/QC_posterior_density.pdf','QC_plot/QC_posterior_acp.pdf','visual_posterior.pdf']
 
 rule targets: # edit at the end 
     input:
@@ -88,20 +87,20 @@ rule generate_bed_file_global:
     shell:
         """
             {Sc}/R.sif Rscript {core_path}/generate_bed_sample.R contig_file={contig_file}\
-                    window_size={window_size} nLoci_per_chr={params.nloci_per_chr_global}\
+                    window_size={window_size} nLoci={nLoci}\
                     output={output.bed_global}
         """
 rule generate_bed_file_locus:
     input:
         contig_file = contig_file
     params:
-        nloci_per_chr_full_locus=-1 # here -1 mean there is no sampling, all locus are analysed. 
+        nloci_full_locus=-1 # here -1 mean there is no sampling, all locus are analysed. 
     output:
         bed_full_locus = '{timeStamp}/bed_full_locus_dataset.txt'
     shell:
         """
             {Sc}/R.sif Rscript {core_path}/generate_bed_sample.R contig_file={contig_file}\
-                    window_size={window_size} nLoci_per_chr={params.nloci_per_chr_full_locus}\
+                    window_size={window_size} nLoci={params.nLoci_full_locus}\
                     output={output.bed_full_locus}
         """
 rule get_rec_rate:
@@ -209,6 +208,7 @@ rule estimation_posterior_and_model_weight:
     input:
         obs= expand("{timeStamp}/ABCstat_global.txt",timeStamp=timeStamp),
         sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
+        check_token = "{timeStamp}/check_modelComp_done.log"
     output:
         "{timeStamp}/posterior.txt",
         "{timeStamp}/model_weight.txt",
@@ -292,18 +292,6 @@ rule barrier_detection_current:
 
 ####################### QC_plot ############################
 
-rule QC_prior:
-    input:
-        '{timeStamp}/ABCstat_locus.txt',
-        '{timeStamp}/ABCstat_global.txt'
-    output:
-        '{timeStamp}/QC_plot/QC_prior.pdf'
-    shell:
-        """
-        {Sc}/R_visual.sif Rscript {core_path}/QC_prior.R\
-            locus_data={timeStamp}/ABCstat_locus.txt global_data={timeStamp}/ABCstat_global.txt\
-            output={output}
-        """
 rule QC_prior_sim:
     input:
         '{timeStamp}/ABCstat_global.txt',
@@ -330,3 +318,28 @@ rule QC_posterior:
         {Sc}/R_visual.sif Rscript {core_path}/QC_posterior.R\
             dir={timeStamp} output_dir={timeStamp}/QC_plot
         """
+
+rule plot_posterior:
+    input:
+        '{timeStamp}/posterior.txt'
+    output:
+        '{timeStamp}/visual_posterior.pdf'
+    shell:
+        """
+        {Sc}/R_visual.sif Rscript {core_path}/plot_posterior.R\
+            posterior={input} prior_dir={timeStamp}/modelComp output={output} Nref={Nref}
+        """
+###### checkpoints  ###############################
+rule check_modelComp:
+    input:
+        sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
+    output:
+        sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
+        check_token = temp ("{timeStamp}/check_modelComp_done.log")
+    shell:
+        """
+        {Sc}/R.sif Rscript {core_path}/check_modelComp.R dir={timeStamp}/modelComp
+        touch {ouput.check_token}
+        """
+
+

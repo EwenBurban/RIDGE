@@ -20,13 +20,13 @@ locus_data = pd.read_csv(locus_datafile,sep='\t')
 nLoci = locus_data.shape[0]
 mscommand = ""
 if "SI" in model:
-    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na}  -transpose-segsites -SC abs"
+    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed} --print-model -transpose-segsites -SC abs"
 if "AM" in model:
-    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2} -ema {Tam} 0 {M_ancestral} {M_ancestral} 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -ema {Tsplit} 0 0 0 0  -transpose-segsites -SC abs"
+    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} 0 -n 1 {N1} -n 2 {N2} -ema {Tam} 0 {M12} {M21} 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -ema {Tsplit} 0 0 0 0 -seed {seed} --print-model -transpose-segsites -SC abs"
 if "SC" in model:
-    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -n 1 {N1} -n 2 {N2}  -ema {Tsc} 0 0 0 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na}  -transpose-segsites -SC abs"
+    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -m 1 2 {M12} -m 2 1 {M21} -n 1 {N1} -n 2 {N2}  -ema {Tsc} 0 0 0 0 -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed}--print-model -transpose-segsites -SC abs"
 if "IM" in model:
-    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na}  -transpose-segsites -SC abs"
+    mscommand = "scrm {totpopsize} 1 -t {theta} -r {rho} {locus_length} -l 100r -I 2 {size_popA} {size_popB} {M_current} -m 1 2 {M12} -m 2 1 {M21} -n 1 {N1} -n 2 {N2}  -ej {Tsplit} 2 1 -eN {Tsplit} {Na} -seed {seed} --print-model -transpose-segsites -SC abs"
 
 ################## convert parameter values in coalescent units
 min_Tsc = 0.05
@@ -36,6 +36,7 @@ max_m = 0.1
 shape_bound = [5,5]
 Tsplit = Tsplit/(4*Nref)
 N = Nref/Nref
+Mbasal /= (4*Nref)
 ###### build global priors for nMultilocus datasets ######
 
 glob_prior = pd.DataFrame({'Tsplit': np.full(nMultilocus,Tsplit),
@@ -89,6 +90,9 @@ def build_locusDf(param,locus_df,nLoci):
         locus_sim[migration] = locus_sim[migration].multiply(np.random.choice([0,1],nLoci,p= [param['Pbarrier'+ migration],1-param['Pbarrier'+ migration]]),axis=0)
         if 'shape_' + migration + '_a' in param : 
             locus_sim[migration] = locus_sim[migration].apply(lambda x: beta_dis(x,param['shape_' + migration + '_a'],param['shape_' + migration + '_b']))
+    if migration != 'null' :
+        locus_sim['M12']=locus_sim['N1']*4*Nref*locus_sim[migration] 
+        locus_sim['M21']=locus_sim['N2']*4*Nref*locus_sim[migration] 
     return locus_sim
 
 locus_param_df = [build_locusDf(glob_prior.loc[x,:],locus_data,nLoci) for x in range(nMultilocus)]
@@ -98,15 +102,15 @@ locus_param_df = [build_locusDf(glob_prior.loc[x,:],locus_data,nLoci) for x in r
 # write priorfile.txt which contains global simulation parameters
 if global_write == True:
     with open('priorfile.txt','w') as o:
-        o.write(glob_prior.to_csv(sep="\t",header=True,index_label='dataset',float_format='%.5f'))
+        o.write(glob_prior.to_csv(sep="\t",header=True,index_label='dataset',float_format='%.10f'))
 
 if locus_write == True:
     with open('priorfile_locus.txt','w') as lo:
         locus_param_df_full = pd.concat(locus_param_df,axis=0)
         locus_param_df_full.reset_index(drop=True,inplace=True)
-        lo.write(locus_param_df_full.to_csv(sep="\t",header=True,index_label='dataset',float_format='%.5f'))
+        lo.write(locus_param_df_full.to_csv(sep="\t",header=True,index_label='dataset',float_format='%.10f'))
 
-def short(x,digits=5):
+def short(x,digits=10):
     if type(x) == np.dtype('float64'):
         return round(x,digits)
     else:

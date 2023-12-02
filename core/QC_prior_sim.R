@@ -25,7 +25,7 @@ ggsave(ggarrange(ind_p,var_p),filename=file.path(output_dir,'QC_prior_acp.pdf'),
 
 
 param_2view=paste0(c('piA','piB','thetaA','thetaB','FST','divAB','netDivAB','sf','ss'),'_avg')
-param_2view=c(param_2view,'sf_outlier','fst_outlier','divAB_outlier','netDivAB_outlier','piA_outlier','piB_outlier')
+#param_2view=c(param_2view,'sf_outlier','fst_outlier','divAB_outlier','netDivAB_outlier','piA_outlier','piB_outlier')
 
 plot_list=lapply(param_2view,function(param,...){
 					 p=ggdensity(all_data,param,color='tag',fill='tag',title=param)+geom_vline(xintercept=obs_data[1,param],color='red')

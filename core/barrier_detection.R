@@ -28,10 +28,10 @@ pbarrier[is.nan(pbarrier)]=0
 # correct way is to compute the average ratio (1-Q)/Q but this way produce Inf when Q=0. 
 # In model averaging, by construction some  posteriors might have a Q=0. 
 # Consequently, we remove Inf value from the mean and so increase the mean value. 
-# To avoid this pitfall, an aproximate way is to compute the ratio as mean(1-Q)/mean(Q)
+# To avoid this pitfall, an aproximate way is to compute the ratio as mean(1-Q)/mean(Q) + var(Q)/mean(Q)³
 correct_pbarrier_ratio=(1-pbarrier)/(pbarrier)
 correct_mean_pbarrier_ratio=mean(correct_pbarrier_ratio[is.infinite(correct_pbarrier_ratio)==F],na.rm=T)
-aproxmate_mean_pbarrier_ratio=(1-mean(pbarrier))/mean(pbarrier)
+aproxmate_mean_pbarrier_ratio=(1-mean(pbarrier))/mean(pbarrier) + var(pbarrier)/(mean(pbarrier)^3)
 
 #mean_prior_ratio=
 
@@ -149,17 +149,13 @@ if(mode=='test'){
 
 ### computing bayes factor ####
 obs_prediction$bayes_factor=correct_mean_pbarrier_ratio * (obs_prediction$post.prob/(1-obs_prediction$post.prob))
-obs_prediction$BF_approxQ_treevote=aproxmate_mean_pbarrier_ratio *  (obs_prediction$tree_vote/(1-obs_prediction$tree_vote))
-obs_prediction$BF_treevote=correct_mean_pbarrier_ratio * (obs_prediction$tree_vote/(1-obs_prediction$tree_vote))
 obs_prediction$BF_approxQ=aproxmate_mean_pbarrier_ratio *  (obs_prediction$post.prob/(1-obs_prediction$post.prob))
 
 
 
-#p_barrier_obs_est=length(which(obs_prediction$allocation=='barrier'))/nrow(obs_prediction)
-
 ####### generate output
 
-write.table(obs_prediction,file=file.path(obs_dir,paste0('Pbarrier.txt')),sep='\t',row.names=F)
+write.table(cbind(obs_data,obs_prediction),file=file.path(obs_dir,paste0('Pbarrier.txt')),sep='\t',row.names=F)
 ### report
 #report=c('obs_bayes_p'=length(which(obs_prediction$bayes_factor>100))/nrow(obs_data),'p_barrier_obs_est'=p_barrier_obs_est)
 report=c('correct_pbarrier_ratio'=correct_mean_pbarrier_ratio,'average_pbarrier'=mean(pbarrier),'aproximate_pbarrier_ratio'=aproxmate_mean_pbarrier_ratio)
@@ -168,5 +164,7 @@ if (mode=='test'){
 	write.table(roc_stat,file=file.path(obs_dir,'true_roc_table.txt'),sep='\t',row.names=F)
 
 }
-write.table(t(report),file.path(obs_dir,paste0('report_barrier_detection.txt')),sep='\t',row.names=F)
-	
+write.table(t(report),file.path(obs_dir,'report_barrier_detection.txt'),sep='\t',row.names=F)	
+write.table(rf$model.rf$confusion.matrix,sep='\t',row.names=F,col.names=T,quote=F,file=file.path(obs_dir,'confusion_matrix_barrier.txt'))
+write.table(rf$model.rf$variable.importance,sep='\t',row.names=F,col.names=T,quote=F,file=file.path(obs_dir,'variable_importance_barrier.txt'))
+

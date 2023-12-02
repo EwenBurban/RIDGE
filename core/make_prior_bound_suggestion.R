@@ -25,7 +25,7 @@ N_ref = round(mean(c(N_min,N_max)))
 # Dxy (absolute divergence; divAB) = 2*mu*Tsplit + 4*Ne*mu ; this way tend to overestimate 
 Tsplit_min=round(quantile(data$netDivAB_avg/(2*mu),0.05))
 Tsplit_max=round(quantile((data$divAB_avg-4*N_ref*mu)/(2*mu),0.95))
-### Determine the maximum proportion of Pbarrier
+### Determine the maximum proportion of Pbarrier /!\ ABANDONNED
 # Pbarrier is estimated by the proportion of outlier for the following summary stat : Fst, Dxy, Da, Sf, ss, piA, piB
 # To determine outlier, the tukey’s fence definition is applied
 P_outlier=function(x,mode='supp'){ # calculate tukey fence and then compute the proportion of outliers 
@@ -37,5 +37,5 @@ P_max=max(P_outlier(data$FST_avg),P_outlier(data$divAB_avg),P_outlier(data$netDi
 		  P_outlier(data$ss_avg,mode='inf'),P_outlier(data$piA_avg,mode='inf'),P_outlier(data$piB_avg,mode='inf'))
 
 
-suggestion=data.frame(prior_bound=c('N_ref','N_min','N_max','Tsplit_min','Tsplit_max','Pbarrier_max') , values=c(N_ref,N_min,N_max,Tsplit_min,Tsplit_max,P_max))
+suggestion=data.frame(prior_bound=c('N_ref','N_min','N_max','Tsplit_min','Tsplit_max') , values=c(N_ref,N_min,N_max,Tsplit_min,Tsplit_max))
 write.table(suggestion,file=output,row.names=F,col.names=T,quote=F)
