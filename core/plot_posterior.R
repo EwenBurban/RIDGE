@@ -8,18 +8,15 @@ posterior_data=args['posterior']
 prior_dir=args['prior_dir']
 Nref=as.numeric(args['Nref'])
 output=args['output']
-posterior_data='~/remote_serv/ifb_project/crow/poelstra_comp/posterior.txt'
-prior_dir='/home/ewenb/remote_serv/ifb_project/crow/poelstra_comp/modelComp/'
-Nref=1e5
 data=read.table(posterior_data,h=T)
 ##### define custom function
 
 plot_distr=function(posterior_dist,prior_dist,param=''){
 	h=hist(posterior_dist,plot=F,breaks=100)
-	p=gghistogram(posterior_dist,bins=100,fill='gray',title=param,xlab=param) +
+	p=gghistogram(posterior_dist,bins=100,fill='gray',title=param,xlab=param,xlim=quantile(prior_dist,c(0.01,0.99))) +
 		geom_vline(xintercept=mean(posterior_dist),color='red') + 
 		geom_vline(xintercept=mean(prior_dist),color='black',linetype='dashed') +
-		annotate('text',x=1.2* mean(posterior_dist), y=1.2* max(h$counts),label=paste0('mean = ',round(mean(posterior_dist))))
+		annotate('text',x=1.2* mean(posterior_dist), y=1.2* max(h$counts),label=paste0('mean = ',round(mean(posterior_dist),digits=2)))
 	p = p+ theme_bw() + labs_pubr()
 	return(p)}
 

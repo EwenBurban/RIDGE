@@ -59,7 +59,7 @@ for (i in 1:nrow(contig_data)){
 #	if(nLoci_per_chr == -1){sel_win = win_seq} else{
 	#	if(length(win_seq)<nLoci_per_chr){nLoci=length(win_seq)}else{nLoci=nLoci_per_chr}
 #	sel_win = sample(win_seq,nLoci,replace=F)}
-	sel_win = do.call(rbind,sel_win)
+	sel_win = do.call(rbind,win_seq)
 	sel_win = cbind(rep(contig_name,nrow(sel_win)),sel_win)
 	if(nLoci!=-1){sel_win = cbind (sel_win,rep(1/contig_length,nrow(sel_win)))}
 	sel_win_list[[i]] = sel_win
@@ -72,7 +72,7 @@ if(nLoci!=-1){
 		nLoci=nrow(bed)
 		print('too much loci requested, nLoci reduced to the maximum amount of window available')
 	}
-	bed = bed[sample(1:nrow(bed),size=nLoci,prob=sel_win[,4]),1:3]}
+	bed = bed[sample(1:nrow(bed),size=nLoci,prob=bed[,4]),1:3]}
 colnames(bed)= c('chr','start','end')
 write.table(bed,file=output,sep='\t',row.names=F)
 

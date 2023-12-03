@@ -1,0 +1,10 @@
+contig_name	contig_length	index
+scaffold_3	43788824	1
+scaffold_7	26556330	2
+scaffold_13	17258394	3
+scaffold_16	16594848	4
+scaffold_21	15742219	5
+scaffold_43	7624735	6
+scaffold_45	7517196	7
+scaffold_75	2845706	8
+scaffold_78	2510962	9

@@ -66,16 +66,19 @@ def build_locusDf(param,locus_df,nLoci):# This function apply the genomic mode d
 # For each multilocus dataset, transform it in a dataframe containing prior for each locus in the multilocus dataset
 locus_param_df = [build_locusDf(glob_prior.loc[x,:],locus_data,nLoci) for x in range(nMultilocus)]
 locus_param_df= pd.concat(locus_param_df,axis=0)
-prob_vec_barrier= locus_param_df.apply(lambda x: 1 if x['M_current'] ==0 & x['M_ancestral'] ==0 else 0, axis=1)
-prob_vec_non_barrier= locus_param_df.apply(lambda x: 1 if x['M_current'] !=0 | x['M_ancestral'] !=0 else 0, axis=1)
-barrier_param_df = locus_param_df.loc[np.random.choice(range(locus_param_df.shape[0]),int(locus_param_df.shape[0]/2),p=prob_vec_barrier),:]
-non_barrier_param_df = locus_param_df.loc[np.random.choice(range(locus_param_df.shape[0]),int(locus_param_df.shape[0]/2),p=prob_vec_non_barrier),:]
-locus_param_full=pd.concat([barrier_param_df,non_barrier_param_df],axis=0)
+prob_vec_barrier=np.where(locus_param_df['M_current']==0,1,0)
+prob_vec_barrier=prob_vec_barrier/np.sum(prob_vec_barrier)
+prob_vec_non_barrier=np.where(locus_param_df['M_current']!=0,1,0)
+prob_vec_non_barrier=prob_vec_non_barrier/np.sum(prob_vec_non_barrier)
+barrier_param_df = locus_param_df.iloc[np.random.choice(range(locus_param_df.shape[0]),int(locus_param_df.shape[0]/2),p=prob_vec_barrier,replace=True),:]
+non_barrier_param_df = locus_param_df.iloc[np.random.choice(range(locus_param_df.shape[0]),int(locus_param_df.shape[0]/2),p=prob_vec_non_barrier,replace=True),:]
+locus_param_df_full=pd.concat([barrier_param_df,non_barrier_param_df],axis=0)
+print(locus_param_df_full)
 ################### write the priorfiles and  the ms commands 
 # write priorfile.txt which contains global simulation parameters
-if global_write == True:
-    with open('priorfile.txt','w') as o:
-        o.write(glob_prior.to_csv(sep="\t",header=True,index_label='dataset',float_format='%.10f'))
+#if global_write == True:
+ #   with open('priorfile.txt','w') as o:
+  #      o.write(glob_prior.to_csv(sep="\t",header=True,index_label='dataset',float_format='%.10f'))
 
 if locus_write == True:
     with open('priorfile_locus.txt','w') as lo:
@@ -92,9 +95,13 @@ def short(x,digits=10): # In order to limit storage cost, each numerical value i
         return x
 
 num_dataset=0
+locus_param_df_full=locus_param_df_full.apply(lambda x: [str(short(y)) for y in x ],axis=0)
+locus_param_df_full['tag']=np.repeat(np.arange(nMultilocus),nLoci)
+split_locus_param=dict(tuple(locus_param_df_full.groupby('tag')))
 with open('exec.sh','w') as o:
-    for sim in locus_param_df:
-        sim = sim.apply(lambda x: [str(short(y)) for y in x ],axis=0)
+    for sim in split_locus_param:
+        sim= pd.DataFrame(split_locus_param[sim])
+        sim.reset_index(drop=True,inplace=True)
         output_command = '{ '
         for locus in range(nLoci):
             mscommand_formated =  mscommand.format(**sim.loc[locus,:]) 

@@ -80,8 +80,6 @@ rule targets: # edit at the end
 rule generate_bed_file_global:
     input:
         contig_file = contig_file
-    params:
-        nloci_per_chr_global=nlocus_per_chr
     output:
         bed_global = '{timeStamp}/bed_global_dataset.txt'
     shell:
@@ -94,7 +92,7 @@ rule generate_bed_file_locus:
     input:
         contig_file = contig_file
     params:
-        nloci_full_locus=-1 # here -1 mean there is no sampling, all locus are analysed. 
+        nLoci_full_locus=-1 # here -1 mean there is no sampling, all locus are analysed. 
     output:
         bed_full_locus = '{timeStamp}/bed_full_locus_dataset.txt'
     shell:
@@ -332,14 +330,13 @@ rule plot_posterior:
 ###### checkpoints  ###############################
 rule check_modelComp:
     input:
-        sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
+        sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP)
     output:
-        sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
-        check_token = temp ("{timeStamp}/check_modelComp_done.log")
+        check_token = temp(expand("{timeStamp}/check_modelComp_done.log",timeStamp=timeStamp))
     shell:
         """
         {Sc}/R.sif Rscript {core_path}/check_modelComp.R dir={timeStamp}/modelComp
-        touch {ouput.check_token}
+        touch {output.check_token}
         """
 
 

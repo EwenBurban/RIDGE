@@ -165,6 +165,6 @@ if (mode=='test'){
 
 }
 write.table(t(report),file.path(obs_dir,'report_barrier_detection.txt'),sep='\t',row.names=F)	
-write.table(rf$model.rf$confusion.matrix,sep='\t',row.names=F,col.names=T,quote=F,file=file.path(obs_dir,'confusion_matrix_barrier.txt'))
-write.table(rf$model.rf$variable.importance,sep='\t',row.names=F,col.names=T,quote=F,file=file.path(obs_dir,'variable_importance_barrier.txt'))
+write.table(rf$model.rf$confusion.matrix,sep='\t',row.names=T,col.names=T,quote=F,file=file.path(obs_dir,'confusion_matrix_barrier.txt'))
+write.table(rf$model.rf$variable.importance,sep='\t',row.names=T,col.names=T,quote=F,file=file.path(obs_dir,'variable_importance_barrier.txt'))
 

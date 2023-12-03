@@ -9,7 +9,7 @@ container_path: /shared/projects/ridge_project/RIDGE/container
 ploidy: 2
 lightMode: True
 timeStamp: /shared/projects/ridge_project/example_ridge
-nlocus_per_chr: 10
+nLoci: 100
 window_size: 50000
 homo_rec: True
 homo_rec_rate: 3e-8 
