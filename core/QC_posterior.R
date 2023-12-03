@@ -28,8 +28,6 @@ ggsave(ggarrange(ind_p,var_p),filename=file.path(output_dir,'QC_posterior_acp.pd
 
 param_2view=paste0(c('piA','piB','thetaA','thetaB','FST','divAB','netDivAB','sf','ss'),'_avg')
 print(param_2view)
-param_2view=c(param_2view,'sf_outlier','fst_outlier','divAB_outlier','netDivAB_outlier','piA_outlier','piB_outlier')
-print(param_2view)
 
 plot_list=lapply(param_2view,function(param,...){
 					 print(param)

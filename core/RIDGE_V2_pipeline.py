@@ -66,7 +66,7 @@ elif mode=='test' :
 else :
     expected_output=['ABCstat_global.txt','ABCstat_locus.txt','gof_prior.txt',
             'gof_posterior.txt','posterior.txt','model_weight.txt','QC_plot/QC_prior_density.pdf','QC_plot/QC_prior_acp.pdf',
-            'Pbarrier.txt','report_barrier_detection.txt','QC_plot/QC_posterior_density.pdf','QC_plot/QC_posterior_acp.pdf','visual_posterior.pdf']
+            'Pbarrier.txt','report_barrier_detection.txt','QC_plot/QC_posterior_density.pdf','QC_plot/QC_posterior_acp.pdf','visual_posterior.pdf','visual_model_weight.pdf']
 
 rule targets: # edit at the end 
     input:
@@ -327,6 +327,17 @@ rule plot_posterior:
         {Sc}/R_visual.sif Rscript {core_path}/plot_posterior.R\
             posterior={input} prior_dir={timeStamp}/modelComp output={output} Nref={Nref}
         """
+
+rule plot_model_weight:
+    input:
+        '{timeStamp}/model_weight.txt'
+    output:
+        '{timeStamp}/visual_model_weight.pdf'
+    shell:
+        """
+        {Sc}/R_visual.sif Rscript {core_path}/plot_model_weight.R\
+            model_weight={input} prior_dir={timeStamp}/modelComp output={output} 
+         """
 ###### checkpoints  ###############################
 rule check_modelComp:
     input:
