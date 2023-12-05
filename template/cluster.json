@@ -1,0 +1,60 @@
+{
+    "__default__" :
+    {
+        "node" : 1,
+        "ntasks" : 1,
+        "p" : "fast",
+	"cpusPerTask" : 1,
+	"memPerCpu" : 5000,
+	"time" : "1-00:00:00"
+    },
+	 "haplotyping" :
+	{
+		"memPerCpu": 50000
+	},
+    "generate_abc_stat_global" :
+    {
+        "memPerCpu" : 60000
+    },
+    "generate_abc_stat_locus" :
+    {
+        "memPerCpu" : 60000
+    },
+    "simulationsModelComp" :
+    {
+        "ntasks" : 4,
+        "memPerCpu" : 2500
+    },
+    "sim_posterior" :
+    {
+        "ntasks" : 4,
+        "memPerCpu" : 2500
+    },
+    "estimation_posterior_and_model_weight" :
+    {
+        "ntasks" : 8,
+        "cpusPerTask" : 1,
+        "memPerCpu" : 30000,
+	"p" : "long"
+    },
+    "estimation_posterior_and_model_weight_test" :
+    {
+        "ntasks" : 8,
+        "cpusPerTask" : 1,
+        "memPerCpu" : 30000,
+		"p" : "long"
+    },
+    "simulation_locus" :
+    {
+        "ntasks" : 50,
+        "memPerCpu" : 2500
+    },
+    "barrier_detection_current":
+    {
+        "ntasks" : 8,
+        "p" : "long",
+        "memPerCpu" : 30000
+    }
+}
+
+
