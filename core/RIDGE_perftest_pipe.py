@@ -7,7 +7,7 @@ core_path = binpath + '/core'
 lightMode = config['lightMode']
 
 # general property
-nmultilocus = 100 # number of multilocus simulations per iteration (500)
+nmultilocus = 1000 # number of multilocus simulations per iteration (500)
 nPosterior_locus = 1000
 split_size=int(nmultilocus/4)
 split_size_locus=int(nmultilocus/50)
@@ -37,13 +37,11 @@ ITERATIONS_ESTIMATES = range(nIterations_estim)
 # informations from the config.yaml file
 nameA = config['nameA']
 nameB = config['nameB']
-useSFS = config['useSFS']
 Pbarrier_max=config['Pbarrier_max']
 timeStamp = config['timeStamp']
 list_dir=os.listdir(timeStamp+'/simdata')
 wdir=[timeStamp+'/simdata/'+x for x in list_dir]
-nMin = config['nMin']
-Nref = (0 + config['N_max'])/2.0 # Nref is the mid point of the prior
+Nref = int(config['Nref']) 
 window_size = config['window_size']
 config_yaml = timeStamp + '/'  +config['config_yaml']
 popfile= timeStamp + '/'  +  config['popfile']

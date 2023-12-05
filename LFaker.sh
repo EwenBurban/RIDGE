@@ -15,6 +15,6 @@ fi
 
 . ${binpath}/config/config.sh
 snakemake --snakefile ${binpath}/faker_module/Faker_pipe -p -j ${ntask_load} \
-	--configfile ${1} --config binpath=${binpath} --cluster-config ${binpath}/core/cluster.json \
+	--configfile ${1} --config binpath=${binpath} --cluster-config ${binpath}/config/cluster.json \
 	--cluster "sbatch -A ${ID} --nodes={cluster.node} --ntasks={cluster.ntasks} --cpus-per-task={cluster.cpusPerTask} --time={cluster.time} --mem-per-cpu={cluster.memPerCpu} -p {cluster.p}" \
 	--latency-wait 60 --nolock -r 

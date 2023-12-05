@@ -20,6 +20,8 @@ size_popA = config['size_popA']
 size_popB = config['size_popB']
 timeStamp = config['timeStamp']
 nLoci = config['nLoci']
+nLoci_locussp =int(config['nLoci_locussp'])
+nLoci_locussp=nLoci_locussp + 2
 Nref = config['Nref']
 mu = config['mu']
 rho_over_theta = config['rho_over_theta']
@@ -76,6 +78,7 @@ rule generate_bpfile:
         nameA={nameA} nameB={nameB} size_popA={size_popA} size_popB={size_popB} rho_over_theta={rho_over_theta} \
         timeStamp={timeStamp}
         cp {output.locus_datafile} {timeStamp}/locus_datafile_locussp
+		sed  -i '{nLoci_locussp},$ d' {timeStamp}/locus_datafile_locussp 
         """ 
 
 rule generate_prior_and_vcf:
