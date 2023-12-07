@@ -189,7 +189,7 @@ rule simulation_locus:
         cd {wildcards.wdir}/sim_locus
         {Sc}/python.sif python3 {core_path}/submit_priorgen_locus.py  \
             locus_datafile={input.locus_datafile} \
-            config_yaml={config_yaml} binpath={core_path} nMultilocus=1000 priorfile={input.post} locus_write=True global_write=False 
+            config_yaml={config_yaml} binpath={core_path} nMultilocus=1000 priorfile={input.post} locus_write=True global_write=False Nref={Nref} 
         split exec.sh -l{split_size_locus} sub_exec
         list_sub=(sub_exec*)
         for sub in ${{list_sub[@]}}; do echo sh $sub >> tmp_exec.sh; done
