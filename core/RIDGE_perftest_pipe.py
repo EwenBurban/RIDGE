@@ -66,19 +66,17 @@ wildcard_constraints:
     j='|'.join([str(x) for x in range(100)])
 
 ############## End of Pipeline & Targets ############
+if mode == 'all' :
+    expected_output=['gof_prior.txt','gof_posterior.txt','model_weight.txt','Pbarrier.txt']
+elif mode == 'DI' :     
+    expected_output=['gof_prior.txt','gof_posterior.txt','model_weight.txt']
+        
 rule targets: # edit at the end 
     input:
         ABCstat_global = expand("{wdir}/ABCstat_global.txt",wdir=wdir),
         ABCstat_locus = expand("{wdir}/ABCstat_locus.txt",wdir=wdir),
         sim =expand("{timeStamp}/modelComp/{model}_{i}/ABCstat_global.txt",timeStamp=timeStamp,model=MODELS_COMP,i=ITERATIONS_MODEL_COMP),
-        gof_prior = expand("{wdir}/gof_prior.txt",wdir=wdir),
-        posterior = expand("{wdir}/posterior.txt",wdir=wdir),
-        mw = expand("{wdir}/model_weight.txt",wdir=wdir),
-        sim_post_glob = expand('{wdir}/sim_posterior/ABCstat_global.txt',wdir=wdir),
-        gof_posterior = expand("{wdir}/gof_posterior.txt",wdir=wdir),
-        barrier_assignation = expand('{wdir}/Pbarrier.txt',wdir=wdir),
- #       table = expand('{wdir}/roc_table.txt',wdir=wdir),
-#        fig = expand('{wdir}/roc.pdf',wdir=wdir)
+        other_outputs=expand('{wdir}/{ouput_list}',wdir=wdir,ouput_list=expected_output)
     shell:
             """
             echo done
