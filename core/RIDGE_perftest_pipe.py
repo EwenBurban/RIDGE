@@ -35,6 +35,7 @@ ITERATIONS_ESTIMATES = range(nIterations_estim)
 
 
 # informations from the config.yaml file
+mode= config['mode']
 nameA = config['nameA']
 nameB = config['nameB']
 Pbarrier_max=config['Pbarrier_max']
