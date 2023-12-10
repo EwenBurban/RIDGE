@@ -63,6 +63,10 @@ elif mode=='test' :
     ITERATIONS_MODEL_COMP = range(nIterations_model_comp)
     nmultilocus = 10 
     nPosterior_locus = 100
+elif mode=='all_no_vis' : 
+    expected_output=['ABCstat_global.txt','ABCstat_locus.txt','gof_prior.txt',
+            'gof_posterior.txt','posterior.txt','model_weight.txt',
+            'Pbarrier.txt','report_barrier_detection.txt']
 else :
     expected_output=['ABCstat_global.txt','ABCstat_locus.txt','gof_prior.txt',
             'gof_posterior.txt','posterior.txt','model_weight.txt','QC_plot/QC_prior_density.pdf','QC_plot/QC_prior_acp.pdf',
