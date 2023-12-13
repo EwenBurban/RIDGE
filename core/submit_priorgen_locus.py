@@ -50,7 +50,6 @@ def build_locusDf(param,locus_df,nLoci):# This function apply the genomic mode d
     locus_sim = pd.DataFrame([param for x in range(nLoci)]) # repeat the param line nLoci times into a DF
     locus_sim.reset_index(inplace=True,drop=True)
     locus_sim = pd.concat([locus_sim,locus_df],axis=1)
-    locus_sim['seed'] = np.random.randint(0,high = 1e18, size = nLoci) # add unique seed number to each locus simulation. It’s used as a tag to avoid confusion and mismatch during reference table
     N = ['Na','N1','N2']
     locus_sim[N] = locus_sim[N].apply(lambda x: beta_dis(x,param['shape_N_a'],param['shape_N_b']),axis=1)
     migration= 'M_current'
@@ -73,6 +72,7 @@ prob_vec_non_barrier=prob_vec_non_barrier/np.sum(prob_vec_non_barrier)
 barrier_param_df = locus_param_df.iloc[np.random.choice(range(locus_param_df.shape[0]),int(locus_param_df.shape[0]/2),p=prob_vec_barrier,replace=True),:]
 non_barrier_param_df = locus_param_df.iloc[np.random.choice(range(locus_param_df.shape[0]),int(locus_param_df.shape[0]/2),p=prob_vec_non_barrier,replace=True),:]
 locus_param_df_full=pd.concat([barrier_param_df,non_barrier_param_df],axis=0)
+locus_param_df_full['seed']=np.random.randint(0,high = 1e18, size = locus_param_df_full.shape[0])# add unique seed number to each locus simulation. It’s used as a tag to avoid confusion and mismatch during reference table
 print(locus_param_df_full)
 ################### write the priorfiles and  the ms commands 
 # write priorfile.txt which contains global simulation parameters
