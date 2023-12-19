@@ -18,6 +18,7 @@ size_popA = length(popA[!is.na(popA)]) * ploidy
 size_popB = length(popB[!is.na(popB)]) * ploidy
 totpopsize=size_popA+size_popB
 window_size = as.numeric(args['window_size'])
+hetero_theta=args['hetero_theta']
 
 
 ##### Determine the bound of Ne #####
