@@ -59,8 +59,10 @@ if(homo_rec=='True'){data$rho= homo_rec_rate * 4 * Nref * window_size} else {
 					   rec_rate = subset(rho_map,subset=chr == index & start <= mean_point & end >= mean_point)['r'][[1]] # gather the recombination rate inside the window
   					  if(identical(rec_rate,numeric(0))){rec_rate=0} # if recombination rate is equal to NA / miss (which is commonn at the start of chromosome, but depend of the recombination map), then replace by r=0
   					  if(length(rec_rate)>1){rec_rate=mean(rec_rate,na.rm=T)} # In some cases, the size of the window is higher than the window size of the recombination rate, so the recombination rate of the window is equal to the mean recombination rate inside the window
+  					  if(is.na(rec_rate)){rec_rate=0} # if recombination rate is equal to NA / miss (which is commonn at the start of chromosome, but depend of the recombination map), then replace by r=0
 		return(rec_rate)
 		})
+	print(rec_vec)
 	data$rho=rec_vec * 4 * Nref * window_size
 	if(any(data$rho<0)){data$rho[which(data$rho<0)]=0}
 }
