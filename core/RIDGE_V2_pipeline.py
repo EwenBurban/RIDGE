@@ -148,7 +148,7 @@ rule generate_suggestion:
         """
             {Sc}/R.sif Rscript {core_path}/make_prior_bound_suggestion.R data={input.abc_locus}\
                     output={output} mu={mu} window_size={window_size} nameA={nameA} nameB={nameB}\
-                    popfile={popfile} ploidy={ploidy}
+                    popfile={popfile} ploidy={ploidy} hetero_theta={hetero_theta}
         """
 
 ############################ generating global data ############
