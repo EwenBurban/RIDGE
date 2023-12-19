@@ -40,6 +40,7 @@ ploidy=config['ploidy']
 mu=config['mu']
 homo_rec=config['homo_rec']
 homo_rec_rate=config['homo_rec_rate']
+hetero_theta=config['hetero_theta']
 mode=config['mode']
 nLoci=config['nLoci']
 ############# singularity parametrisaiton #########
@@ -81,56 +82,33 @@ rule targets: # edit at the end
             """
 #### generate subsample #######
 
-rule generate_bed_file_global:
+rule generate_segmentation:
     input:
         contig_file = contig_file
     output:
-        bed_global = '{timeStamp}/bed_global_dataset.txt'
+        bed_full_locus = '{timeStamp}/genome_segmentation.txt'
     shell:
         """
-            {Sc}/R.sif Rscript {core_path}/generate_bed_sample.R contig_file={contig_file}\
+            {Sc}/R.sif Rscript {core_path}/generate_genome_segmentation.R contig_file={contig_file}\
                     window_size={window_size} nLoci={nLoci}\
-                    output={output.bed_global}
-        """
-rule generate_bed_file_locus:
-    input:
-        contig_file = contig_file
-    params:
-        nLoci_full_locus=-1 # here -1 mean there is no sampling, all locus are analysed. 
-    output:
-        bed_full_locus = '{timeStamp}/bed_full_locus_dataset.txt'
-    shell:
-        """
-            {Sc}/R.sif Rscript {core_path}/generate_bed_sample.R contig_file={contig_file}\
-                    window_size={window_size} nLoci={params.nLoci_full_locus}\
                     output={output.bed_full_locus}
-        """
-rule get_rec_rate:
-    input:
-        contig_file = contig_file
-    output:
-        '{timeStamp}/bed_rec_rate.txt'
-    shell:
-        """
-            {Sc}/R.sif Rscript {core_path}/get_rec_rate.R contig_file={contig_file}\
-                    window_size={window_size} rho_map={rec_rate_map} output={output}\
-                    homo_rec={homo_rec} homo_rec_rate={homo_rec_rate}
         """
 
 rule generate_locus_datafile:
     input:
-        bed_rec_rate = '{timeStamp}/bed_rec_rate.txt',
         contig_file = contig_file,
         popfile = popfile,
-        bed_global = '{timeStamp}/bed_global_dataset.txt'
+        abc_data='{timeStamp}/ABCstat_locus.txt'
     output:
-        datafile = '{timeStamp}/locus_datafile'
+        datafile = '{timeStamp}/locus_datafile',
+        bed_global='{timeStamp}/bed_global_dataset.txt'
     shell:
         """
             {Sc}/R.sif Rscript {core_path}/generate_locus_datafile.R \
-                    rho_map={input.bed_rec_rate} bedfile={input.bed_global} mu={mu}\
-                    Nref={Nref} window_size={window_size} nameA={nameA} nameB={nameB}\
-                    popfile={popfile} output={output.datafile} ploidy={ploidy}
+                    rho_map={rec_rate_map} homo_rec={homo_rec} homo_rec_rate={homo_rec_rate} contig_data={contig_file}\
+                    Nref={Nref} window_size={window_size} nameA={nameA} nameB={nameB} nLoci={nLoci}\
+                    popfile={popfile} output={output.datafile} ploidy={ploidy} output_bed={output.bed_global} \
+                    abc_data={input.abc_data} mu={mu} hetero_theta={hetero_theta}
         """
 
 rule generate_abc_stat_global: 
@@ -151,7 +129,7 @@ rule generate_abc_stat_locus:
     input:
         vcf_file = vcf_file,
         popfile = popfile,
-        bed_locus = '{timeStamp}/bed_full_locus_dataset.txt'
+        bed_locus = '{timeStamp}/genome_segmentation.txt'
     output:
         '{timeStamp}/ABCstat_locus.txt'
     shell:
@@ -168,7 +146,9 @@ rule generate_suggestion:
         '{timeStamp}/prior_bound_suggestion.txt'
     shell:
         """
-            {Sc}/R.sif Rscript {core_path}/make_prior_bound_suggestion.R data={input.abc_locus} output={output} mu={mu}
+            {Sc}/R.sif Rscript {core_path}/make_prior_bound_suggestion.R data={input.abc_locus}\
+                    output={output} mu={mu} window_size={window_size} nameA={nameA} nameB={nameB}\
+                    popfile={popfile} ploidy={ploidy}
         """
 
 ############################ generating global data ############

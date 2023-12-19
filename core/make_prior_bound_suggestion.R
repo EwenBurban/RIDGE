@@ -8,6 +8,16 @@ data=args['data']
 output=args['output']
 mu = as.numeric(args['mu'])
 data=read.table(data,h=T)
+popfile = read.table(args['popfile'],sep=',',h=T)
+nameA = args['nameA']
+nameB = args['nameB']
+popA = popfile[,nameA]
+popB = popfile[,nameB]
+ploidy= as.numeric(args['ploidy'])
+size_popA = length(popA[!is.na(popA)]) * ploidy
+size_popB = length(popB[!is.na(popB)]) * ploidy
+totpopsize=size_popA+size_popB
+window_size = as.numeric(args['window_size'])
 
 
 ##### Determine the bound of Ne #####
@@ -20,6 +30,12 @@ N_B=data$piB_avg / (4*mu)
 N_min = round(min(quantile(N_A,0.05),quantile(N_B,0.05)))
 N_max = round(max(quantile(N_A,0.95),quantile(N_B,0.95)))
 N_ref = round(mean(c(N_min,N_max)))
+#### Determine mu from data if hetero_theta=True else mu is setup by user
+# Using the watterson theta estimator, we obtain from … (TO-DO :finish commentary )
+if(hetero_theta=='True'){
+	mu_vec=data$bialsite_avg/(4*N_ref*sum(1/(1:(totpopsize-1)))*window_size)
+	mu=mean(mu_vec,na.rm=T)
+}
 ### Determine the bouds of Tsplit
 # Da (net divergence; netDivAB) = 2 * mu * Tsplit so Tsplit=Da/(2*mu) ; this way tend to underestimate Tsplit
 # Dxy (absolute divergence; divAB) = 2*mu*Tsplit + 4*Ne*mu ; this way tend to overestimate 

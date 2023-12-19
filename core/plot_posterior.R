@@ -69,7 +69,15 @@ Tsplit_plot= plot_distr(data$Tsplit * 4 * Nref,prior_data$Tsplit* 4 * Nref,param
 Tsc_plot= plot_distr(data$Tsc* 4 * Nref,prior_data$Tsc* 4 * Nref,param='Tsc')
 Tam_plot= plot_distr(data$Tam* 4 * Nref,prior_data$Tam* 4 * Nref,param='Tam')
 
+
 ### generate N1 & N2 & Na plot
+N1_plot=plot_distr(data$N1 * Nref, prior_data$N1*Nref,param='N1')
+N2_plot=plot_distr(data$N2 * Nref, prior_data$N2*Nref,param='N2')
+Na_plot=plot_distr(data$Na * Nref, prior_data$Na*Nref,param='Na')
+### gerenaret M plot
+
+M_cur_plot=plot_distr(data$M_current *4* Nref, prior_data$M_current*4*Nref,param='M_cur')
+M_anc_plot=plot_distr(data$M_ancestral *4* Nref, prior_data$M_ancestral*4*Nref,param='M_anc')
 ## Because Ne distribution is affected by a beta shape, it recreate first a distribution from mean value and beta parameter
 n=100
 N1_post_dist=as.vector(apply(data,1,function(vv,...){rbeta(n,vv['shape_N_a'],vv['shape_N_b']) * vv['N1'] /((vv['shape_N_a'])/ (vv['shape_N_a'] + vv['shape_N_b']))}))* Nref
@@ -80,9 +88,9 @@ N1_prior_dist=as.vector(apply(prior_data,1,function(vv,...){rbeta(n,vv['shape_N_
 N2_prior_dist=as.vector(apply(prior_data,1,function(vv,...){rbeta(n,vv['shape_N_a'],vv['shape_N_b']) * vv['N2'] /((vv['shape_N_a'])/ (vv['shape_N_a'] + vv['shape_N_b']))}))* Nref
 Na_prior_dist=as.vector(apply(prior_data,1,function(vv,...){rbeta(n,vv['shape_N_a'],vv['shape_N_b']) * vv['Na'] /((vv['shape_N_a'])/ (vv['shape_N_a'] + vv['shape_N_b']))}))* Nref
 
-N1_plot=plot_distr(N1_post_dist,N1_prior_dist,param='N1')
-N2_plot=plot_distr(N2_post_dist,N2_prior_dist,param='N2')
-Na_plot=plot_distr(Na_post_dist,Na_prior_dist,param='Na')
+N1_beta_plot=plot_distr(N1_post_dist,N1_prior_dist,param='N1_beta')
+N2_beta_plot=plot_distr(N2_post_dist,N2_prior_dist,param='N2_beta')
+Na_beta_plot=plot_distr(Na_post_dist,Na_prior_dist,param='Na_beta')
 
 ### generate M_curr and M_anc plot
 ### Because m distribution is affected by a Pbarrier, it reacreate first a distribution from m value and Pbarrier 
@@ -93,8 +101,8 @@ M_anc_post_dist=as.vector(apply(data,1,function(vv,...){rbinom(n,size=1,prob=vv[
 M_cur_prior_dist=as.vector(apply(prior_data,1,function(vv,...){rbinom(n,size=1,prob=vv['PbarrierM_current']) * vv['M_current'] * 4* Nref}))
 M_anc_prior_dist=as.vector(apply(prior_data,1,function(vv,...){rbinom(n,size=1,prob=vv['PbarrierM_ancestral']) * vv['M_ancestral'] * 4* Nref}))
 
-M_cur_plot=plot_distr(M_cur_post_dist,M_cur_prior_dist,param='M_cur')
-M_anc_plot=plot_distr(M_anc_post_dist,M_anc_prior_dist,param='M_anc')
+M_cur_Q_plot=plot_distr(M_cur_post_dist,M_cur_prior_dist,param='M_cur_Q')
+M_anc_Q_plot=plot_distr(M_anc_post_dist,M_anc_prior_dist,param='M_anc_Q')
 
-all_plot=ggarrange(N1_plot,N2_plot,Na_plot,Tsplit_plot,Tsc_plot,Tam_plot,M_cur_plot,M_anc_plot,ncol=3,nrow=3)
+all_plot=ggarrange(N1_plot,N2_plot,Na_plot,Tsplit_plot,Tsc_plot,Tam_plot,M_cur_plot,M_anc_plot,N1_beta_plot,N2_beta_plot,Na_beta_plot,M_cur_Q_plot,M_anc_Q_plot,ncol=3,nrow=5)
 ggsave(all_plot,filename=output,width=14,height=14)

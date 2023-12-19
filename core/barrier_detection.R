@@ -1,6 +1,5 @@
 #!/usr/bin/env Rscript
 library(abcrf)
-library(ggpubr)
 args = commandArgs(trailingOnly=T)
 args = sapply(args,function(x){tmp = unlist(strsplit(x,split='='))
             y = vector()
@@ -115,7 +114,24 @@ col_data=colnames(subset(train_data,select=-c(dataset,seed)))
 col_prior=colnames(subset(train_prior,select=-c(dataset,seed)))
 
 all = merge(train_data,train_prior,by='seed')
-col_data=param2kp(all[,col_data]) ## curate the dataset
+nb_barr=length(which(all$M_current==0))
+nb_nonbarr=length(which(all$M_current!=0))
+print(nb_barr/nrow(all))
+if (nb_barr > nb_nonbarr){
+	all_bar=which(all$M_current==0)
+	all_bar=all[all_bar[sample(1:nb_barr,size=nb_nonbarr)],]
+	all_nonbar=all[which(all$M_current!=0),]
+	all=rbind(all_bar,all_nonbar)
+} else if (nb_barr < nb_nonbarr){
+	all_nonbar=which(all$M_current!=0)
+	all_nonbar=all[all_nonbar[sample(1:nb_nonbarr,size=nb_barr)],]
+	all_bar=all[which(all$M_current==0),]
+	all=rbind(all_bar,all_nonbar)
+}
+#col_data=param2kp(all[,col_data]) ## curate the dataset
+
+nb_barr=length(which(all$M_current==0))
+print(nb_barr/nrow(all))
 
 obs_roc_all=all
 
@@ -168,3 +184,24 @@ write.table(t(report),file.path(obs_dir,'report_barrier_detection.txt'),sep='\t'
 write.table(rf$model.rf$confusion.matrix,sep='\t',row.names=T,col.names=T,quote=F,file=file.path(obs_dir,'confusion_matrix_barrier.txt'))
 write.table(rf$model.rf$variable.importance,sep='\t',row.names=T,col.names=T,quote=F,file=file.path(obs_dir,'variable_importance_barrier.txt'))
 
+
+### gerenate control plot
+
+test_vec=rf$model.rf$predictions == status
+test_vec_barr=test_vec[which(status=='barrier')]
+test_vec_nonbarr=test_vec[which(status=='non-barrier')]
+
+get_error_class=function(ref_v,s,e,t_v){
+	tt=t_v[which(ref_v>=s & ref_v<e)]
+	y=length(which(tt==F))/length(t_v)
+	return(y)}
+
+
+h=hist(all$bialsite_avg,breaks=100)
+hh=data.frame(s=h$breaks[-length(h$breaks)],e=h$breaks[-1])
+error_class=apply(hh,1,function(se,...){get_error_class(all$bialsite_avg,s=se[1],e=se[2],t_v=test_vec)})
+error_class_barrier=apply(hh,1,function(se,...){get_error_class(all$bialsite_avg,s=se[1],e=se[2],t_v=test_vec_barr)})
+error_class_nonbarrier=apply(hh,1,function(se,...){get_error_class(all$bialsite_avg,s=se[1],e=se[2],t_v=test_vec_nonbarr)})
+
+class_error_data=data.frame(bialsite_breaks=h$mids,error_class,error_class_barrier,error_class_nonbarrier)
+write.table(class_error_data,file=file.path(obs_dir,'class_error_data.txt'),sep='\t',row.names=F,col.names=T)
