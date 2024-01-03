@@ -71,7 +71,7 @@ auc <-function(x, y, from = min(x, na.rm=TRUE), to = max(x, na.rm=TRUE),absolute
     # Sanity checks
     stopifnot(length(x) == length(y))
     stopifnot(!is.na(from))
-    if (length(unique(x)) < 2){
+    if (length(unique(x)) < 2 | length(unique(y))<2){
         return(NA)}
 	# perform linear interpolation 
 	if(absolutearea==F){
