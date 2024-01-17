@@ -36,12 +36,12 @@ It will take sometime to build up all container
 
 ## 2.3. Configuration
 
-Before launching anything, ensure that the config/ folder contains at least one file named `config.sh`. If your cluster uses SLURM as the job manager, you must also fill the `cluster_config.yaml` file. Simply refer to the `example/config` folder and adjust it to match your cluster's configuration. 
+Before launching anything, ensure that the config/ folder contains at least one file named `launch_param.sh`. If your cluster uses SLURM as the job manager, you must also fill the `cluster_config.yaml` file. Simply refer to the `example/config` folder and adjust it to match your cluster's configuration. 
 For more details, consult the `user_manual.pdf`.
 
 # 3. Usage
 ---
-Please refer to the `user_manual.pdf` for information on this section. Note that the file to launch RIDGE is `RIDGE.sh`, and `core/RIDGE_V2_pipeline.py` manages all of the code.
+Please refer to the `user_manual.pdf` for information on this section. Note that the file to launch RIDGE is `RIDGE.sh`, and `core/RIDGE_pipeline.py` manages all of the code.
 
 # 4. Troubleshooting
 ---
