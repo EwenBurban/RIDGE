@@ -174,13 +174,13 @@ obs_prediction$BF_approxQ=aproxmate_mean_pbarrier_ratio *  (obs_prediction$post.
 write.table(cbind(obs_data,obs_prediction),file=file.path(obs_dir,paste0('Pbarrier.txt')),sep='\t',row.names=F)
 ### report
 #report=c('obs_bayes_p'=length(which(obs_prediction$bayes_factor>100))/nrow(obs_data),'p_barrier_obs_est'=p_barrier_obs_est)
-report=c('correct_pbarrier_ratio'=correct_mean_pbarrier_ratio,'average_pbarrier'=mean(pbarrier),'aproximate_pbarrier_ratio'=aproxmate_mean_pbarrier_ratio)
+report=c('average_pbarrier'=mean(pbarrier),'pbarrier_ratio'=correct_mean_pbarrier_ratio,'aproximate_pbarrier_ratio'=aproxmate_mean_pbarrier_ratio)
 if (mode=='test'){
 	report=c(report,'obs_AUC'=obs_AUC,'true_pbarrier'=p_barrier_obs_obs)
 	write.table(roc_stat,file=file.path(obs_dir,'true_roc_table.txt'),sep='\t',row.names=F)
 
 }
-write.table(t(report),file.path(obs_dir,'report_barrier_detection.txt'),sep='\t',row.names=F)	
+write.table(t(report),file.path(obs_dir,'barrier_proportion_and_ratio.txt'),sep='\t',row.names=F)	
 write.table(rf$model.rf$confusion.matrix,sep='\t',row.names=T,col.names=T,quote=F,file=file.path(obs_dir,'confusion_matrix_barrier.txt'))
 write.table(rf$model.rf$variable.importance,sep='\t',row.names=T,col.names=T,quote=F,file=file.path(obs_dir,'variable_importance_barrier.txt'))
 

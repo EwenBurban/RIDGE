@@ -22,13 +22,13 @@ else:
     ntree = 1000 # number of tree for the random forest (RF) model comparison (1000)
     nIterations_model_comp = 10 # number of subdirectories for the simulations used in the RF model comparison
 ITERATIONS_MODEL_COMP = range(nIterations_model_comp)
-MODELS_COMP = ['SC_1M_1N', 'SC_1M_2N', 'SC_3M_1N', 'SC_3M_2N', 'AM_1M_1N', 'AM_1M_2N', 'AM_3M_1N', 'AM_3M_2N', 'IM_1M_1N', 'IM_1M_2N', 'IM_3M_1N', 'IM_3M_2N', 'SI_1N', 'SI_2N']
+MODELS_COMP = ['SC_1M_1N', 'SC_1M_2N', 'SC_2M_1N', 'SC_2M_2N', 'AM_1M_1N', 'AM_1M_2N', 'AM_2M_1N', 'AM_2M_2N', 'IM_1M_1N', 'IM_1M_2N', 'IM_2M_1N', 'IM_2M_2N', 'SI_1N', 'SI_2N']
 
 
 # informations from the config.yaml file
 nameA = config['nameA']
 nameB = config['nameB']
-timeStamp = config['timeStamp']
+timeStamp = config['work_dir']
 Nref = config['Nref'] # Nref is the mid point of the prior
 window_size = config['window_size']
 config_yaml = timeStamp + '/'  +config['config_yaml']
@@ -71,7 +71,7 @@ elif mode=='all_no_vis' :
 else :
     expected_output=['ABCstat_global.txt','ABCstat_locus.txt','gof_prior.txt',
             'gof_posterior.txt','posterior.txt','model_weight.txt','QC_plot/QC_prior_density.pdf','QC_plot/QC_prior_acp.pdf',
-            'Pbarrier.txt','report_barrier_detection.txt','QC_plot/QC_posterior_density.pdf','QC_plot/QC_posterior_acp.pdf','visual_posterior.pdf','visual_model_weight.pdf']
+            'Pbarrier.txt','barrier_proportion_and_ratio.txt','QC_plot/QC_posterior_density.pdf','QC_plot/QC_posterior_acp.pdf','visual_posterior.pdf','visual_model_weight.pdf']
 
 rule targets: # edit at the end 
     input:
@@ -261,7 +261,7 @@ rule barrier_detection_current:
         "{timeStamp}/sim_locus/priorfile_locus.txt"
     output:
         '{timeStamp}/Pbarrier.txt',
-        '{timeStamp}/report_barrier_detection.txt'
+        '{timeStamp}/barrier_proportion_and_ratio.txt'
     threads: 8
     shell:
         """

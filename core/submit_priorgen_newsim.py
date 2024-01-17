@@ -99,14 +99,14 @@ if 'AM' in model:
 if 'SC' in model or 'IM' in model:
     migration = 'M_current'
     glob_prior[migration] = loguniform(low=M_bound[0],high=M_bound[1],size = nMultilocus)
-if '2M' in model: # old method ; to remove
+if '3M' in model: # old method ; to remove
     glob_prior['shape_' + migration + '_a'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
     glob_prior['shape_' + migration + '_b'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
     glob_prior['Pbarrier' + migration] = np.random.uniform(low=P_bound[0],high=P_bound[1],size=nMultilocus)
 if '2N' in model:
     glob_prior['shape_N_a'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
     glob_prior['shape_N_b'] = np.random.uniform(low=shape_bound[0],high=shape_bound[1],size=nMultilocus)   
-if '3M' in model:
+if '2M' in model:
     glob_prior['Pbarrier' + migration] = np.random.uniform(low=P_bound[0],high=P_bound[1],size=nMultilocus)
 
 ########################### Generate locus level parameters
