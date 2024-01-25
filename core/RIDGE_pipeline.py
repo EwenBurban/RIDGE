@@ -67,7 +67,7 @@ elif mode=='test' :
 elif mode=='all_no_vis' : 
     expected_output=['ABCstat_global.txt','ABCstat_locus.txt','gof_prior.txt',
             'gof_posterior.txt','posterior.txt','model_weight.txt',
-            'Pbarrier.txt','report_barrier_detection.txt']
+            'Pbarrier.txt','barrier_proportion_and_ratio.txt']
 else :
     expected_output=['ABCstat_global.txt','ABCstat_locus.txt','gof_prior.txt',
             'gof_posterior.txt','posterior.txt','model_weight.txt','QC_plot/QC_prior_density.pdf','QC_plot/QC_prior_acp.pdf',
