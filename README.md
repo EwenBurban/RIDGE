@@ -20,7 +20,7 @@ Download the code with the following command 
 
 ```
 
-git clone https://github.com/EwenBurban/RIDGE.git
+git clone -b v1.0 https://github.com/EwenBurban/RIDGE.git
 
 ```
 
