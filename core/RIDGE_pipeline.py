@@ -22,7 +22,10 @@ else:
     ntree = 1000 # number of tree for the random forest (RF) model comparison (1000)
     nIterations_model_comp = 10 # number of subdirectories for the simulations used in the RF model comparison
 ITERATIONS_MODEL_COMP = range(nIterations_model_comp)
-MODELS_COMP = ['SC_1M_1N', 'SC_1M_2N', 'SC_2M_1N', 'SC_2M_2N', 'AM_1M_1N', 'AM_1M_2N', 'AM_2M_1N', 'AM_2M_2N', 'IM_1M_1N', 'IM_1M_2N', 'IM_2M_1N', 'IM_2M_2N', 'SI_1N', 'SI_2N']
+MODELS_COMP = ['SC_1M_1N', 'SC_1M_2N', 'SC_2M_1N', 'SC_2M_2N', 'AM_1M_1N', 
+        'AM_1M_2N', 'AM_2M_1N', 'AM_2M_2N', 'IM_1M_1N', 'IM_1M_2N', 'IM_2M_1N',
+        'IM_2M_2N', 'SI_1N', 'SI_2N','SC_1M_3N','SC_2M_3N','IM_1M_3N',
+        'IM_2M_3N','AM_1M_3N','AM_2M_3N','SI_3N']
 
 
 # informations from the config.yaml file
