@@ -2,12 +2,15 @@ import allel
 import sys
 import pandas as pd
 import numpy as np
+import time
+
 argv={x.split('=')[0]: x.split('=')[1] for x in sys.argv[1:]}
 data_file = argv['data']
 bed_file = argv['bed_file']
 popfile = argv['popfile']
 nameA = argv['nameA']
 nameB = argv['nameB']
+mask_file = argv['mask_file']
 win_size = int(argv['window_size'])
 min_sites = 3 
 locus_write = eval(argv['locus_write'])
@@ -18,6 +21,10 @@ print('Warning: window containing less than {} sites are rejected'.format(min_si
 ### load data ####
 bed = pd.read_csv(bed_file,sep='\t')
 popfile = pd.read_csv(popfile,dtype=str)
+if mask_file != 'None':
+    mask_file = pd.read_csv(mask_file,sep='\t')
+
+
 data = allel.read_vcf(data_file)
 gt = allel.GenotypeArray(data['calldata/GT'])
 popA_samples = popfile[nameA]
@@ -47,23 +54,34 @@ for contig in set(bed['chr']):
     sel_snp = np.where(data['variants/CHROM'] == contig)
     pos = data['variants/POS'][sel_snp]
     window_list  =np.array(bed[bed['chr']==contig][['start','end']])
+    contig_accessibility=mask_file.loc[(mask_file['chr'] == contig),'accessibility'].to_numpy() 
+    contig_pos_access=mask_file.loc[(mask_file['chr'] == contig),'pos'].to_numpy()
+    contig_accessibility=np.array([contig_accessibility[i] for i in np.argsort(contig_pos_access)])
+
 
     sxA_arr = sxB_arr= sf_arr = ss_arr= nsites = thetaA= thetaB = TajDA = TajDB = Fst = piA = piB = dxy = da = dataset =np.empty(0)
     for window in window_list:
         sel_snp_sfs = sel_snp[0][np.where(np.logical_and(pos>=window[0],pos<=window[1])==True)[0]]
         sfs_nsites = len(sel_snp_sfs)
         sub_pos=pos[np.where(np.logical_and(pos>=window[0],pos<=window[1])==True)[0]]
+        if isinstance(mask_file,pd.DataFrame): 
+            accessibility=contig_accessibility[int(window[0]):(int(window[1])+1)]
+        else : 
+            accessibility=np.full(int(window[1]-window[0]),1)
 
         if sfs_nsites >= min_sites:
-            piA_tmp = allel.sequence_diversity(sub_pos,acA[sel_snp_sfs],start=window[0],stop=window[1])
-            piB_tmp= allel.sequence_diversity(sub_pos,acB[sel_snp_sfs],start=window[0],stop=window[1])
-            thetaA_tmp = allel.watterson_theta(sub_pos,acA[sel_snp_sfs],start=window[0],stop=window[1])
-            thetaB_tmp =  allel.watterson_theta(sub_pos,acB[sel_snp_sfs],start=window[0],stop=window[1])
+            relative_sub_pos=sub_pos-(int(window[0])-1)
+            tpos,ac=allel.util.mask_inaccessible(accessibility,relative_sub_pos,acA[sel_snp_sfs])
+            piA_tmp = allel.sequence_diversity(relative_sub_pos,acA[sel_snp_sfs],start=1,stop=int(window[1])-int(window[0])+1,is_accessible=accessibility)
+            piA_tmp_bis = allel.sequence_diversity(relative_sub_pos,acA[sel_snp_sfs],start=1,stop=int(window[1])-int(window[0])+1)
+            piB_tmp= allel.sequence_diversity(relative_sub_pos,acB[sel_snp_sfs],start=1,stop=int(window[1])-int(window[0])+1,is_accessible=accessibility)
+            thetaA_tmp = allel.watterson_theta(relative_sub_pos,acA[sel_snp_sfs],start=1,stop=int(window[1])-int(window[0])+1,is_accessible=accessibility)
+            thetaB_tmp =  allel.watterson_theta(relative_sub_pos,acB[sel_snp_sfs],start=1,stop=int(window[1])-int(window[0])+1,is_accessible=accessibility)
 
             TajDA_tmp = allel.tajima_d(acA[sel_snp_sfs],sub_pos,start=window[0],stop=window[1])
             TajDB_tmp = allel.tajima_d(acB[sel_snp_sfs],sub_pos,start=window[0],stop=window[1])
 
-            dxy_tmp = allel.sequence_divergence(sub_pos,acA[sel_snp_sfs],acB[sel_snp_sfs],start=window[0],stop=window[1])
+            dxy_tmp = allel.sequence_divergence(relative_sub_pos,acA[sel_snp_sfs],acB[sel_snp_sfs],start=1,stop=int(window[1])-int(window[0])+1,is_accessible=accessibility)
             da_tmp = dxy_tmp - (piA_tmp + piB_tmp)/2
             a,b,c=allel.weir_cockerham_fst(gt[sel_snp_sfs],[popA_index,popB_index])
             Fst_tmp = np.nansum(a)/(np.nansum(a)+np.nansum(b)+np.nansum(c))
@@ -91,7 +109,7 @@ for contig in set(bed['chr']):
             da = np.append(da,da_tmp)
             Fst = np.append(Fst,Fst_tmp)
             dataset = np.append(dataset,dataset_tmp)
-        
+
 
 
     #### format all arrays into a dataframe

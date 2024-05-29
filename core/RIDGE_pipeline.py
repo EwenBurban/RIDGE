@@ -1,3 +1,4 @@
+import os
 # links to the codes
 binpath = config['binpath']
 core_path = binpath + '/core'
@@ -43,6 +44,7 @@ homo_rec_rate=config['homo_rec_rate']
 hetero_theta=config['hetero_theta']
 mode=config['mode']
 nLoci=config['nLoci']
+mask_file=timeStamp + '/' +config['mask_file']
 ############# singularity parametrisaiton #########
 container_path =binpath + '/container' 
 Sc='singularity exec --bind {0},{1} {2}'.format(binpath,timeStamp,container_path)
@@ -52,6 +54,22 @@ wildcard_constraints:
     timeStamp=timeStamp,
     binpath=binpath,
     model='|'.join(MODELS_COMP)
+############### sanity check  ######################
+if not os.path.isfile(mask_file):
+    mask_file='None'
+    print('mask file not found, RIDGE continue without considering the mask file')
+
+if not os.path.isfile(contig_file):
+    print('contig file not found, RIDGE stop !')
+    exit()
+
+if not os.path.isfile(popfile):
+    print('popfile not found, RIDGE stop !')
+    exit()
+
+if not os.path.isfile(vcf_file):
+    print('vcf_file not found, RIDGE stop !')
+    exit()
 
 ############## End of Pipeline & Targets ############
 if mode=='scan' : 
@@ -122,7 +140,7 @@ rule generate_abc_stat_global:
         """
             {Sc}/scrm_py.sif python3 {core_path}/vcf2abc.py  data={input.vcf_file} bed_file={input.bed_global}\
                     popfile={popfile} nameA={nameA} nameB={nameB} window_size={window_size}\
-                    locus_write="False" global_write="True" output_dir={timeStamp} ploidy={ploidy}
+                    locus_write="False" global_write="True" output_dir={timeStamp} ploidy={ploidy} mask_file={mask_file}
         """
 
 rule generate_abc_stat_locus: 
@@ -136,7 +154,7 @@ rule generate_abc_stat_locus:
         """
             {Sc}/scrm_py.sif python3 {core_path}/vcf2abc.py  data={input.vcf_file} bed_file={input.bed_locus}\
                     popfile={popfile} nameA={nameA} nameB={nameB} window_size={window_size}\
-                    locus_write="True" global_write="False" output_dir={timeStamp} ploidy={ploidy}
+                    locus_write="True" global_write="False" output_dir={timeStamp} ploidy={ploidy} mask_file={mask_file}
         """
 
 rule generate_suggestion:

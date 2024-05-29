@@ -109,15 +109,16 @@ if '2N' in model:
 if '2M' in model:
     glob_prior['Pbarrier' + migration] = np.random.uniform(low=P_bound[0],high=P_bound[1],size=nMultilocus)
 
+
 ########################### Generate locus level parameters
 
-def beta_dis(X,a,b): # In case of modeBarrier == beta, apply the a and b values to a vector X of values
+def beta_dis(X,a,b): 
     scalar = np.random.beta(a,b)
     rescale = a / (a +b)
     _ =  X * scalar/rescale 
     return(_)
 
-def build_locusDf(param,locus_df,nLoci): # This function apply the genomic mode defined before to create heterogeneity among locus
+def build_locusDf(param,locus_df,nLoci,model): # This function apply the genomic mode defined before to create heterogeneity among locus
     locus_sim = pd.DataFrame([param for x in range(nLoci)]) # repeat the param line nLoci times into a DF
     locus_sim.reset_index(inplace=True,drop=True)
     locus_sim = pd.concat([locus_sim,locus_df],axis=1)
@@ -127,10 +128,16 @@ def build_locusDf(param,locus_df,nLoci): # This function apply the genomic mode 
     else:
         pat  = re.compile('M')
         migration =  list(filter(pat.match,list(param.keys())))[0]
-    if 'shape_N_a' in param :
+    if 'shape_N_a' in param and '2N' in model :
         N = ['Na','N1','N2']
         locus_sim[N] = locus_sim[N].apply(lambda x: beta_dis(x,param['shape_N_a'],param['shape_N_b']),axis=1)
         #locus_sim[N] = np.clip(locus_sim[N],9e-4,1e9)
+    if 'shape_N_a' in param and '3N' in model :
+        N = ['Na','N1','N2']
+        scalar=np.random(param['shape_N_a'],param['shape_N_b'])
+        rescale=param['shape_N_a']/(param['shape_N_a']+param['shape_N_b'])
+        locus_sim[N] = locus_sim[N].apply(lambda x: x*scalar/rescale,axis=1)
+
     if 'Pbarrier'+ migration  in param:
         if 'shape_' + migration + '_a' in param : 
             locus_sim[migration] = locus_sim[migration].apply(lambda x: beta_dis(x,param['shape_' + migration + '_a'],param['shape_' + migration + '_b']))
